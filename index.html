@@ -57,21 +57,30 @@
   .multiview{margin:72px auto 0;max-width:920px;display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
   .mv-tile{aspect-ratio:16/9;border-radius:8px;position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.06);box-shadow:0 16px 48px rgba(0,0,0,.6);transition:border-color .3s}
   .mv-tile:hover{border-color:rgba(255,255,255,.14)}
-  .mv-label{position:absolute;left:8px;bottom:7px;font-family:var(--cond);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.7);z-index:2}
+  .mv-label{position:absolute;left:8px;bottom:7px;font-family:var(--cond);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.7);z-index:4}
   .mv-pgm{grid-column:span 2;grid-row:span 2;aspect-ratio:auto;border:1.5px solid var(--tally)}
-  .mv-pgm .tag{position:absolute;top:10px;right:10px;display:flex;align-items:center;gap:6px;font-family:var(--cond);font-size:10px;letter-spacing:.18em;color:#fff;background:var(--tally);padding:4px 10px;border-radius:4px;z-index:3;font-weight:700}
+  .mv-pgm .tag{position:absolute;top:10px;right:10px;display:flex;align-items:center;gap:6px;font-family:var(--cond);font-size:10px;letter-spacing:.18em;color:#fff;background:var(--tally);padding:4px 10px;border-radius:4px;z-index:5;font-weight:700}
   .mv-pgm .tag .led{width:6px;height:6px;border-radius:50%;background:#fff;animation:pulse 1.8s infinite}
   .mv-wide{grid-column:span 2}
-  .g1{background:linear-gradient(135deg,#162040,#2e4a7a);--cd:9.4s;--cf:0s}
-  .g2{background:linear-gradient(135deg,#321528,#6e2e4a);--cd:7.2s;--cf:-3.1s}
-  .g3{background:linear-gradient(135deg,#102518,#245e3e);--cd:11s;--cf:-1.8s}
-  .g4{background:linear-gradient(135deg,#221c10,#5a4c22);--cd:8.3s;--cf:-5.6s}
-  .g5{background:linear-gradient(135deg,#1e1228,#4a2e62);--cd:10.1s;--cf:-2.4s}
-  .g6{background:linear-gradient(135deg,#141418,#2e2e3a);--cd:7.8s;--cf:-4.9s}
-  .mv-tile:not(.mv-pgm)::before{content:'';position:absolute;inset:0;z-index:1;pointer-events:none;background:rgba(0,0,0,.13);opacity:0;animation:camExposure var(--cd,9s) ease-in-out infinite;animation-delay:var(--cf,0s)}
-  @keyframes camExposure{0%,100%{opacity:0}50%{opacity:1}}
+  .g1{background:linear-gradient(135deg,#0d1830,#162040,#2e4a7a);background-size:300% 300%;--cd:9.4s;--cf:0s}
+  .g2{background:linear-gradient(135deg,#280d1e,#321528,#6e2e4a);background-size:300% 300%;--cd:7.2s;--cf:-3.1s}
+  .g3{background:linear-gradient(135deg,#081a10,#102518,#245e3e);background-size:300% 300%;--cd:11s;--cf:-1.8s}
+  .g4{background:linear-gradient(135deg,#16110a,#221c10,#5a4c22);background-size:300% 300%;--cd:8.3s;--cf:-5.6s}
+  .g5{background:linear-gradient(135deg,#160a1e,#1e1228,#4a2e62);background-size:300% 300%;--cd:10.1s;--cf:-2.4s}
+  .g6{background:linear-gradient(135deg,#0c0c10,#141418,#2e2e3a);background-size:300% 300%;--cd:7.8s;--cf:-4.9s}
+  .g1,.g2,.g3,.g4,.g5,.g6{animation:bgShift var(--cd,9s) ease-in-out infinite;animation-delay:var(--cf,0s)}
+  @keyframes bgShift{0%{background-position:0% 0%}33%{background-position:100% 30%}66%{background-position:30% 100%}100%{background-position:0% 0%}}
+  .mv-tile:not(.mv-pgm)::before{content:'';position:absolute;width:200%;height:200%;left:-50%;top:-50%;z-index:1;pointer-events:none;background:radial-gradient(ellipse 45% 45% at 50% 50%,rgba(255,255,255,.07),transparent 70%);animation:camHighlight var(--cd,9s) ease-in-out infinite;animation-delay:var(--cf,0s)}
+  @keyframes camHighlight{0%,100%{transform:translate(10%,15%);opacity:.45}25%{transform:translate(-5%,-10%);opacity:.75}50%{transform:translate(20%,5%);opacity:.5}75%{transform:translate(-15%,20%);opacity:.8}}
+  .mv-tile:not(.mv-pgm)::after{content:'';position:absolute;left:0;right:0;top:-55%;height:55%;background:linear-gradient(transparent,rgba(255,255,255,.04),transparent);pointer-events:none;z-index:2;animation:scanDown var(--cd,9s) linear infinite;animation-delay:var(--cf,0s)}
+  @keyframes scanDown{from{transform:translateY(0)}to{transform:translateY(290%)}}
+  .mv-pgm::before{content:'';position:absolute;width:200%;height:200%;left:-50%;top:-50%;z-index:1;pointer-events:none;background:radial-gradient(ellipse 50% 40% at 60% 40%,rgba(255,255,255,.05),transparent 60%);animation:pgmHighlight 15s ease-in-out infinite}
+  @keyframes pgmHighlight{0%,100%{transform:translate(0%,0%)}33%{transform:translate(-6%,12%)}66%{transform:translate(12%,-6%)}}
   .gpgm{background:linear-gradient(135deg,#0c1a30,#1e4068 60%,#152e50);animation:pgmBreath 10s ease-in-out infinite}
   @keyframes pgmBreath{0%,100%{box-shadow:0 0 0 1px rgba(229,40,30,.28),0 20px 60px rgba(229,40,30,.2),0 0 80px rgba(229,40,30,.05)}50%{box-shadow:0 0 0 1px rgba(229,40,30,.52),0 20px 65px rgba(229,40,30,.3),0 0 115px rgba(229,40,30,.13)}}
+  .mv-timecode{position:absolute;top:10px;left:10px;font-family:var(--cond);font-size:11px;letter-spacing:.12em;color:rgba(255,255,255,.9);background:rgba(0,0,0,.55);padding:3px 8px;border-radius:3px;z-index:5;font-variant-numeric:tabular-nums;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+  .mv-vu{position:absolute;bottom:8px;right:8px;display:flex;gap:2px;align-items:flex-end;z-index:5;height:24px}
+  .mv-vu-bar{width:3px;border-radius:1px;min-height:2px;transition:height .08s,background .08s}
   @media(max-width:720px){.multiview{grid-template-columns:repeat(2,1fr);gap:6px;margin-top:52px}.mv-pgm{grid-column:span 2;grid-row:auto;aspect-ratio:16/9}}
 
   .statement{background:var(--white);color:var(--ink);text-align:center}
@@ -409,6 +418,7 @@
           <div class="srow"><span class="k" data-en="Awning">Markīze</span><span class="v">Thule Omnistor</span></div>
           <div class="srow"><span class="k" data-en="Climate">Klimats</span><span class="v">Truma</span></div>
           <div class="srow"><span class="k" data-en="Required space">Nepieciešamā vieta</span><span class="v" data-en="9 m length">9 m garumā</span></div>
+          <div class="srow"><span class="k" data-en="Power supply">Barošana</span><span class="v" data-en="6 kW · 230 V / 32 A or 3-phase">6 kW · 230 V / 32 A vai 3 fāzu</span></div>
           <div class="srow"><span class="k" data-en="Support vehicle">Palīgtransports</span><span class="v" data-en="With trailer (option)">Ar piekabi (opcija)</span></div>
         </div>
       </div>
@@ -544,6 +554,37 @@
     btn.textContent=(l==='en')?'LV':'EN';
   }
   btn.addEventListener('click',()=>setLang(lang==='en'?'lv':'en'));
+
+  // PGM timecode (starts at 10:00:00:00, 50fps)
+  const pgmTile=document.querySelector('.mv-pgm');
+  const tcEl=document.createElement('div');
+  tcEl.className='mv-timecode';
+  pgmTile.appendChild(tcEl);
+  let th=10,tm=0,ts=0,tf=0;
+  function tickTC(){
+    tcEl.textContent=[th,tm,ts,tf].map(n=>String(n).padStart(2,'0')).join(':');
+    if(++tf>=50){tf=0;if(++ts>=60){ts=0;if(++tm>=60){tm=0;th++;}}}
+    setTimeout(tickTC,20);
+  }
+  tickTC();
+
+  // PGM audio VU meter
+  const vuEl=document.createElement('div');
+  vuEl.className='mv-vu';
+  const vuBars=Array.from({length:8},()=>{
+    const b=document.createElement('div');
+    b.className='mv-vu-bar';
+    vuEl.appendChild(b);
+    return b;
+  });
+  pgmTile.appendChild(vuEl);
+  setInterval(()=>{
+    vuBars.forEach(b=>{
+      const h=2+Math.random()*20;
+      b.style.height=h+'px';
+      b.style.background=h>16?'#e5281e':h>10?'#f5a623':'#30d158';
+    });
+  },80);
 </script>
 
 </body>

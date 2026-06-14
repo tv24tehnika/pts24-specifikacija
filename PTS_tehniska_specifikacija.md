@@ -158,7 +158,7 @@ Papildu personāls (komentētāju atbalsts, replay operators, papildu kameru ope
 |---|---|
 | Uzstādīšanas laiks | `[X]` h pirms pasākuma (atkarībā no apjoma) |
 | Demontāža | `[X]` h pēc pasākuma |
-| Barošana | `[X]` kW, `[X]` × 230V / 16A vai 3 fāzu pieslēgums |
+| Barošana | 6 kW, 230V / 32A vai 3 fāzu pieslēgums |
 | Telpa režijai | `[X]` m² aizsargāta no nokrišņiem / PTS busam piekļuve |
 | Nepieciešamā vieta | 9 m garumā (transportlīdzeklis + darba zona ar markīzi) |
 | Tīkls / internets | Mobilais pārklājums LiveU augšuplādei vai dedicated šķiedra |
