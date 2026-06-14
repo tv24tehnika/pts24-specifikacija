@@ -203,6 +203,18 @@ input[type="number"]:focus {
 }
 
 /* ── Totals ── */
+.disc-inp {
+  width: 42px;
+  border: 1px solid #aaa;
+  padding: 2px 3px;
+  font-size: 9.5px;
+  text-align: right;
+  background: transparent;
+  color: inherit;
+}
+.disc-inp:focus { outline: none; border-color: #ff6b5b; }
+.t-disc-amt { color: #c41f10; }
+
 .totals-wrap {
   display: flex;
   justify-content: flex-end;
@@ -280,6 +292,8 @@ input[type="number"]:focus {
   .page { margin: 0; padding: 12mm 10mm; box-shadow: none; }
   input[type="number"],
   input[type="text"] { background: transparent !important; border-color: transparent !important; border-bottom: 1px solid #bbb !important; }
+  .disc-inp { border: none !important; border-bottom: 1px solid #bbb !important; }
+  #disc-input-row.disc-zero { display: none; }
   .notes { background: #f5f5f5 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .section-row td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   thead tr { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -358,6 +372,11 @@ input[type="number"]:focus {
   <div class="totals-wrap">
     <div class="totals-box">
       <div class="trow"><span>Summa bez PVN</span><span class="tval" id="t-net">0,00</span></div>
+      <div class="trow" id="disc-input-row">
+        <span>Atlaide&nbsp;&nbsp;<input type="number" id="disc-pct" class="disc-inp" min="0" max="100" step="0.5" value="0" oninput="recalc()">&thinsp;%</span>
+        <span class="tval t-disc-amt" id="t-disc">—</span>
+      </div>
+      <div class="trow" id="row-discnet" style="display:none"><span>Pēc atlaides</span><span class="tval" id="t-discnet">0,00</span></div>
       <div class="trow"><span>PVN 21&thinsp;%</span><span class="tval" id="t-vat">0,00</span></div>
       <div class="trow grand"><span>KOPĀ AR PVN</span><span class="tval" id="t-gross">0,00</span></div>
     </div>
@@ -414,6 +433,7 @@ const ROWS = [
 
   { s: 'Kameras atbalsts (opcija)' },
   { name: 'Dolly Super Panther 3', desc: 'Sliede līdz 32 m, pilns aplis Ø6 m', qty: 0, days: 1, unit: 420 },
+  { name: 'Dolly sliede', desc: 'Garums metros (maks. 32 m)', qty: 0, days: 1, unit: 12 },
   { name: 'Kameras krāns ABC', desc: '8 m sniedzamība', qty: 0, days: 1, unit: 260 },
 
   { s: 'Audio' },
@@ -458,10 +478,17 @@ function rowTotal(r) {
 function recalc() {
   let net = 0;
   ROWS.forEach(r => { if (!r.s) net += rowTotal(r); });
-  const vat = net * 0.21;
+  const discPct = parseFloat(document.getElementById('disc-pct').value) || 0;
+  const discAmt = net * discPct / 100;
+  const discNet = net - discAmt;
+  const vat = discNet * 0.21;
   document.getElementById('t-net').textContent = fmt(net);
+  document.getElementById('t-disc').textContent = discAmt > 0 ? '− ' + fmt(discAmt) : '—';
+  document.getElementById('t-discnet').textContent = fmt(discNet);
+  document.getElementById('row-discnet').style.display = discAmt > 0 ? '' : 'none';
+  document.getElementById('disc-input-row').classList.toggle('disc-zero', discAmt === 0);
   document.getElementById('t-vat').textContent = fmt(vat);
-  document.getElementById('t-gross').textContent = fmt(net + vat);
+  document.getElementById('t-gross').textContent = fmt(discNet + vat);
 }
 
 function changed(el) {
@@ -504,7 +531,8 @@ function saveDoc() {
   const rowState = ROWS.map(r => r.s ? null : { qty: r.qty, days: r.days, unit: r.unit });
   const fieldState = {};
   document.querySelectorAll('input[type="text"]').forEach((inp, i) => { fieldState[i] = inp.value; });
-  const state = JSON.stringify({ rows: rowState, fields: fieldState });
+  const disc = parseFloat(document.getElementById('disc-pct').value) || 0;
+  const state = JSON.stringify({ rows: rowState, fields: fieldState, disc });
 
   let html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
   html = html.replace(/<script id="pts-state">[^<]*<\/script>\n?/, '');
@@ -553,6 +581,10 @@ if (window.__SAVED__ && window.__SAVED__.fields) {
   document.querySelectorAll('input[type="text"]').forEach((inp, i) => {
     if (window.__SAVED__.fields[i] !== undefined) inp.value = window.__SAVED__.fields[i];
   });
+}
+if (window.__SAVED__ && window.__SAVED__.disc) {
+  document.getElementById('disc-pct').value = window.__SAVED__.disc;
+  recalc();
 }
 </script>
 </body>
