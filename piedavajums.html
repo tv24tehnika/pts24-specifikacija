@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="lv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PTS 24 — Pakalpojumu piedāvājums</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 11px;
+  color: #111;
+  background: #e8e8e8;
+}
+
+.controls {
+  max-width: 210mm;
+  margin: 12px auto 0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 0 4px;
+}
+.controls button {
+  padding: 7px 18px;
+  background: #e52818;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .5px;
+}
+.controls button:hover { background: #c41f10; }
+.controls button.secondary {
+  background: #333;
+}
+.controls button.secondary:hover { background: #555; }
+
+.page {
+  max-width: 210mm;
+  margin: 10px auto 30px;
+  background: white;
+  padding: 16mm 14mm;
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+}
+
+/* ── Header ── */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 14px;
+  border-bottom: 3px solid #e52818;
+  margin-bottom: 16px;
+}
+.logo-area .logo {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 3px;
+}
+.logo-area .sub {
+  font-size: 8.5px;
+  letter-spacing: 1.5px;
+  color: #666;
+  text-transform: uppercase;
+  margin-top: 1px;
+}
+.logo-area .contact {
+  font-size: 9px;
+  color: #555;
+  margin-top: 8px;
+  line-height: 1.6;
+}
+.doc-info {
+  text-align: right;
+}
+.doc-info h1 {
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #111;
+}
+.doc-info .meta {
+  font-size: 9.5px;
+  color: #555;
+  margin-top: 6px;
+  line-height: 1.7;
+}
+.doc-info .meta input[type="text"] {
+  border: none;
+  border-bottom: 1px solid #ccc;
+  font-size: 9.5px;
+  width: 140px;
+  text-align: right;
+  background: transparent;
+  color: #111;
+}
+
+/* ── Info grid ── */
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+.info-block h2 {
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #888;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 4px;
+  margin-bottom: 8px;
+}
+.field-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 5px;
+}
+.field-row label {
+  font-size: 9.5px;
+  color: #666;
+  width: 88px;
+  flex-shrink: 0;
+}
+.field-row input[type="text"] {
+  flex: 1;
+  border: none;
+  border-bottom: 1px solid #ccc;
+  font-size: 9.5px;
+  padding: 1px 2px;
+  background: transparent;
+  color: #111;
+}
+.field-row input[type="text"]:focus {
+  outline: none;
+  border-bottom-color: #e52818;
+}
+
+/* ── Table ── */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 12px;
+  font-size: 9.5px;
+}
+thead tr {
+  background: #1a1a1a;
+  color: white;
+}
+thead th {
+  padding: 7px 8px;
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+thead th.r { text-align: right; }
+
+.section-row td {
+  background: #e52818;
+  color: white;
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  font-weight: 700;
+  padding: 4px 8px;
+}
+
+tbody tr.data-row:nth-child(odd) { background: #f8f8f8; }
+tbody tr.data-row td {
+  padding: 4px 8px;
+  vertical-align: middle;
+  border-bottom: 1px solid #eee;
+}
+.item-name { font-weight: 600; }
+.item-desc { color: #777; font-size: 8.5px; }
+
+td.r { text-align: right; }
+
+input[type="number"] {
+  width: 52px;
+  border: 1px solid #ddd;
+  padding: 2px 4px;
+  font-size: 9.5px;
+  text-align: right;
+  background: #fffde7;
+  color: #111;
+}
+input[type="number"]:focus {
+  outline: none;
+  border-color: #e52818;
+  background: #fff8e1;
+}
+
+.row-total {
+  font-weight: 600;
+  min-width: 70px;
+}
+
+/* ── Totals ── */
+.totals-wrap {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 18px;
+}
+.totals-box {
+  width: 280px;
+  border-top: 2px solid #1a1a1a;
+}
+.totals-box .trow {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 8px;
+  font-size: 10px;
+  border-bottom: 1px solid #eee;
+}
+.totals-box .trow .tval { font-weight: 600; }
+.totals-box .trow.grand {
+  background: #1a1a1a;
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  border: none;
+  padding: 8px 8px;
+}
+.totals-box .trow.grand .tval { color: #ff6b5b; }
+
+/* ── Notes ── */
+.notes {
+  margin-bottom: 18px;
+  padding: 10px 12px;
+  background: #f5f5f5;
+  border-left: 3px solid #e52818;
+}
+.notes h3 {
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: #555;
+  margin-bottom: 6px;
+}
+.notes ul {
+  padding-left: 14px;
+}
+.notes li {
+  font-size: 9px;
+  color: #555;
+  margin-bottom: 3px;
+  line-height: 1.5;
+}
+
+/* ── Signatures ── */
+.signatures {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  margin-top: 24px;
+}
+.sig-block {
+  border-top: 1px solid #333;
+  padding-top: 6px;
+}
+.sig-block .sig-label {
+  font-size: 8.5px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.sig-block .sig-space { height: 28px; }
+
+/* ── Print ── */
+@media print {
+  body { background: white; font-size: 10px; }
+  .controls { display: none; }
+  .page { margin: 0; padding: 12mm 10mm; box-shadow: none; }
+  input[type="number"],
+  input[type="text"] { background: transparent !important; border-color: transparent !important; border-bottom: 1px solid #bbb !important; }
+  .notes { background: #f5f5f5 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .section-row td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  thead tr { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .totals-box .trow.grand { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+</style>
+</head>
+<body>
+
+<div class="controls">
+  <button class="secondary" onclick="resetQty()">Atiestatīt skaitus</button>
+  <button class="secondary" onclick="saveDoc()">&#128190; Saglabāt failu</button>
+  <button onclick="window.print()">&#128438; Drukāt / Saglabāt PDF</button>
+</div>
+
+<div class="page">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo-area">
+      <div class="logo">PTS 24</div>
+      <div class="sub">Pārvietojamā televīzijas stacija</div>
+      <div class="contact">
+        TV24 tehnika<br>
+        Rīga, Latvija<br>
+        +371 29242245<br>
+        tehnika@tv24.lv
+      </div>
+    </div>
+    <div class="doc-info">
+      <h1>Pakalpojumu piedāvājums</h1>
+      <div class="meta">
+        Nr.&nbsp;&nbsp;<input type="text" id="doc-nr" placeholder="____-____"><br>
+        Datums&nbsp;&nbsp;<input type="text" id="doc-date" placeholder="__.__.__"><br>
+        Derīgs līdz&nbsp;&nbsp;<input type="text" id="doc-valid" placeholder="__.__.__">
+      </div>
+    </div>
+  </div>
+
+  <!-- Client / event info -->
+  <div class="info-grid">
+    <div class="info-block">
+      <h2>Klients / Pasūtītājs</h2>
+      <div class="field-row"><label>Organizācija</label><input type="text" placeholder="—"></div>
+      <div class="field-row"><label>Kontaktpersona</label><input type="text" placeholder="—"></div>
+      <div class="field-row"><label>E-pasts</label><input type="text" placeholder="—"></div>
+      <div class="field-row"><label>Tālrunis</label><input type="text" placeholder="—"></div>
+      <div class="field-row"><label>Rēķina adrese</label><input type="text" placeholder="—"></div>
+    </div>
+    <div class="info-block">
+      <h2>Pasākuma informācija</h2>
+      <div class="field-row"><label>Pasākums</label><input type="text" placeholder="—"></div>
+      <div class="field-row"><label>Norises vieta</label><input type="text" placeholder="—"></div>
+      <div class="field-row"><label>Datums / Datumi</label><input type="text" placeholder="—"></div>
+      <div class="field-row"><label>Ražošanas dienas</label><input type="text" placeholder="—"></div>
+      <div class="field-row"><label>Piezīmes</label><input type="text" placeholder="—"></div>
+    </div>
+  </div>
+
+  <!-- Quote table -->
+  <table>
+    <thead>
+      <tr>
+        <th style="width:34%">Pozīcija</th>
+        <th style="width:20%">Modelis / apraksts</th>
+        <th class="r" style="width:9%">Skaits</th>
+        <th class="r" style="width:9%">Dienas</th>
+        <th class="r" style="width:14%">Vienības cena €</th>
+        <th class="r" style="width:14%">Summa €</th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+
+  <!-- Totals -->
+  <div class="totals-wrap">
+    <div class="totals-box">
+      <div class="trow"><span>Summa bez PVN</span><span class="tval" id="t-net">0,00</span></div>
+      <div class="trow"><span>PVN 21&thinsp;%</span><span class="tval" id="t-vat">0,00</span></div>
+      <div class="trow grand"><span>KOPĀ AR PVN</span><span class="tval" id="t-gross">0,00</span></div>
+    </div>
+  </div>
+
+  <!-- Notes -->
+  <div class="notes">
+    <h3>Piezīmes un nosacījumi</h3>
+    <ul>
+      <li>Cenas norādītas bez PVN (21 %). PVN tiek piemērots atbilstoši spēkā esošajiem nodokļu normatīviem.</li>
+      <li>Viena darba diena — 8 stundas. Par papildu stundām tiek piemērots stundu tarifs.</li>
+      <li>Brauciena izdevumi tiek rēķināti atsevišķi: €0,50/km no Rīgas un atpakaļ, ja attālums &gt; 50 km.</li>
+      <li>Galīgā konfigurācija un cena tiek precizēta pēc tehniskās apspriedes un norises vietas apskates.</li>
+      <li>Piedāvājums derīgs 30 dienas no izrakstīšanas datuma.</li>
+      <li>Apmaksa: 50 % avansā, 50 % — pēc pakalpojuma sniegšanas.</li>
+    </ul>
+  </div>
+
+  <!-- Signatures -->
+  <div class="signatures">
+    <div class="sig-block">
+      <div class="sig-label">PTS 24 pārstāvis</div>
+      <div class="sig-space"></div>
+      <div class="sig-label">Paraksts &nbsp;&nbsp;&nbsp; Datums</div>
+    </div>
+    <div class="sig-block">
+      <div class="sig-label">Pasūtītāja pārstāvis</div>
+      <div class="sig-space"></div>
+      <div class="sig-label">Paraksts &nbsp;&nbsp;&nbsp; Datums</div>
+    </div>
+  </div>
+
+</div><!-- /.page -->
+
+<script>
+const ROWS = [
+  { s: 'Transportlīdzeklis un infrastruktūra' },
+  { name: 'OB vans MAN TGE 3.180', desc: 'Markīze Thule, klimats Truma, elektro', qty: 1, days: 1, unit: 1200 },
+
+  { s: 'Video režija' },
+  { name: 'ATEM 4 M/E Constellation 4K', desc: '+ ATEM 1 M/E Advanced Panel 20', qty: 1, days: 1, unit: 350 },
+  { name: 'Blackmagic Videohub 40×40', desc: 'SDI maršrutēšanas matrica', qty: 1, days: 1, unit: 120 },
+  { name: 'HyperDeck ierakstītāji', desc: 'Tīrs + ISO ieraksts', qty: 1, days: 1, unit: 80 },
+
+  { s: 'Kameras — sistēmas' },
+  { name: 'Grass Valley LDX 92', desc: '+ XCU bāzes stacija + SMPTE optika', qty: 4, days: 1, unit: 320 },
+  { name: 'Grass Valley LDX 110', desc: '+ XCU bāzes stacija + SMPTE optika', qty: 4, days: 1, unit: 380 },
+  { name: 'Grass Valley CGP500 vadības panelis', desc: 'Kameras parametru vadība', qty: 2, days: 1, unit: 60 },
+
+  { s: 'Kameras — PTZ un kompaktās' },
+  { name: 'BirdDog X5 Ultra PTZ', desc: 'NDI / 12G-SDI', qty: 6, days: 1, unit: 180 },
+  { name: 'Panasonic CX350', desc: 'Kompaktā kamera', qty: 0, days: 1, unit: 75 },
+  { name: 'Bezvadu RF kamera (DJI / Teradek)', desc: 'Bezvadu attēls, mobilais operators', qty: 0, days: 1, unit: 160 },
+
+  { s: 'Kameras atbalsts (opcija)' },
+  { name: 'Dolly Super Panther 3', desc: 'Sliede līdz 32 m, pilns aplis Ø6 m', qty: 0, days: 1, unit: 420 },
+  { name: 'Kameras krāns ABC', desc: '8 m sniedzamība', qty: 0, days: 1, unit: 260 },
+
+  { s: 'Audio' },
+  { name: 'Behringer X32 Compact + stagebox', desc: 'Digitālā pults + AES50 digitālais stagebox', qty: 1, days: 1, unit: 120 },
+
+  { s: 'Grafika' },
+  { name: 'Grafikas serveris CasparCG + vMix', desc: 'Reāllaika titri un grafika', qty: 1, days: 1, unit: 80 },
+
+  { s: 'Pārraide un straumēšana' },
+  { name: 'LiveU LU600 (galvenais uplink)', desc: 'Bonded cellular, 5G', qty: 1, days: 1, unit: 260 },
+  { name: 'LiveU LU300 (rezerves uplink)', desc: 'Rezerves enkoderis', qty: 1, days: 1, unit: 130 },
+  { name: 'Starlink', desc: 'Satelīta internets', qty: 1, days: 1, unit: 80 },
+  { name: 'Blackmagic WebPresenter HD', desc: 'RTMP straumēšana', qty: 1, days: 1, unit: 50 },
+
+  { s: 'Sakari un vadība' },
+  { name: 'GreenGo intercom sistēma', desc: 'Vadu + bezvadu', qty: 1, days: 1, unit: 100 },
+  { name: 'Tally sistēma Grass Valley CCS-ONE', desc: 'Kameru signalizācija', qty: 1, days: 1, unit: 60 },
+  { name: 'Automatizācija (Companion + Stream Deck XL)', desc: 'Raspberry Pi vadības sistēma', qty: 1, days: 1, unit: 40 },
+
+  { s: 'Komanda' },
+  { name: 'Tehniskais producents / TD', desc: 'Vadītājs un režisors', qty: 1, days: 1, unit: 450 },
+  { name: 'Skaņu operators', desc: '', qty: 1, days: 1, unit: 320 },
+  { name: 'Grafikas operators', desc: '', qty: 1, days: 1, unit: 280 },
+  { name: 'Pārraides inženieris', desc: '', qty: 1, days: 1, unit: 320 },
+  { name: 'Kameras operators (sistēmas kamera)', desc: '', qty: 4, days: 1, unit: 300 },
+  { name: 'Kameras operators (PTZ / kompaktā)', desc: '', qty: 0, days: 1, unit: 250 },
+
+  { s: 'Papildu izdevumi' },
+  { name: 'Brauciena izdevumi', desc: 'km × tarifs, ja > 50 km', qty: 0, days: 1, unit: 1 },
+  { name: 'Palīgtransports ar piekabi (opcija)', desc: 'Papildu tehnikas pārvadāšana', qty: 0, days: 1, unit: 200 },
+  { name: 'EVS atkārtojumu sistēma (opcija)', desc: 'Super slow-motion replay', qty: 0, days: 1, unit: 620 },
+];
+
+function fmt(n) {
+  return n.toLocaleString('lv-LV', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function rowTotal(r) {
+  return r.qty * r.days * r.unit;
+}
+
+function recalc() {
+  let net = 0;
+  ROWS.forEach(r => { if (!r.s) net += rowTotal(r); });
+  const vat = net * 0.21;
+  document.getElementById('t-net').textContent = fmt(net);
+  document.getElementById('t-vat').textContent = fmt(vat);
+  document.getElementById('t-gross').textContent = fmt(net + vat);
+}
+
+function changed(el) {
+  const i = +el.dataset.i;
+  const f = el.dataset.f;
+  ROWS[i][f] = parseFloat(el.value) || 0;
+  const tr = el.closest('tr');
+  const tot = rowTotal(ROWS[i]);
+  tr.querySelector('.row-total').textContent = tot > 0 ? fmt(tot) : '—';
+  recalc();
+}
+
+function build() {
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = '';
+  ROWS.forEach((r, i) => {
+    if (r.s) {
+      const tr = document.createElement('tr');
+      tr.className = 'section-row';
+      tr.innerHTML = `<td colspan="6">${r.s}</td>`;
+      tbody.appendChild(tr);
+      return;
+    }
+    const tot = rowTotal(r);
+    const tr = document.createElement('tr');
+    tr.className = 'data-row';
+    tr.innerHTML =
+      `<td><span class="item-name">${r.name}</span></td>` +
+      `<td><span class="item-desc">${r.desc}</span></td>` +
+      `<td class="r"><input type="number" min="0" step="1" value="${r.qty}" data-i="${i}" data-f="qty" onchange="changed(this)"></td>` +
+      `<td class="r"><input type="number" min="0" step="1" value="${r.days}" data-i="${i}" data-f="days" onchange="changed(this)"></td>` +
+      `<td class="r"><input type="number" min="0" step="1" value="${r.unit}" data-i="${i}" data-f="unit" onchange="changed(this)"></td>` +
+      `<td class="r row-total">${tot > 0 ? fmt(tot) : '—'}</td>`;
+    tbody.appendChild(tr);
+  });
+  recalc();
+}
+
+function saveDoc() {
+  const rowState = ROWS.map(r => r.s ? null : { qty: r.qty, days: r.days, unit: r.unit });
+  const fieldState = {};
+  document.querySelectorAll('input[type="text"]').forEach((inp, i) => { fieldState[i] = inp.value; });
+  const state = JSON.stringify({ rows: rowState, fields: fieldState });
+
+  let html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+  html = html.replace(/<script id="pts-state">[^<]*<\/script>\n?/, '');
+  html = html.replace('</head>', `<script id="pts-state">window.__SAVED__=${state};<\/script>\n</head>`);
+
+  const docNr = (document.getElementById('doc-nr').value.trim() || 'piedavajums').replace(/[^\w\-]/g, '_');
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `PTS24_${docNr}.html`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function resetQty() {
+  if (!confirm('Atiestatīt visus skaitļus uz noklusējuma vērtībām?')) return;
+  location.reload();
+}
+
+// Apply saved row state before building
+if (window.__SAVED__) {
+  window.__SAVED__.rows.forEach((s, i) => {
+    if (s && ROWS[i] && !ROWS[i].s) {
+      ROWS[i].qty = s.qty; ROWS[i].days = s.days; ROWS[i].unit = s.unit;
+    }
+  });
+}
+
+// Set date defaults (overwritten below if saved state exists)
+(function() {
+  if (window.__SAVED__) return;
+  const d = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  const today = `${pad(d.getDate())}.${pad(d.getMonth()+1)}.${d.getFullYear()}`;
+  const valid = new Date(d); valid.setDate(valid.getDate()+30);
+  const validStr = `${pad(valid.getDate())}.${pad(valid.getMonth()+1)}.${valid.getFullYear()}`;
+  document.getElementById('doc-date').value = today;
+  document.getElementById('doc-valid').value = validStr;
+  document.getElementById('doc-nr').value = `PTS-${d.getFullYear()}-`;
+})();
+
+build();
+
+// Restore saved text field values
+if (window.__SAVED__ && window.__SAVED__.fields) {
+  document.querySelectorAll('input[type="text"]').forEach((inp, i) => {
+    if (window.__SAVED__.fields[i] !== undefined) inp.value = window.__SAVED__.fields[i];
+  });
+}
+</script>
+</body>
+</html>
