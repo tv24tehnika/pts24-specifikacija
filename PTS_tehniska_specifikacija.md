@@ -51,6 +51,7 @@ Standarta konfigurācija pilnvērtīgam daudzkameru raidījumam ar pārraidi.
 - **8 × Grass Valley sistēmas kameras** — 4 × **LDX 92** + 4 × **LDX 110** ar **XCU** bāzes stacijām un **CGP500** vadības paneļiem
 - **6 × BirdDog X5 Ultra** PTZ kameras
 - Līdz **12 × Panasonic AG-CX350** kompaktās kameras
+- **4 × Sony PXW-Z90** kompaktās 4K kameras
 - Bezvadu RF risinājumi — **DJI** un **Teradek**
 - SMPTE optiskā šķiedra starp sistēmas kameru un bāzes staciju (video, atgriezeniskais signāls, tally, intercom, barošana)
 - Centralizēta krāsu un diafragmas vadība (shading) no režijas; super slow-motion atbalsts
@@ -77,7 +78,7 @@ Standarta konfigurācija pilnvērtīgam daudzkameru raidījumam ar pārraidi.
 ### 3.6 Signāla pārraide / straumēšana
 - **LiveU LU600** — apvienota mobilo tīklu (bonded cellular) augšuplāde
 - **Starlink** — satelīta interneta savienojums
-- **Blackmagic WebPresenter HD** — tieša straumēšana uz platformām (YouTube, Facebook, RTMP)
+- **Blackmagic WebPresenter 4K** — tieša straumēšana uz platformām (YouTube, Facebook, RTMP)
 - Pārraide uz raidorganizācijas studiju
 
 ### 3.7 Sakari (intercom)
@@ -102,10 +103,10 @@ Bāzes komplekts paplašināms ar šādiem moduļiem atkarībā no pasākuma:
 
 | Modulis | Apraksts |
 |---|---|
-| Papildu kameras | Vēl LDX 92 / LDX 110, BirdDog X5 Ultra PTZ vai Panasonic CX350 |
+| Papildu kameras | Vēl LDX 92 / LDX 110, BirdDog X5 Ultra PTZ, Panasonic AG-CX350 vai Sony PXW-Z90 |
 | Bezvadu RF kamera | DJI un Teradek risinājumi mobilam attēlam (sporta laukumam, skatuvei) |
 | Kameras krāns | **ABC krāns**, 8 m sniedzamība |
-| Dolly sistēma | **Super Panther 3** — sliede līdz 32 m, pilns aplis Ø6 m diametrā |
+| Dolly sistēma | **Super Panther III** — sliede līdz 32 m, pilns aplis Ø6 m diametrā |
 
 ### 4.2 Atkārtojumi un grafika
 
@@ -160,7 +161,7 @@ Papildu personāls (komentētāju atbalsts, replay operators, papildu kameru ope
 | Demontāža | `[X]` h pēc pasākuma |
 | Barošana | 6 kW, 230V / 32A vai 3 fāzu pieslēgums |
 | Telpa režijai | `[X]` m² aizsargāta no nokrišņiem / PTS busam piekļuve |
-| Nepieciešamā vieta | 9 m garumā (transportlīdzeklis + darba zona ar markīzi) |
+| Nepieciešamā vieta | 9 m garumā × 5 m platumā (transportlīdzeklis + darba zona ar markīzi) |
 | Tīkls / internets | Mobilais pārklājums LiveU augšuplādei vai dedicated šķiedra |
 | Piekļuve | Transportlīdzekļa piebraukšana izkraušanai |
 
@@ -186,7 +187,7 @@ Papildu personāls (komentētāju atbalsts, replay operators, papildu kameru ope
 | Papildu kamera (PTZ / CX350) + operators | dienā | `[€ XX]` |
 | Bezvadu RF kamera (DJI / Teradek) | dienā | `[€ XXX]` |
 | EVS atkārtojumu sistēma | dienā | `[€ XXX]` |
-| Dolly sistēma (Super Panther 3) | dienā | `[€ XXX]` |
+| Dolly sistēma (Super Panther III) | dienā | `[€ XXX]` |
 | Kameras krāns (ABC, 8 m) | dienā | `[€ XXX]` |
 | Komentētāju pozīcija | gab. | `[€ XX]` |
 | Dublējošs uplink | dienā | `[€ XXX]` |
