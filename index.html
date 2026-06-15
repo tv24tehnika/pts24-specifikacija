@@ -59,7 +59,7 @@
   .mv-tile:hover{border-color:rgba(255,255,255,.14)}
   .mv-label{position:absolute;left:8px;bottom:7px;font-family:var(--cond);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.7);z-index:4}
   .mv-pgm{aspect-ratio:16/9;border:1.5px solid var(--tally)}
-  .mv-pgm .mv-label{left:16px;bottom:14px;font-size:clamp(14px,2.1vw,21px);font-weight:700;color:#fff;text-shadow:0 2px 14px rgba(0,0,0,.85);background:rgba(0,0,0,.32);padding:5px 11px;border-radius:4px;backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+  .mv-pgm .mv-label{left:8px;bottom:7px;font-size:clamp(10px,1.4vw,13px);font-weight:700;color:#fff;text-shadow:0 2px 14px rgba(0,0,0,.85);background:rgba(0,0,0,.32);padding:3px 7px;border-radius:4px;backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
   .mv-pgm .tag{position:absolute;top:13px;right:13px;display:flex;align-items:center;gap:8px;font-family:var(--cond);font-size:clamp(15px,2.2vw,22px);letter-spacing:.18em;color:#fff;background:var(--tally);padding:7px 17px;border-radius:5px;z-index:5;font-weight:700;box-shadow:0 4px 18px rgba(0,0,0,.4)}
   .mv-pgm .tag .led{width:9px;height:9px;border-radius:50%;background:#fff;animation:pulse 1.8s infinite}
   .mv-wide{grid-column:span 2}
@@ -80,10 +80,10 @@
   .gpgm{background:#000;animation:pgmBreath 10s ease-in-out infinite}
   @keyframes pgmBreath{0%,100%{box-shadow:0 0 0 1px rgba(229,40,30,.28),0 20px 60px rgba(229,40,30,.2),0 0 80px rgba(229,40,30,.05)}50%{box-shadow:0 0 0 1px rgba(229,40,30,.52),0 20px 65px rgba(229,40,30,.3),0 0 115px rgba(229,40,30,.13)}}
   .mv-testcard{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:0;image-rendering:pixelated}
-  .mv-timecode{position:absolute;top:14px;left:14px;font-family:var(--cond);font-size:clamp(15px,2.3vw,23px);letter-spacing:.14em;color:rgba(255,255,255,.95);background:rgba(0,0,0,.55);padding:6px 13px;border-radius:4px;z-index:5;font-variant-numeric:tabular-nums;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
-  .mv-vu{position:absolute;right:16px;top:60px;bottom:16px;display:flex;gap:7px;align-items:flex-end;z-index:5}
-  .mv-vu-bar{width:11px;border-radius:2px;min-height:3px;transition:height .08s,background .08s;box-shadow:0 0 8px rgba(0,0,0,.5)}
-  @media(max-width:720px){.multiview{margin-top:52px}.mv-pgm{aspect-ratio:16/9}.mv-vu{top:46px;right:12px}.mv-vu-bar{width:8px}}
+  .mv-timecode{position:absolute;top:6px;left:50%;transform:translateX(-50%);font-family:var(--cond);font-size:clamp(13px,1.9vw,19px);letter-spacing:.14em;color:rgba(255,255,255,.95);background:rgba(0,0,0,.55);padding:5px 11px;border-radius:4px;z-index:5;font-variant-numeric:tabular-nums;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+  .mv-vu{position:absolute;right:16px;top:60px;bottom:16px;display:flex;gap:5px;align-items:flex-end;z-index:5}
+  .mv-vu-bar{width:7px;border-radius:2px;min-height:3px;transition:height .08s,background .08s;box-shadow:0 0 8px rgba(0,0,0,.5)}
+  @media(max-width:720px){.multiview{margin-top:52px}.mv-pgm{aspect-ratio:16/9}.mv-vu{top:46px;right:12px;gap:4px}.mv-vu-bar{width:5px}}
 
   .statement{background:var(--white);color:var(--ink);text-align:center}
   .statement h2{font-size:clamp(32px,5.4vw,64px);max-width:980px;margin:0 auto;color:var(--ink);line-height:1.06}
@@ -229,7 +229,7 @@
     <p class="lead" data-en="Your event, live. In broadcast quality.">Tava pasākuma tiešraide. Raidījuma kvalitātē.</p>
     <p class="sub" data-en="A fully equipped mobile TV station — multicamera production, graphics and transmission at any location.">Pilnībā aprīkota mobilā televīzijas stacija — daudzkameru režija, grafika un pārraide jebkurā norises vietā.</p>
     <div class="multiview">
-      <div class="mv-tile mv-pgm gpgm"><canvas class="mv-testcard"></canvas><div class="tag"><span class="led"></span>PGM</div><div class="mv-label" data-en="Programme · 1080p50">Programma · 1080p50</div></div>
+      <div class="mv-tile mv-pgm gpgm"><canvas class="mv-testcard"></canvas><div class="tag"><span class="led"></span>LIVE</div><div class="mv-label" data-en="Programme · 1080p50">Programma · 1080p50</div></div>
     </div>
   </div>
 </section>
@@ -550,15 +550,18 @@
   }
   btn.addEventListener('click',()=>setLang(lang==='en'?'lv':'en'));
 
-  // PGM timecode — wall-clock time of day, HH:MM:SS:FF (50fps)
+  // PGM timecode — Riga time of day regardless of viewer timezone, HH:MM:SS:FF (50fps)
   const pgmTile=document.querySelector('.mv-pgm');
   const tcEl=document.createElement('div');
   tcEl.className='mv-timecode';
   pgmTile.appendChild(tcEl);
+  const rigaFmt=new Intl.DateTimeFormat('lv-LV',{timeZone:'Europe/Riga',hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});
   function tickTC(){
     const d=new Date();
-    const ff=Math.floor(d.getMilliseconds()/20); // 0..49 @ 50fps
-    tcEl.textContent=[d.getHours(),d.getMinutes(),d.getSeconds(),ff].map(n=>String(n).padStart(2,'0')).join(':');
+    const p=Object.fromEntries(rigaFmt.formatToParts(d).map(x=>[x.type,x.value]));
+    const hh=p.hour==='24'?'00':p.hour; // Intl var atgriezt 24
+    const ff=String(Math.floor(d.getMilliseconds()/20)).padStart(2,'0'); // 0..49 @ 50fps
+    tcEl.textContent=[hh,p.minute,p.second,ff].join(':');
     setTimeout(tickTC,20);
   }
   tickTC();
@@ -566,7 +569,7 @@
   // PGM audio VU meter
   const vuEl=document.createElement('div');
   vuEl.className='mv-vu';
-  const vuBars=Array.from({length:2},()=>{
+  const vuBars=Array.from({length:4},()=>{
     const b=document.createElement('div');
     b.className='mv-vu-bar';
     vuEl.appendChild(b);
