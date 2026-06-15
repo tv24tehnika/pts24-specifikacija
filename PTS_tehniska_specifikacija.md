@@ -105,7 +105,7 @@ Bāzes komplekts paplašināms ar šādiem moduļiem atkarībā no pasākuma:
 |---|---|
 | Papildu kameras | Vēl LDX 92 / LDX 110, BirdDog X5 Ultra PTZ, Panasonic AG-CX350 vai Sony PXW-Z90 |
 | Bezvadu RF kamera | DJI un Teradek risinājumi mobilam attēlam (sporta laukumam, skatuvei) |
-| Kameras krāns | **ABC krāns**, 8 m sniedzamība |
+| Kameras krāns | **ABC krāns**, 8 m garumā |
 | Dolly sistēma | **Super Panther III** — sliede līdz 32 m, pilns aplis Ø6 m diametrā |
 
 ### 4.2 Atkārtojumi un grafika
