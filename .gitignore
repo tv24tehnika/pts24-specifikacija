@@ -1,2 +1,5 @@
 *.DS_Store
 .icloud
+
+# ChatGPT ģenerētās bildes — tikai lokāli, ne uz git
+ChatGPT Image*.png

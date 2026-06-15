@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="lv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PTS HyperDeck Ieraksta Kalkulators</title>
+    <style>
+        :root {
+            --bg-color: #121824;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #38bdf8;
+            --accent-hover: #0ea5e9;
+            --border-color: #334155;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --network: #a855f7;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            width: 100%;
+            max-width: 650px;
+            padding: 30px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 13px;
+            margin-bottom: 25px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 15px;
+        }
+
+        /* --- Tabs --- */
+        .tabs {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 25px;
+            background-color: #0f172a;
+            padding: 5px;
+            border-radius: 8px;
+        }
+
+        .tab-button {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 10px 12px;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+        .tab-button:hover {
+            color: var(--text-main);
+        }
+
+        .tab-button.active {
+            background-color: var(--accent);
+            color: #0f172a;
+        }
+
+        .tab-panel {
+            display: none;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--text-muted);
+        }
+
+        .input-row {
+            display: flex;
+            gap: 15px;
+        }
+
+        .input-control {
+            flex: 1;
+        }
+
+        input[type="number"], select {
+            width: 100%;
+            background-color: #0f172a;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 12px 16px;
+            color: var(--text-main);
+            font-size: 15px;
+            transition: border-color 0.2s;
+        }
+
+        input[type="number"]:focus, select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .range-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-top: 8px;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            accent-color: var(--accent);
+        }
+
+        .range-value {
+            font-size: 14px;
+            font-weight: 600;
+            width: 50px;
+            text-align: right;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .result-box {
+            background-color: #0f172a;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .result-box.storage { border-left: 4px solid var(--accent); }
+        .result-box.network { border-left: 4px solid var(--network); }
+        .result-box.media-sd { border-left: 4px solid var(--success); }
+        .result-box.media-ssd { border-left: 4px solid var(--warning); }
+
+        .result-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .result-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 4px;
+        }
+
+        .storage .result-value span.highlight { color: var(--accent); }
+        .network .result-value span.highlight { color: var(--network); }
+        .media-sd .result-value span.highlight { color: var(--success); }
+        .media-ssd .result-value span.highlight { color: var(--warning); }
+
+        .result-sub {
+            font-size: 12px;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        .storage-visualization {
+            margin-top: 30px;
+            background-color: #0f172a;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .vis-title {
+            font-size: 13px;
+            color: var(--text-main);
+            margin-bottom: 16px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .vis-title span {
+            color: var(--accent);
+        }
+
+        .disk-row {
+            margin-bottom: 14px;
+        }
+
+        .disk-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .disk-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            margin-bottom: 6px;
+        }
+
+        .disk-name {
+            color: var(--text-main);
+            font-weight: 500;
+        }
+
+        .disk-status {
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .progress-bar-bg {
+            background-color: #1e293b;
+            height: 10px;
+            border-radius: 5px;
+            overflow: hidden;
+            width: 100%;
+            border: 1px solid var(--border-color);
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease, background-color 0.3s ease;
+            border-radius: 4px;
+        }
+
+        .status-ok { background-color: var(--success); }
+        .status-warn { background-color: var(--warning); }
+        .status-full { background-color: var(--danger); }
+
+        .footer-note {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 25px;
+            text-align: center;
+            line-height: 1.4;
+        }
+
+        @media (max-width: 500px) {
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent);"><path d="M23 7a2 2 0 0 0-2.45-1.45L16 7V5a2 2 0 0 0-2-2H2a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2l4.55 1.45A2 2 0 0 0 23 17V7z"></path></svg>
+        PTS HyperDeck Ieraksta Kalkulators
+    </h1>
+    <div class="subtitle">Lokālo datu nesēju un kopējā apjoma plānošana</div>
+
+    <div class="tabs">
+        <button class="tab-button active" data-tab="tab-storage">Apjoms un kopēšana</button>
+        <button class="tab-button" data-tab="tab-media">Nesēju skaits</button>
+    </div>
+
+    <!-- ============ CILNE 1: APJOMS UN KOPĒŠANA ============ -->
+    <div id="tab-storage" class="tab-panel active">
+        <div class="form-group">
+            <label for="format">Video formāts un kodeks</label>
+            <select id="format">
+                <option value="50" selected>1080i50 — ProRes 422 LT (~50 GB/h)</option>
+                <option value="96">1080p50 — ProRes 422 LT (~96 GB/h)</option>
+                <option value="73">1080i50 — ProRes 422 (~73 GB/h)</option>
+                <option value="145">1080p50 — ProRes 422 (~145 GB/h)</option>
+                <option value="154">2160p25 — ProRes 422 LT (~154 GB/h)</option>
+                <option value="308">2160p50 — ProRes 422 LT (~308 GB/h)</option>
+            </select>
+        </div>
+
+        <div class="input-row">
+            <div class="form-group input-control">
+                <label for="cameras">Kameru skaits (kopējam aprēķinam)</label>
+                <input type="number" id="cameras" min="1" max="64" value="12">
+            </div>
+
+            <div class="form-group input-control">
+                <label for="duration">Ieraksta ilgums</label>
+                <div class="range-container">
+                    <input type="range" id="duration-slider" min="0.5" max="12" step="0.5" value="1.5">
+                    <span class="range-value" id="duration-text">1.5 h</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="results-grid">
+            <div class="result-box storage">
+                <div class="result-title">Projekta Dati Kopā</div>
+                <div class="result-value">
+                    <span class="highlight" id="res-total-val">900</span>
+                    <span id="res-total-unit" style="font-size: 24px;">GB</span>
+                </div>
+                <div class="result-sub">
+                    Tikai 1 kameras dati: <strong id="res-1cam-sub">75 GB</strong>
+                </div>
+            </div>
+
+            <div class="result-box network">
+                <div class="result-title">Kopēšana Projektam (1 Gbps)</div>
+                <div class="result-value"><span class="highlight" id="dl-total-main">2h 30m</span></div>
+                <div class="result-sub">
+                    Laiks 1 kameras failam: <strong id="dl-1cam-sub">12m</strong>
+                </div>
+            </div>
+        </div>
+
+        <div class="storage-visualization">
+            <div class="vis-title">
+                Vienas kameras fiziskā slota aizpildījums:
+                <span id="vis-hours">1.5h ierakstam</span>
+            </div>
+
+            <div class="disk-row">
+                <div class="disk-info">
+                    <span class="disk-name">128 GB SD karte</span>
+                    <span class="disk-status" id="disk-128-text">0%</span>
+                </div>
+                <div class="progress-bar-bg">
+                    <div id="disk-128-fill" class="progress-bar-fill"></div>
+                </div>
+            </div>
+
+            <div class="disk-row">
+                <div class="disk-info">
+                    <span class="disk-name">256 GB SD karte / SSD</span>
+                    <span class="disk-status" id="disk-256-text">0%</span>
+                </div>
+                <div class="progress-bar-bg">
+                    <div id="disk-256-fill" class="progress-bar-fill"></div>
+                </div>
+            </div>
+
+            <div class="disk-row">
+                <div class="disk-info">
+                    <span class="disk-name">512 GB SSD</span>
+                    <span class="disk-status" id="disk-512-text">0%</span>
+                </div>
+                <div class="progress-bar-bg">
+                    <div id="disk-512-fill" class="progress-bar-fill"></div>
+                </div>
+            </div>
+
+            <div class="disk-row">
+                <div class="disk-info">
+                    <span class="disk-name">1 TB SSD</span>
+                    <span class="disk-status" id="disk-1000-text">0%</span>
+                </div>
+                <div class="progress-bar-bg">
+                    <div id="disk-1000-fill" class="progress-bar-fill"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-note">
+            Datu apjoma aprēķinos iekļauta ~10% sistēmas failu un nekompresēta audio rezerve.<br>
+            Tīkla kopēšanas laiks aprēķināts pie reālā ātruma ~100 MB/s.
+        </div>
+    </div>
+
+    <!-- ============ CILNE 2: NESĒJU SKAITS ============ -->
+    <div id="tab-media" class="tab-panel">
+        <div class="form-group">
+            <label for="m-format">Video formāts un kodeks</label>
+            <select id="m-format">
+                <option value="50" selected>1080i50 — ProRes 422 LT (~50 GB/h)</option>
+                <option value="96">1080p50 — ProRes 422 LT (~96 GB/h)</option>
+                <option value="73">1080i50 — ProRes 422 (~73 GB/h)</option>
+                <option value="145">1080p50 — ProRes 422 (~145 GB/h)</option>
+                <option value="154">2160p25 — ProRes 422 LT (~154 GB/h)</option>
+                <option value="308">2160p50 — ProRes 422 LT (~308 GB/h)</option>
+            </select>
+        </div>
+
+        <div class="input-row">
+            <div class="form-group input-control">
+                <label for="m-cameras">Kameru skaits</label>
+                <input type="number" id="m-cameras" min="1" max="64" value="12">
+            </div>
+
+            <div class="form-group input-control">
+                <label for="m-duration">Ieraksta ilgums</label>
+                <div class="range-container">
+                    <input type="range" id="m-duration-slider" min="0.5" max="12" step="0.5" value="1.5">
+                    <span class="range-value" id="m-duration-text">1.5 h</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="input-row">
+            <div class="form-group input-control">
+                <label for="sd-size">SD kartes izmērs</label>
+                <select id="sd-size">
+                    <option value="64">64 GB</option>
+                    <option value="128" selected>128 GB</option>
+                    <option value="256">256 GB</option>
+                    <option value="512">512 GB</option>
+                    <option value="1000">1 TB</option>
+                </select>
+            </div>
+
+            <div class="form-group input-control">
+                <label for="ssd-size">SSD izmērs</label>
+                <select id="ssd-size">
+                    <option value="256">256 GB</option>
+                    <option value="512">512 GB</option>
+                    <option value="1000" selected>1 TB</option>
+                    <option value="2000">2 TB</option>
+                    <option value="4000">4 TB</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="results-grid">
+            <div class="result-box media-sd">
+                <div class="result-title">SD kartes (visam projektam)</div>
+                <div class="result-value">
+                    <span class="highlight" id="sd-total">24</span>
+                    <span style="font-size: 18px;">gab.</span>
+                </div>
+                <div class="result-sub">
+                    <span id="sd-per-cam">2</span> karte(s) uz kameru &middot; <span id="sd-fill">59</span>% pēdējā piepildīta
+                </div>
+            </div>
+
+            <div class="result-box media-ssd">
+                <div class="result-title">SSD diski (visam projektam)</div>
+                <div class="result-value">
+                    <span class="highlight" id="ssd-total">12</span>
+                    <span style="font-size: 18px;">gab.</span>
+                </div>
+                <div class="result-sub">
+                    <span id="ssd-per-cam">1</span> disks uz kameru &middot; <span id="ssd-fill">7</span>% pēdējais piepildīts
+                </div>
+            </div>
+        </div>
+
+        <div class="storage-visualization">
+            <div class="vis-title">
+                Vienas kameras dati:
+                <span id="m-cam-data">75 GB</span>
+            </div>
+
+            <div class="disk-row">
+                <div class="disk-info">
+                    <span class="disk-name" id="sd-bar-name">128 GB SD karte</span>
+                    <span class="disk-status" id="sd-bar-text">0%</span>
+                </div>
+                <div class="progress-bar-bg">
+                    <div id="sd-bar-fill" class="progress-bar-fill"></div>
+                </div>
+            </div>
+
+            <div class="disk-row">
+                <div class="disk-info">
+                    <span class="disk-name" id="ssd-bar-name">1 TB SSD</span>
+                    <span class="disk-status" id="ssd-bar-text">0%</span>
+                </div>
+                <div class="progress-bar-bg">
+                    <div id="ssd-bar-fill" class="progress-bar-fill"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-note">
+            Aprēķins pieņem, ka katra kamera raksta savā nesējā (multicam). Nepilnīgs nesējs tiek skaitīts kā pilns.<br>
+            Iekļauta ~10% sistēmas failu un audio rezerve. SSD/SD ietilpība rēķināta pēc nominālā izmēra.
+        </div>
+    </div>
+</div>
+
+<script>
+    // ============ Cilņu pārslēgšana ============
+    document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById(btn.dataset.tab).classList.add('active');
+        });
+    });
+
+    // ~10% rezerve sistēmas failiem un audio
+    const OVERHEAD = 1.10;
+
+    function formatTime(totalSeconds) {
+        const calcHours = Math.floor(totalSeconds / 3600);
+        const calcMinutes = Math.floor((totalSeconds % 3600) / 60);
+        let timeString = "";
+        if (calcHours > 0) {
+            timeString += calcHours + "h ";
+        }
+        timeString += calcMinutes + "m";
+        return timeString || "< 1m";
+    }
+
+    function sizeLabel(gb) {
+        return gb >= 1000 ? (gb / 1000) + ' TB' : gb + ' GB';
+    }
+
+    // ============ CILNE 1 ============
+    const formatSelect = document.getElementById('format');
+    const camerasInput = document.getElementById('cameras');
+    const durationSlider = document.getElementById('duration-slider');
+    const durationText = document.getElementById('duration-text');
+
+    const resTotalVal = document.getElementById('res-total-val');
+    const resTotalUnit = document.getElementById('res-total-unit');
+    const res1CamSub = document.getElementById('res-1cam-sub');
+
+    const dlTotalMain = document.getElementById('dl-total-main');
+    const dl1CamSub = document.getElementById('dl-1cam-sub');
+
+    const visHours = document.getElementById('vis-hours');
+
+    function updateCalculations() {
+        const gbPerHourPerCamera = parseFloat(formatSelect.value);
+        const cameras = parseInt(camerasInput.value) || 1;
+        const hours = parseFloat(durationSlider.value);
+
+        durationText.innerText = hours + ' h';
+        visHours.innerText = hours + 'h ierakstam';
+
+        const singleCameraGb = gbPerHourPerCamera * hours;
+        const totalGb = singleCameraGb * cameras;
+
+        if (totalGb >= 1000) {
+            resTotalVal.innerText = (totalGb / 1000).toFixed(2);
+            resTotalUnit.innerText = 'TB';
+        } else {
+            resTotalVal.innerText = Math.round(totalGb);
+            resTotalUnit.innerText = 'GB';
+        }
+
+        res1CamSub.innerText = Math.round(singleCameraGb) + ' GB';
+
+        const speedMBps = 100;
+        const singleCamSeconds = (singleCameraGb * 1000) / speedMBps;
+        const totalSeconds = (totalGb * 1000) / speedMBps;
+
+        dlTotalMain.innerText = formatTime(totalSeconds);
+        dl1CamSub.innerText = formatTime(singleCamSeconds);
+
+        updateBar('disk-128', singleCameraGb, 128);
+        updateBar('disk-256', singleCameraGb, 256);
+        updateBar('disk-512', singleCameraGb, 512);
+        updateBar('disk-1000', singleCameraGb, 1000);
+    }
+
+    function updateBar(id, current, max) {
+        const fill = document.getElementById(id + '-fill');
+        const text = document.getElementById(id + '-text');
+
+        let percentage = (current / max) * 100;
+        let isFull = false;
+
+        if (percentage > 100) {
+            percentage = 100;
+            isFull = true;
+        }
+        if (percentage < 0) percentage = 0;
+
+        fill.style.width = percentage.toFixed(1) + '%';
+
+        fill.className = 'progress-bar-fill';
+        if (percentage < 75) {
+            fill.classList.add('status-ok');
+            text.style.color = 'var(--success)';
+        } else if (percentage < 95 && !isFull) {
+            fill.classList.add('status-warn');
+            text.style.color = 'var(--warning)';
+        } else {
+            fill.classList.add('status-full');
+            text.style.color = 'var(--danger)';
+        }
+
+        if (isFull) {
+            text.innerText = 'Trūkst vietas!';
+        } else {
+            text.innerText = Math.round((current / max) * 100) + '% aizpildīts';
+        }
+    }
+
+    formatSelect.addEventListener('change', updateCalculations);
+    camerasInput.addEventListener('input', updateCalculations);
+    durationSlider.addEventListener('input', updateCalculations);
+    updateCalculations();
+
+    // ============ CILNE 2: NESĒJU SKAITS ============
+    const mFormat = document.getElementById('m-format');
+    const mCameras = document.getElementById('m-cameras');
+    const mDurationSlider = document.getElementById('m-duration-slider');
+    const mDurationText = document.getElementById('m-duration-text');
+    const sdSize = document.getElementById('sd-size');
+    const ssdSize = document.getElementById('ssd-size');
+
+    const sdTotal = document.getElementById('sd-total');
+    const sdPerCam = document.getElementById('sd-per-cam');
+    const sdFill = document.getElementById('sd-fill');
+    const ssdTotal = document.getElementById('ssd-total');
+    const ssdPerCam = document.getElementById('ssd-per-cam');
+    const ssdFill = document.getElementById('ssd-fill');
+    const mCamData = document.getElementById('m-cam-data');
+
+    function updateMedia() {
+        const gbPerHour = parseFloat(mFormat.value);
+        const cameras = parseInt(mCameras.value) || 1;
+        const hours = parseFloat(mDurationSlider.value);
+        const sd = parseFloat(sdSize.value);
+        const ssd = parseFloat(ssdSize.value);
+
+        mDurationText.innerText = hours + ' h';
+
+        // Reālie dati uz nesēja ar rezervi
+        const camGb = gbPerHour * hours * OVERHEAD;
+        mCamData.innerText = Math.round(camGb) + ' GB';
+
+        // SD kartes
+        const sdPerCamera = Math.max(1, Math.ceil(camGb / sd));
+        const sdTotalCount = sdPerCamera * cameras;
+        const sdLastFill = Math.round(((camGb - (sdPerCamera - 1) * sd) / sd) * 100);
+        sdTotal.innerText = sdTotalCount;
+        sdPerCam.innerText = sdPerCamera;
+        sdFill.innerText = Math.min(100, Math.max(0, sdLastFill));
+
+        // SSD diski
+        const ssdPerCamera = Math.max(1, Math.ceil(camGb / ssd));
+        const ssdTotalCount = ssdPerCamera * cameras;
+        const ssdLastFill = Math.round(((camGb - (ssdPerCamera - 1) * ssd) / ssd) * 100);
+        ssdTotal.innerText = ssdTotalCount;
+        ssdPerCam.innerText = ssdPerCamera;
+        ssdFill.innerText = Math.min(100, Math.max(0, ssdLastFill));
+
+        // Vizuālie joslas — viena nesēja aizpildījums (cik daudz no pirmā nesēja aizņem viena kamera)
+        document.getElementById('sd-bar-name').innerText = sizeLabel(sd) + ' SD karte';
+        document.getElementById('ssd-bar-name').innerText = sizeLabel(ssd) + ' SSD';
+        updateBar('sd-bar', camGb, sd);
+        updateBar('ssd-bar', camGb, ssd);
+    }
+
+    mFormat.addEventListener('change', updateMedia);
+    mCameras.addEventListener('input', updateMedia);
+    mDurationSlider.addEventListener('input', updateMedia);
+    sdSize.addEventListener('change', updateMedia);
+    ssdSize.addEventListener('change', updateMedia);
+    updateMedia();
+</script>
+
+</body>
+</html>
