@@ -225,7 +225,7 @@
 <section class="hero">
   <div class="wrap">
     <div class="onair"><span class="led"></span><span data-en="On Air · Outside broadcast">On Air · Izbraukuma producēšana</span></div>
-    <h1>PTS</h1>
+    <h1 data-en="OB VAN">PTS</h1>
     <p class="lead" data-en="Your event, live. In broadcast quality.">Tava pasākuma tiešraide. Raidījuma kvalitātē.</p>
     <p class="sub" data-en="A fully equipped mobile TV station — multicamera production, graphics and transmission at any location.">Pilnībā aprīkota mobilā televīzijas stacija — daudzkameru režija, grafika un pārraide jebkurā norises vietā.</p>
     <div class="multiview">
@@ -573,13 +573,17 @@
     return b;
   });
   pgmTile.appendChild(vuEl);
+  const vuLevel=vuBars.map(()=>40);
+  const vuTarget=vuBars.map(()=>40);
+  setInterval(()=>{ for(let i=0;i<vuTarget.length;i++) vuTarget[i]=22+Math.random()*64; },420);
   setInterval(()=>{
-    vuBars.forEach(b=>{
-      const h=12+Math.random()*86;
+    vuBars.forEach((b,i)=>{
+      vuLevel[i]+=(vuTarget[i]-vuLevel[i])*0.1; // gluda interpolācija
+      const h=vuLevel[i];
       b.style.height=h+'%';
-      b.style.background=h>84?'#e5281e':h>60?'#f5a623':'#30d158';
+      b.style.background=h>82?'#e5281e':h>62?'#f5a623':'#30d158';
     });
-  },90);
+  },45);
 </script>
 
 <script>
@@ -594,44 +598,32 @@
   const mk=(w,h)=>{const c=document.createElement('canvas');c.width=w;c.height=h;return c;};
   const base=mk(RW,RH),chR=mk(RW,RH),chG=mk(RW,RH),chB=mk(RW,RH),noise=mk(256,144);
 
-  function paintCell(g,x,y,w,h,black){g.fillStyle=black?'#000':'#fff';g.fillRect(x,y,w,h);}
   function drawTestCard(g){
-    g.fillStyle='#9a9a9a';g.fillRect(0,0,RW,RH);
-    const cols=16,rows=12,cw=RW/cols,ch=RH/rows;
-    for(let i=0;i<cols;i++){const black=i%2===0;paintCell(g,i*cw,0,cw,ch,black);paintCell(g,i*cw,RH-ch,cw,ch,!black);}
-    for(let j=1;j<rows-1;j++){const black=j%2===0;paintCell(g,0,j*ch,cw,ch,black);paintCell(g,RW-cw,j*ch,cw,ch,!black);}
-    const sideBars=['#c00000','#00c000','#c000c0','#0000c0'];
-    const sbW=cw*0.9,sbH=(RH-4*ch)/sideBars.length;
-    sideBars.forEach((c,k)=>{g.fillStyle=c;g.fillRect(cw,2*ch+k*sbH,sbW,sbH);g.fillStyle=sideBars[sideBars.length-1-k];g.fillRect(RW-cw-sbW,2*ch+k*sbH,sbW,sbH);});
-    const cx=RW/2,cy=RH/2,R=RH*0.42;
-    g.save();g.beginPath();g.arc(cx,cy,R,0,Math.PI*2);g.clip();
-    g.fillStyle='#b4b4b4';g.fillRect(0,0,RW,RH);
-    const topY=cy-R,topH=R*0.55;
-    g.fillStyle='#ffffff';g.fillRect(cx-R,topY,R*2,topH);
-    g.fillStyle='#000';
-    const nbars=12,bw=(R*2)/(nbars*2);
-    for(let i=0;i<nbars;i++) g.fillRect(cx-R+i*bw*2+bw*0.5,topY+ch*0.4,bw,topH-ch*0.6);
-    const bandY=cy-ch*1.4,bandH=ch*2.8;
-    const colors=['#ffff00','#00ffff','#00c000','#000000','#ff00ff','#ff0000','#0000ff'];
-    const bwid=(R*2)/colors.length;
-    colors.forEach((c,i)=>{g.fillStyle=c;g.fillRect(cx-R+i*bwid,bandY,bwid+1,bandH);});
-    const burstY=bandY+bandH,burstH=ch*1.6;
-    g.fillStyle='#808080';g.fillRect(cx-R,burstY,R*2,burstH);
-    const groups=[2,3,4,6,9];let gx=cx-R*0.8;const gW=(R*1.6)/groups.length;
-    groups.forEach(freq=>{const lw=gW/(freq*2);g.fillStyle='#000';for(let i=0;i<freq;i++) g.fillRect(gx+i*lw*2,burstY+4,lw,burstH-8);gx+=gW;});
-    const stepY=burstY+burstH,stepH=ch*1.4,steps=8,sW=(R*2)/steps;
-    for(let i=0;i<steps;i++){const v=Math.round(255*i/(steps-1));g.fillStyle='rgb('+v+','+v+','+v+')';g.fillRect(cx-R+i*sW,stepY,sW+1,stepH);}
-    g.fillStyle='#ffff00';g.fillRect(cx-R,stepY+stepH,R*2,ch*0.9);
-    g.fillStyle='#ff0000';g.fillRect(cx-bwid*0.5,stepY+stepH-ch*0.5,bwid,ch*1.1);
-    g.restore();
-    g.strokeStyle='#fff';g.lineWidth=2;g.beginPath();g.arc(cx,cy,R,0,Math.PI*2);g.stroke();
-    const boxW=cw*1.0,boxH=ch*1.4;
-    g.fillStyle='#000';g.fillRect(cx-boxW/2,cy-boxH/2,boxW,boxH);
-    g.strokeStyle='#fff';g.lineWidth=1;g.beginPath();
-    g.moveTo(cx,cy-boxH/2);g.lineTo(cx,cy+boxH/2);g.moveTo(cx-R,cy);g.lineTo(cx+R,cy);g.stroke();
-    if(CFG.station){g.fillStyle='#fff';g.textAlign='center';g.textBaseline='middle';g.font='bold '+Math.round(ch*0.7)+'px Arial, sans-serif';g.fillText(CFG.station,cx,cy-boxH);}
-    g.strokeStyle='#fff';g.lineWidth=2;const r2=ch*0.9,off=cw*2.2;
-    [[off,2*ch+r2],[RW-off,2*ch+r2],[off,RH-2*ch-r2],[RW-off,RH-2*ch-r2]].forEach(([px,py])=>{g.beginPath();g.arc(px,py,r2,0,Math.PI*2);g.stroke();});
+    // EBU 100% colour bars (white, yellow, cyan, green, magenta, red, blue)
+    g.fillStyle='#000';g.fillRect(0,0,RW,RH);
+    const bars=['#ffffff','#ffff00','#00ffff','#00ff00','#ff00ff','#ff0000','#0000ff'];
+    const n=bars.length, bw=RW/n;
+    const topH=Math.round(RH*0.72);
+    bars.forEach((c,i)=>{ g.fillStyle=c; g.fillRect(Math.round(i*bw),0,Math.ceil(bw)+1,topH); });
+
+    // reverse / "castellation" strip
+    const midH=Math.round(RH*0.10), midY=topH;
+    const rev=['#0000ff','#101010','#ff00ff','#101010','#00ffff','#101010','#ffffff'];
+    rev.forEach((c,i)=>{ g.fillStyle=c; g.fillRect(Math.round(i*bw),midY,Math.ceil(bw)+1,midH); });
+
+    // bottom PLUGE / reference row
+    const botY=midY+midH, botH=RH-botY, seg=RW/7;
+    g.fillStyle='#0d0d0d'; g.fillRect(0,botY,RW,botH);
+    g.fillStyle='#ffffff'; g.fillRect(Math.round(seg*1.5),botY,Math.round(seg),botH);   // 100% white ref
+    const px=Math.round(seg*4.0), pw=Math.round(seg*0.85);
+    g.fillStyle='#050505'; g.fillRect(px,botY,pw,botH);          // sub-black (-4%)
+    g.fillStyle='#0d0d0d'; g.fillRect(px+pw,botY,pw,botH);       // black (0%)
+    g.fillStyle='#1f1f1f'; g.fillRect(px+2*pw,botY,pw,botH);     // super-black (+4%)
+    if(CFG.station){
+      g.fillStyle='#fff';g.textAlign='center';g.textBaseline='middle';
+      g.font='bold '+Math.round(botH*0.6)+'px Arial, sans-serif';
+      g.fillText(CFG.station,RW*0.5,topH*0.5);
+    }
   }
   function buildChannels(){
     [[chR,'#ff0000'],[chG,'#00ff00'],[chB,'#0000ff']].forEach(([c,tint])=>{
