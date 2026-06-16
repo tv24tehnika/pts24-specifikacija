@@ -344,7 +344,7 @@
             </div>
 
             <div class="result-box network">
-                <div class="result-title">Kopēšana Projektam (1 Gbps)</div>
+                <div class="result-title">Kopēšana Projektam (~1 Gbps)</div>
                 <div class="result-value"><span class="highlight" id="dl-total-main">2h 30m</span></div>
                 <div class="result-sub">
                     Laiks 1 kameras failam: <strong id="dl-1cam-sub">12m</strong>
@@ -568,7 +568,7 @@
         durationText.innerText = hours + ' h';
         visHours.innerText = hours + 'h ierakstam';
 
-        const singleCameraGb = gbPerHourPerCamera * hours;
+        const singleCameraGb = gbPerHourPerCamera * hours * OVERHEAD;
         const totalGb = singleCameraGb * cameras;
 
         if (totalGb >= 1000) {

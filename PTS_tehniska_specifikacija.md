@@ -65,7 +65,6 @@ Standarta konfigurācija pilnvērtīgam daudzkameru raidījumam ar pārraidi.
 
 ### 3.4 Ieraksts
 - **Blackmagic HyperDeck** ierakstītāji — programmas ieraksts + taimkods
-- **EVS** atkārtojumu sistēma (lēnā kustība)
 - ISO (atsevišķo kameru) ieraksts, maršrutējot signālus caur Videohub aux izvadēm
 - Ieraksta kanālu skaits: `[precizējams]`
 
@@ -85,7 +84,6 @@ Standarta konfigurācija pilnvērtīgam daudzkameru raidījumam ar pārraidi.
 - **GreenGo** digitālā intercom sistēma — vadu un **bezvadu**
 - Sadalītas sakaru grupas (režija, kameras, skaņa, producents)
 - **Grass Valley CCS-ONE** tally sistēma (iekļauta bāzē)
-- Komentētāju pieslēgvietas (iepriekš saskaņojot)
 
 ### 3.8 Maršrutēšana, vadība un infrastruktūra
 - **Blackmagic Videohub 40×40** SDI maršrutēšanas matrica — elastīga signālu sadale starp kamerām, switcheri, ierakstu un izvadēm
