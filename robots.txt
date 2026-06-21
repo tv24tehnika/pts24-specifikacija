@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /calc.html
+Disallow: /piedavajums.html
+
+Sitemap: https://pts24.lv/sitemap.xml
