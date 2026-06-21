@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="lv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PTS 24 — Biežāk uzdotie jautājumi (FAQ)</title>
+<meta name="description" content="Biežāk uzdotie jautājumi par PTS 24 pārvietojamo televīzijas staciju — kameras, tiešraides pārraide, kvalitāte, cena, norises vietas prasības un rezervēšana.">
+<meta name="robots" content="noindex">
+
+<!-- Favicon / ikonas -->
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="icon" href="/favicon-16.png" sizes="16x16" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#050507">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --black:#050507;--near:#0e0e13;--panel:#13131b;--white:#fff;--gray:#f2f2f5;
+    --ink:#0f0f15;--muted:#636370;--muted-d:#9393a3;
+    --tally:#e5281e;--tally-glow:rgba(229,40,30,.5);--tally-soft:rgba(229,40,30,.1);
+    --line:rgba(255,255,255,.07);--line-d:rgba(0,0,0,.07);
+    --font:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    --cond:"Barlow Condensed",var(--font);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{font-family:var(--font);background:var(--black);color:var(--white);-webkit-font-smoothing:antialiased;line-height:1.5;overflow-x:hidden}
+  .wrap{max-width:1160px;margin:0 auto;padding:0 32px}
+
+  nav{position:fixed;top:0;left:0;right:0;z-index:100;height:58px;display:flex;align-items:center;background:rgba(5,5,7,0);border-bottom:1px solid transparent;transition:background .4s,backdrop-filter .4s,border-color .4s}
+  nav.scrolled{background:rgba(5,5,7,.85);backdrop-filter:saturate(200%) blur(28px);-webkit-backdrop-filter:saturate(200%) blur(28px);border-bottom:1px solid var(--line)}
+  nav .wrap{display:flex;align-items:center;justify-content:space-between;width:100%;gap:16px}
+  .brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:17px;letter-spacing:-.02em;flex:none;color:#fff;text-decoration:none}
+  .brand .dot{width:8px;height:8px;border-radius:50%;background:var(--tally);box-shadow:0 0 14px var(--tally-glow)}
+  .navlinks{display:flex;gap:32px;font-size:13px;color:var(--muted-d);margin-left:auto}
+  .navlinks a{color:inherit;text-decoration:none;transition:color .2s;letter-spacing:.01em}
+  .navlinks a:hover,.navlinks a.active{color:var(--white)}
+  .navright{display:flex;align-items:center;gap:12px;flex:none}
+  .lang{background:none;border:1px solid rgba(255,255,255,.18);color:#fff;font:inherit;font-size:11px;font-weight:700;letter-spacing:.1em;padding:6px 12px;border-radius:980px;cursor:pointer;transition:border-color .2s,background .2s;text-transform:uppercase}
+  .lang:hover{border-color:rgba(255,255,255,.45);background:rgba(255,255,255,.05)}
+  .nav-cta{font-size:13px;font-weight:600;color:#fff;text-decoration:none;background:var(--tally);padding:8px 16px;border-radius:980px;transition:transform .2s,opacity .2s;white-space:nowrap;letter-spacing:-.01em}
+  .nav-cta:hover{opacity:.85;transform:translateY(-1px)}
+  .nav-cta-mobile{display:none}
+  .menu-toggle{display:none;flex-direction:column;justify-content:center;gap:5px;width:36px;height:36px;background:none;border:0;cursor:pointer;padding:0;flex:none}
+  .menu-toggle span{display:block;width:20px;height:2px;background:#fff;border-radius:2px;margin:0 auto;transition:transform .28s,opacity .2s}
+  nav.menu-open .menu-toggle span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+  nav.menu-open .menu-toggle span:nth-child(2){opacity:0}
+  nav.menu-open .menu-toggle span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+  nav.menu-open{background:rgba(5,5,7,.97);backdrop-filter:saturate(200%) blur(28px);-webkit-backdrop-filter:saturate(200%) blur(28px)}
+  @media(max-width:820px){
+    .menu-toggle{display:flex}
+    .nav-cta-desk{display:none}
+    .navlinks{position:fixed;top:58px;left:0;right:0;flex-direction:column;gap:0;margin-left:0;
+      background:rgba(5,5,7,.97);backdrop-filter:saturate(200%) blur(28px);-webkit-backdrop-filter:saturate(200%) blur(28px);
+      border-bottom:1px solid var(--line);padding:8px 32px 24px;font-size:16px;
+      transform:translateY(-12px);opacity:0;visibility:hidden;transition:transform .28s,opacity .28s,visibility .28s}
+    nav.menu-open .navlinks{transform:none;opacity:1;visibility:visible}
+    .navlinks a{padding:15px 0;border-bottom:1px solid var(--line)}
+    .nav-cta-mobile{display:inline-block;align-self:flex-start;margin-top:18px;border-bottom:0!important;padding:11px 20px;font-size:14px}
+  }
+
+  section{position:relative}
+  .pad{padding:120px 0}
+  .eyebrow{font-family:var(--cond);text-transform:uppercase;letter-spacing:.24em;font-weight:700;font-size:13px;color:var(--tally);margin-bottom:20px}
+  h1,h2,h3{letter-spacing:-.03em;font-weight:700;line-height:1.03}
+  .reveal{opacity:0;transform:translateY(40px);transition:opacity 1s cubic-bezier(.16,.84,.34,1),transform 1s cubic-bezier(.16,.84,.34,1)}
+  .reveal.in{opacity:1;transform:none}
+
+  /* draft banner — editorial only, remove before publish */
+  .draftbar{position:fixed;top:58px;left:0;right:0;z-index:90;background:rgba(229,40,30,.12);border-bottom:1px solid rgba(229,40,30,.3);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+  .draftbar .wrap{display:flex;align-items:center;gap:10px;padding-top:9px;padding-bottom:9px;font-size:12.5px;color:#ffb3ae}
+  .draftbar b{color:#ff7a72;font-family:var(--cond);letter-spacing:.14em;text-transform:uppercase;font-size:12px}
+
+  /* HEADER */
+  .faqhead{text-align:center;padding:190px 0 60px;overflow:hidden;
+    background:radial-gradient(ellipse 80% 60% at 50% -10%,rgba(229,40,30,.18),transparent 60%),var(--black)}
+  .faqhead::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(229,40,30,.55) 50%,transparent)}
+  .faqhead h1{font-size:clamp(40px,7vw,80px);background:linear-gradient(172deg,#fff 0%,#fff 40%,#8c8c9a);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:18px}
+  .faqhead p{font-size:18px;color:var(--muted-d);max-width:520px;margin:0 auto;line-height:1.6}
+
+  /* FAQ */
+  .faqsec{padding:30px 0 120px;background:var(--black)}
+  .faqwrap{max-width:840px;margin:0 auto;padding:0 32px}
+  .faqgroup{margin-top:54px}
+  .faqgroup:first-child{margin-top:0}
+  .faqgroup .gl{font-family:var(--cond);text-transform:uppercase;letter-spacing:.18em;font-weight:700;font-size:12px;color:var(--tally);margin:0 0 16px 4px}
+  .faq-item{border:1px solid var(--line);border-radius:14px;background:var(--panel);margin-bottom:10px;overflow:hidden;transition:border-color .3s,background .3s}
+  .faq-item:hover{border-color:rgba(255,255,255,.16)}
+  .faq-item.open{border-color:rgba(229,40,30,.4);background:#15151d}
+  .faq-q{width:100%;background:none;border:0;cursor:pointer;text-align:left;color:#fff;font:inherit;font-size:clamp(15px,2.2vw,17px);font-weight:600;letter-spacing:-.01em;
+    display:flex;align-items:center;justify-content:space-between;gap:20px;padding:22px 24px;line-height:1.4}
+  .faq-ic{position:relative;flex:none;width:18px;height:18px;transition:transform .35s cubic-bezier(.16,.84,.34,1)}
+  .faq-ic::before,.faq-ic::after{content:'';position:absolute;background:var(--tally);border-radius:2px;transition:opacity .3s}
+  .faq-ic::before{top:8px;left:0;width:18px;height:2px}
+  .faq-ic::after{left:8px;top:0;width:2px;height:18px}
+  .faq-item.open .faq-ic{transform:rotate(135deg)}
+  .faq-a{display:grid;grid-template-rows:0fr;transition:grid-template-rows .35s cubic-bezier(.16,.84,.34,1)}
+  .faq-item.open .faq-a{grid-template-rows:1fr}
+  .faq-a>div{min-height:0;overflow:hidden}
+  .faq-a p{padding:0 24px 24px;font-size:15px;color:var(--muted-d);line-height:1.68;max-width:680px}
+  .faq-a p a{color:#fff;text-decoration:underline;text-underline-offset:2px}
+
+  /* internal notes box — editorial only, remove before publish */
+  .notes{max-width:840px;margin:70px auto 0;padding:28px 30px;border:1px dashed rgba(229,40,30,.4);border-radius:14px;background:rgba(229,40,30,.05)}
+  .notes h3{font-family:var(--cond);text-transform:uppercase;letter-spacing:.14em;font-size:14px;color:#ff7a72;margin-bottom:14px}
+  .notes ol{margin:0;padding-left:20px;color:var(--muted-d);font-size:14.5px;line-height:1.75}
+  .notes li{margin-bottom:6px}
+
+  /* CTA */
+  .cta{text-align:center;background:radial-gradient(ellipse 65% 65% at 50% 0%,rgba(229,40,30,.2),transparent 60%),radial-gradient(ellipse 40% 40% at 50% 108%,rgba(16,16,48,.35),transparent 56%),var(--black)}
+  .cta h2{font-size:clamp(34px,5.4vw,64px);margin-bottom:20px;background:linear-gradient(170deg,#fff 0%,#fff 42%,#8c8c9a);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .cta p{font-size:18px;color:var(--muted-d);max-width:500px;margin:0 auto 38px;line-height:1.6}
+  .btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+  .btn-primary{background:var(--tally);color:#fff;padding:16px 34px;border-radius:980px;font-size:15px;font-weight:600;text-decoration:none;transition:transform .2s,opacity .2s;letter-spacing:-.01em}
+  .btn-primary:hover{opacity:.85;transform:translateY(-2px)}
+  .btn-ghost{border:1px solid rgba(255,255,255,.22);color:#fff;padding:16px 34px;border-radius:980px;font-size:15px;font-weight:600;text-decoration:none;transition:border-color .2s,background .2s;letter-spacing:-.01em}
+  .btn-ghost:hover{border-color:rgba(255,255,255,.5);background:rgba(255,255,255,.06)}
+
+  footer{background:var(--panel);border-top:1px solid var(--line);padding:44px 0;font-size:13px;color:var(--muted)}
+  footer .wrap{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap}
+  footer .brand{font-size:14px;color:rgba(255,255,255,.7);font-weight:600;letter-spacing:-.01em}
+  footer a{color:rgba(255,255,255,.78);text-decoration:none;transition:color .2s}
+  footer a:hover{color:#fff}
+
+  @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}.reveal{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+
+<nav id="nav">
+  <div class="wrap">
+    <a href="index.html" class="brand"><span class="dot"></span>PTS 24</a>
+    <div class="navlinks" id="navlinks">
+      <a href="index.html#stacija" data-en="Station">Stacija</a>
+      <a href="index.html#tehnika" data-en="Equipment">Tehnika</a>
+      <a href="index.html#specifikacija" data-en="Specs">Parametri</a>
+      <a href="index.html#moduli" data-en="Options">Moduļi</a>
+      <a href="faq.html" class="active" data-en="FAQ">FAQ</a>
+      <a href="index.html#kontakts" class="nav-cta nav-cta-mobile" data-en="Request a quote">Pieprasīt piedāvājumu</a>
+    </div>
+    <div class="navright">
+      <button id="langToggle" class="lang">EN</button>
+      <a href="index.html#kontakts" class="nav-cta nav-cta-desk" data-en="Request a quote">Pieprasīt piedāvājumu</a>
+      <button id="menuToggle" class="menu-toggle" aria-label="Atvērt izvēlni" aria-expanded="false" aria-controls="navlinks"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+
+<!-- DRAFT BANNER (editorial — remove before publish) -->
+<div class="draftbar">
+  <div class="wrap"><b>Melnraksts</b><span data-en="Draft for approval — internal notes at the bottom of the page.">Melnraksts apstiprināšanai — iekšējās piezīmes lapas apakšā.</span></div>
+</div>
+
+<!-- HEADER -->
+<section class="faqhead">
+  <div class="wrap reveal">
+    <div class="eyebrow" data-en="Frequently asked questions">Biežāk uzdotie jautājumi</div>
+    <h1 data-en="Good to know">Noderīgi zināt</h1>
+    <p data-en="Answers to the questions clients ask most often. Didn't find yours? Just get in touch.">Atbildes uz jautājumiem, ko klienti uzdod visbiežāk. Neatradi savu? Sazinies ar mums.</p>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="faqsec">
+  <div class="faqwrap">
+
+    <div class="faqgroup reveal">
+      <div class="gl" data-en="About the service">Par pakalpojumu</div>
+
+      <div class="faq-item">
+        <button class="faq-q" aria-expanded="false"><span data-en="What is PTS 24?">Kas ir PTS 24?</span><span class="faq-ic" aria-hidden="true"></span></button>
+        <div class="faq-a"><div><p data-en="PTS 24 is a mobile TV station (OB van) — a fully equipped production unit that captures, switches, records, adds graphics and transmits video in real time, on location. Everything you need in one place: vision mixing, cameras, audio, graphics and live transmission.">PTS 24 ir pārvietojamā televīzijas stacija (OB van) — pilnībā aprīkota mobilā producēšanas vienība, kas izbraukuma apstākļos uztver, komutē, ieraksta, papildina ar grafiku un pārraida video reālā laikā. Viss vajadzīgais ir vienā vietā: režija, kameras, skaņa, grafika un tiešraides pārraide.</p></div></div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" aria-expanded="false"><span data-en="What kinds of events is it suited for?">Kādiem pasākumiem tas ir piemērots?</span><span class="faq-ic" aria-hidden="true"></span></button>
+        <div class="faq-a"><div><p data-en="Sports events, concerts, conferences, corporate and cultural events — anywhere you need professional multicamera live production or recording in broadcast quality.">Sporta sacensībām, koncertiem, konferencēm, korporatīvajiem un kultūras pasākumiem — visur, kur vajadzīga profesionāla, apraides kvalitātes daudzkameru tiešraide vai ieraksts.</p></div></div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" aria-expanded="false"><span data-en="How does the modular system work?">Kā darbojas modulārā sistēma?</span><span class="faq-ic" aria-hidden="true"></span></button>
+        <div class="faq-a"><div><p data-en="The base kit already delivers a full multicamera production with transmission. Depending on the event, it expands with modules — additional cameras, EVS replays, camera crane and dolly, commentary positions, backup uplink and more. You only pay for what your event actually needs.">Bāzes komplekts jau nodrošina pilnvērtīgu daudzkameru raidījumu ar pārraidi. Atkarībā no pasākuma to var paplašināt ar moduļiem — papildu kameras, EVS atkārtojumi, kameras krāns un dolly sistēma, komentētāju pozīcijas, dublējošs uplink u.c. Tu maksā tikai par to, kas konkrētajam pasākumam ir vajadzīgs.</p></div></div>
+      </div>
+    </div>
+
+    <div class="faqgroup reveal">
+      <div class="gl" data-en="Equipment & quality">Tehnika un kvalitāte</div>
+
+      <div class="faq-item">
+        <button class="faq-q" aria-expanded="false"><span data-en="How many cameras can you provide?">Cik kameras varat nodrošināt?</span><span class="faq-ic" aria-hidden="true"></span></button>
+        <div class="faq-a"><div><p data-en="The base kit includes 8 Grass Valley system cameras (4 × LDX 92 + 4 × LDX 110), 6 BirdDog X5 Ultra PTZ cameras, plus compact Panasonic AG-CX350 and Sony PXW-Z90. The setup scales up to 26 cameras, including wireless RF solutions (DJI, Teradek).">Bāzes komplektā ir 8 Grass Valley sistēmas kameras (4 × LDX 92 + 4 × LDX 110), 6 BirdDog X5 Ultra PTZ kameras, kā arī kompaktās Panasonic AG-CX350 un Sony PXW-Z90. Kopā konfigurāciju var paplašināt līdz 26 kamerām, ieskaitot bezvadu RF risinājumus (DJI, Teradek).</p></div></div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" aria-expanded="false"><span data-en="Can you stream live online?">Vai varat translēt tiešraidi internetā?</span><span class="faq-ic" aria-hidden="true"></span></button>
+        <div class="faq-a"><div><p data-en="Yes. We stream to YouTube, Facebook and other RTMP platforms (Blackmagic WebPresenter 4K), as well as to a broadcaster's studio. For connectivity we use LiveU LU600 (bonded cellular) and Starlink satellite, so we can work even at venues without stable local internet.">Jā. Translējam uz YouTube, Facebook un citām RTMP platformām (Blackmagic WebPresenter 4K), kā arī uz raidorganizācijas studiju. Interneta savienojumam izmantojam LiveU LU600 (apvienoti mobilie tīkli) un Starlink satelīta savienojumu, tāpēc varam strādāt arī vietās bez stabila vietējā interneta.</p></div></div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" aria-expanded="false"><span data-en="What is the picture and sound quality?">Kāda ir attēla un skaņas kvalitāte?</span><span class="faq-ic" aria-hidden="true"></span></button>
+        <div class="faq-a"><div><p data-en="We work on industry-standard SDI infrastructure with HD (1080i50 / 1080p50) and UHD (2160p50) support. The signal meets EBU broadcaster quality standards — audio to EBU R128 loudness, graphics within EBU R95 safe areas.">Strādājam pēc nozares standarta SDI infrastruktūras ar HD (1080i50 / 1080p50) un UHD (2160p50) atbalstu. Signāls atbilst EBU raidorganizāciju kvalitātes prasībām — skaņa pēc EBU R128 skaļuma normas, grafika EBU R95 drošajās zonās.</p></div></div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" aria-expanded="false"><span data-en="Will I get a recording after the event?">Vai pēc pasākuma saņemšu ierakstu?</span><span class="faq-ic" aria-hidden="true"></span></button>
+        <div class="faq-a"><div><p data-en="Yes. We record both the clean programme and individual camera (ISO) feeds with timecode (Blackmagic HyperDeck). Post-production and editing are available by separate arrangement.">Jā. Ierakstām gan tīro programmu, gan atsevišķo kameru (ISO) ierakstu ar taimkodu (Blackmagic HyperDeck). Materiālu pēcapstrāde un montāža iespējama pēc atsevišķas vienošanās.</p></div></div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" aria-expanded="false"><span data-en="Can you produce graphics with our brand?">Vai varat veidot grafiku ar mūsu zīmolu?</span><span class="faq-ic" aria-hidden="true"></span></button>
+        <div class="faq-a"><div><p data-en="Yes. We produce real-time graphics (scorebug, lower thirds, line-ups, final results) with CasparCG and vMix servers, tailored to your brand — logo, colours and fonts.">Jā. Reāllaika grafiku (rezultātu tablo, titrus, sastāvus, gala rezultātu) veidojam ar CasparCG un vMix serveriem, pielāgojot klienta zīmola dizainu — logo, krāsas un fontus.</p></div></div>
+      </div>
+    </div>
+
+    <div class="faqgroup reveal">
+      <div class="gl" data-en="Venue & crew">Norises vieta un komanda</div>
+
+      <div class="faq-item">
+        <button class="faq-q" aria-expanded="false"><span data-en="What do you need from us at the venue?">Kas vajadzīgs no manas puses norises vietā?</span><span class="faq-ic" aria-hidden="true"></span></button>
+        <div class="faq-a"><div><p data-en="You need a space of roughly 9 m × 5 m (vehicle + work area with awning), power of 6 kW (230 V / 32 A or 3-phase) and vehicle access for unloading. We provide internet ourselves (LiveU + Starlink); if a dedicated fibre line is available on site, we can use that too.">Nepieciešama vieta aptuveni 9 m garumā × 5 m platumā (transportlīdzeklis + darba zona ar markīzi), barošana 6 kW (230 V / 32 A vai 3 fāzu pieslēgums) un piebraukšanas iespēja izkraušanai. Internetu nodrošinām paši (LiveU + Starlink); ja vietā ir dedicated šķiedra, varam izmantot arī to.</p></div></div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" aria-expanded="false"><span data-en="How long does setup take?">Cik ilgs ir uzstādīšanas laiks?</span><span class="faq-ic" aria-hidden="true"></span></button>
+        <div class="faq-a"><div><p data-en="Setup and teardown time depends on the scale of the event and the camera layout; we agree it in advance.">Uzstādīšanas un demontāžas laiks ir atkarīgs no pasākuma apjoma un kameru izvietojuma; to saskaņojam iepriekš.</p></div></div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" aria-expanded="false"><span data-en="Does your crew come along?">Vai jūsu komanda nāk līdzi?</span><span class="faq-ic" aria-hidden="true"></span></button>
+        <div class="faq-a"><div><p data-en="Yes. The base kit includes a technical crew — technical producer / director, video engineer, audio engineer, camera operators and a graphics operator. We bring in additional staff as needed (replay operators, commentary support, extra camera operators).">Jā. Bāzes komplektā ietilpst tehniskā komanda — tehniskais producents / režisors, video tehniķis, skaņu režisors, kameru operatori un grafikas operators. Pēc nepieciešamības piesaistām papildu personālu (replay operators, komentētāju atbalsts, papildu kameru operatori).</p></div></div>
+      </div>
+    </div>
+
+    <div class="faqgroup reveal">
+      <div class="gl" data-en="Pricing & booking">Cena un rezervēšana</div>
+
+      <div class="faq-item">
+        <button class="faq-q" aria-expanded="false"><span data-en="How much does it cost?">Cik tas maksā?</span><span class="faq-ic" aria-hidden="true"></span></button>
+        <div class="faq-a"><div><p data-en="The price depends on the scale, duration and location of the event. We finalise the configuration and price after a short technical discussion and a site visit. Get in touch and we'll prepare an offer.">Cena ir atkarīga no pasākuma apjoma, ilguma un norises vietas. Galīgo konfigurāciju un cenu precizējam pēc īsas tehniskās apspriedes un norises vietas apskates. Sazinies ar mums, un sagatavosim piedāvājumu.</p></div></div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" aria-expanded="false"><span data-en="Do you work outside Riga and Latvia?">Vai strādājat ārpus Rīgas un Latvijas?</span><span class="faq-ic" aria-hidden="true"></span></button>
+        <div class="faq-a"><div><p data-en="Yes, we work across Latvia and the Baltics. For events outside Riga, additional transport and crew per-diem costs may apply — we include them in the offer.">Jā, strādājam visā Latvijā un Baltijā. Pasākumiem ārpus Rīgas papildus var attiekties transporta un komandas dienas naudas izmaksas — tās iekļaujam piedāvājumā.</p></div></div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" aria-expanded="false"><span data-en="How and how far in advance should I book?">Kā un cik laicīgi rezervēt?</span><span class="faq-ic" aria-hidden="true"></span></button>
+        <div class="faq-a"><div><p data-en="Contact us at tehnika@tv24.lv or +371 29242245. PTS availability is confirmed against the schedule, so we recommend booking as early as possible.">Sazinies ar mums pa e-pastu <a href="mailto:tehnika@tv24.lv">tehnika@tv24.lv</a> vai tālruni <a href="tel:+37129242245">+371 29242245</a>. PTS pieejamība tiek apstiprināta atbilstoši grafikam, tāpēc iesakām pieteikties pēc iespējas laicīgāk.</p></div></div>
+      </div>
+    </div>
+
+    <!-- INTERNAL NOTES (editorial — remove before publish) -->
+    <div class="notes reveal">
+      <h3 data-en="Internal notes — open questions (remove before publish)">Iekšējās piezīmes — atvērtie jautājumi (pirms publicēšanas dzēst)</h3>
+      <ol>
+        <li data-en="Pricing: show an indicative range / starting price, or keep 'we'll prepare an offer'?">Cena: norādām indikatīvu diapazonu / sākuma cenu, vai paliekam pie “sagatavosim piedāvājumu”?</li>
+        <li data-en="Concrete setup/teardown hours?">Konkrēts uzstādīšanas/demontāžas stundu skaits?</li>
+        <li data-en="Latvia/Baltics only, or further afield?">Tikai Latvija/Baltija, vai arī tālāk?</li>
+        <li data-en="Is there a recommended booking lead time (e.g. 2 weeks)?">Vai ir ieteicamais rezervēšanas termiņš (piem., 2 nedēļas)?</li>
+        <li data-en="Any question to add or remove?">Kāds jautājums jāpievieno vai jāizņem?</li>
+      </ol>
+    </div>
+
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta pad">
+  <div class="wrap reveal">
+    <h2 data-en="Still have a question?">Palika kāds jautājums?</h2>
+    <p data-en="We finalise the configuration and price after a short technical discussion and site visit.">Galīgo konfigurāciju un cenu precizējam pēc īsas tehniskās apspriedes un norises vietas apskates.</p>
+    <div class="btns">
+      <a href="mailto:tehnika@tv24.lv" class="btn-primary" data-en="Request a quote">Pieprasīt piedāvājumu</a>
+      <a href="tel:+37129242245" class="btn-ghost" data-en="Call +371 29242245">Zvanīt +371 29242245</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="brand"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--tally);margin-right:8px;vertical-align:middle"></span>PTS 24</div>
+    <div data-en="Mobile TV station · Riga, Latvia · <a href='tel:+37129242245'>+371 29242245</a> · <a href='mailto:tehnika@tv24.lv'>tehnika@tv24.lv</a>">Pārvietojamā televīzijas stacija · Rīga, Latvija · <a href="tel:+37129242245">+371 29242245</a> · <a href="mailto:tehnika@tv24.lv">tehnika@tv24.lv</a></div>
+  </div>
+</footer>
+
+<script>
+  const nav=document.getElementById('nav');
+  const onScroll=()=>nav.classList.toggle('scrolled',window.scrollY>20);
+  onScroll();window.addEventListener('scroll',onScroll,{passive:true});
+
+  // mobile menu (hamburger)
+  const menuBtn=document.getElementById('menuToggle');
+  const closeMenu=()=>{nav.classList.remove('menu-open');menuBtn.setAttribute('aria-expanded','false');};
+  menuBtn.addEventListener('click',()=>{
+    const open=nav.classList.toggle('menu-open');
+    menuBtn.setAttribute('aria-expanded',open?'true':'false');
+  });
+  document.querySelectorAll('#navlinks a').forEach(a=>a.addEventListener('click',closeMenu));
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeMenu();});
+
+  // reveal on scroll
+  const io=new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});
+  },{threshold:0.15,rootMargin:'0px 0px -8% 0px'});
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+  // FAQ accordion
+  document.querySelectorAll('.faq-q').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const item=btn.closest('.faq-item');
+      const open=item.classList.toggle('open');
+      btn.setAttribute('aria-expanded',open?'true':'false');
+    });
+  });
+
+  // language toggle (LV / EN)
+  const tEls=[...document.querySelectorAll('[data-en]')];
+  tEls.forEach(e=>e.dataset.lv=e.innerHTML);
+  let lang='lv';
+  const btn=document.getElementById('langToggle');
+  function setLang(l){
+    lang=l;document.documentElement.lang=l;
+    tEls.forEach(e=>{e.innerHTML=(l==='en')?e.dataset.en:e.dataset.lv;});
+    btn.textContent=(l==='en')?'LV':'EN';
+  }
+  btn.addEventListener('click',()=>setLang(lang==='en'?'lv':'en'));
+</script>
+
+</body>
+</html>
