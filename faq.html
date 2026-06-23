@@ -5,7 +5,46 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PTS 24 — Biežāk uzdotie jautājumi (FAQ)</title>
 <meta name="description" content="Biežāk uzdotie jautājumi par PTS 24 pārvietojamo televīzijas staciju — kameras, tiešraides pārraide, kvalitāte, cena, norises vietas prasības un rezervēšana.">
-<meta name="robots" content="noindex">
+<link rel="canonical" href="https://pts24.lv/faq">
+
+<!-- Open Graph / Twitter -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="PTS 24">
+<meta property="og:locale" content="lv_LV">
+<meta property="og:title" content="PTS 24 — Biežāk uzdotie jautājumi (FAQ)">
+<meta property="og:description" content="Biežāk uzdotie jautājumi par PTS 24 pārvietojamo televīzijas staciju — kameras, tiešraides pārraide, kvalitāte, cena, norises vietas prasības un rezervēšana.">
+<meta property="og:url" content="https://pts24.lv/faq">
+<meta property="og:image" content="https://pts24.lv/og-cover.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="PTS 24 — Biežāk uzdotie jautājumi (FAQ)">
+<meta name="twitter:description" content="Biežāk uzdotie jautājumi par PTS 24 pārvietojamo televīzijas staciju.">
+<meta name="twitter:image" content="https://pts24.lv/og-cover.png">
+
+<!-- FAQ strukturētie dati (schema.org) -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "@id": "https://pts24.lv/faq#faq",
+  "inLanguage": "lv",
+  "mainEntity": [
+    { "@type": "Question", "name": "Kas ir PTS 24?", "acceptedAnswer": { "@type": "Answer", "text": "PTS 24 ir pārvietojamā televīzijas stacija (OB van) — pilnībā aprīkota mobilā producēšanas vienība, kas izbraukuma apstākļos uztver, komutē, ieraksta, papildina ar grafiku un pārraida video reālā laikā. Viss vajadzīgais ir vienā vietā: režija, kameras, skaņa, grafika un tiešraides pārraide." } },
+    { "@type": "Question", "name": "Kādiem pasākumiem tas ir piemērots?", "acceptedAnswer": { "@type": "Answer", "text": "Koncertiem, konferencēm, korporatīvajiem un kultūras pasākumiem, kā arī sporta sacensībām — visur, kur vajadzīga profesionāla, apraides kvalitātes daudzkameru tiešraide vai ieraksts." } },
+    { "@type": "Question", "name": "Kā darbojas modulārā sistēma?", "acceptedAnswer": { "@type": "Answer", "text": "Bāzes komplekts jau nodrošina pilnvērtīgu daudzkameru raidījumu ar pārraidi. Atkarībā no pasākuma to var paplašināt ar moduļiem — papildu kameras, EVS atkārtojumi, kameras krāns un dolly sistēma, komentētāju pozīcijas, dublējošs uplink u.c. Tu maksā tikai par to, kas konkrētajam pasākumam ir vajadzīgs." } },
+    { "@type": "Question", "name": "Cik kameras varat nodrošināt?", "acceptedAnswer": { "@type": "Answer", "text": "Bāzes komplektā ir 8 Grass Valley sistēmas kameras (4 × LDX 92 + 4 × LDX 110), 6 BirdDog X5 Ultra PTZ kameras, kā arī kompaktās Panasonic AG-CX350 un Sony PXW-Z90. Kopā konfigurāciju var paplašināt līdz 26 kamerām, ieskaitot bezvadu RF risinājumus (DJI, Teradek)." } },
+    { "@type": "Question", "name": "Vai varat translēt tiešraidi internetā?", "acceptedAnswer": { "@type": "Answer", "text": "Jā. Translējam uz YouTube, Facebook un citām RTMP platformām (Blackmagic WebPresenter 4K), kā arī uz raidorganizācijas studiju. Interneta savienojumam izmantojam LiveU LU600 (apvienoti mobilie tīkli) un Starlink satelīta savienojumu, tāpēc varam strādāt arī vietās bez stabila vietējā interneta." } },
+    { "@type": "Question", "name": "Kāda ir attēla un skaņas kvalitāte?", "acceptedAnswer": { "@type": "Answer", "text": "Strādājam pēc nozares standarta SDI infrastruktūras ar HD (1080i50 / 1080p50) un UHD (2160p50) atbalstu. Signāls atbilst EBU raidorganizāciju kvalitātes prasībām — skaņa pēc EBU R128 skaļuma normas, grafika EBU R95 drošajās zonās." } },
+    { "@type": "Question", "name": "Vai pēc pasākuma saņemšu ierakstu?", "acceptedAnswer": { "@type": "Answer", "text": "Jā. Ierakstām gan tīro programmu, gan atsevišķo kameru (ISO) ierakstu ar taimkodu (Blackmagic HyperDeck). Materiālu pēcapstrāde un montāža iespējama pēc atsevišķas vienošanās." } },
+    { "@type": "Question", "name": "Vai varat veidot grafiku ar mūsu zīmolu?", "acceptedAnswer": { "@type": "Answer", "text": "Jā. Reāllaika grafiku (rezultātu tablo, titrus, sastāvus, gala rezultātu) veidojam ar CasparCG un vMix serveriem, pielāgojot klienta zīmola dizainu — logo, krāsas un fontus." } },
+    { "@type": "Question", "name": "Kas vajadzīgs no manas puses norises vietā?", "acceptedAnswer": { "@type": "Answer", "text": "Nepieciešama vieta aptuveni 9 m garumā × 5 m platumā (transportlīdzeklis + darba zona ar markīzi), barošana 6 kW (230 V / 32 A vai 3 fāzu pieslēgums) un piebraukšanas iespēja izkraušanai. Internetu nodrošinām paši (LiveU + Starlink); ja vietā ir dedicated šķiedra, varam izmantot arī to." } },
+    { "@type": "Question", "name": "Cik ilgs ir uzstādīšanas laiks?", "acceptedAnswer": { "@type": "Answer", "text": "Uzstādīšanas un demontāžas laiks ir atkarīgs no pasākuma apjoma un kameru izvietojuma; to saskaņojam iepriekš." } },
+    { "@type": "Question", "name": "Vai jūsu komanda nāk līdzi?", "acceptedAnswer": { "@type": "Answer", "text": "Jā. Bāzes komplektā ietilpst tehniskā komanda — tehniskais producents / režisors, video tehniķis, skaņu režisors, kameru operatori un grafikas operators. Pēc nepieciešamības piesaistām papildu personālu (replay operators, komentētāju atbalsts, papildu kameru operatori)." } },
+    { "@type": "Question", "name": "Cik tas maksā?", "acceptedAnswer": { "@type": "Answer", "text": "Cena ir atkarīga no pasākuma apjoma, ilguma un norises vietas. Galīgo konfigurāciju un cenu precizējam pēc īsas tehniskās apspriedes un norises vietas apskates. Sazinies ar mums, un sagatavosim piedāvājumu." } },
+    { "@type": "Question", "name": "Vai strādājat ārpus Rīgas un Latvijas?", "acceptedAnswer": { "@type": "Answer", "text": "Jā. Strādājam visā Latvijā un Baltijā, kā arī Skandināvijā. Pēc vienošanās un iespēju robežās uzņemamies pasūtījumus arī citur Eiropā. Pasākumiem ārpus Rīgas papildus var attiekties transporta un komandas dienas naudas izmaksas — tās iekļaujam piedāvājumā." } },
+    { "@type": "Question", "name": "Kā un cik laicīgi rezervēt?", "acceptedAnswer": { "@type": "Answer", "text": "Sazinies ar mums pa e-pastu tehnika@tv24.lv vai tālruni +371 29242245. PTS pieejamība tiek apstiprināta atbilstoši grafikam, tāpēc iesakām pieteikties pēc iespējas laicīgāk." } }
+  ]
+}
+</script>
 
 <!-- Favicon / ikonas -->
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
@@ -70,13 +109,8 @@
   .reveal{opacity:0;transform:translateY(40px);transition:opacity 1s cubic-bezier(.16,.84,.34,1),transform 1s cubic-bezier(.16,.84,.34,1)}
   .reveal.in{opacity:1;transform:none}
 
-  /* draft banner — editorial only, remove before publish */
-  .draftbar{position:fixed;top:58px;left:0;right:0;z-index:90;background:rgba(229,40,30,.12);border-bottom:1px solid rgba(229,40,30,.3);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
-  .draftbar .wrap{display:flex;align-items:center;gap:10px;padding-top:9px;padding-bottom:9px;font-size:12.5px;color:#ffb3ae}
-  .draftbar b{color:#ff7a72;font-family:var(--cond);letter-spacing:.14em;text-transform:uppercase;font-size:12px}
-
   /* HEADER */
-  .faqhead{text-align:center;padding:190px 0 60px;overflow:hidden;
+  .faqhead{text-align:center;padding:150px 0 60px;overflow:hidden;
     background:radial-gradient(ellipse 80% 60% at 50% -10%,rgba(229,40,30,.18),transparent 60%),var(--black)}
   .faqhead::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(229,40,30,.55) 50%,transparent)}
   .faqhead h1{font-size:clamp(40px,7vw,80px);background:linear-gradient(172deg,#fff 0%,#fff 40%,#8c8c9a);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:18px}
@@ -103,12 +137,6 @@
   .faq-a>div{min-height:0;overflow:hidden}
   .faq-a p{padding:0 24px 24px;font-size:15px;color:var(--muted-d);line-height:1.68;max-width:680px}
   .faq-a p a{color:#fff;text-decoration:underline;text-underline-offset:2px}
-
-  /* internal notes box — editorial only, remove before publish */
-  .notes{max-width:840px;margin:70px auto 0;padding:28px 30px;border:1px dashed rgba(229,40,30,.4);border-radius:14px;background:rgba(229,40,30,.05)}
-  .notes h3{font-family:var(--cond);text-transform:uppercase;letter-spacing:.14em;font-size:14px;color:#ff7a72;margin-bottom:14px}
-  .notes ol{margin:0;padding-left:20px;color:var(--muted-d);font-size:14.5px;line-height:1.75}
-  .notes li{margin-bottom:6px}
 
   /* CTA */
   .cta{text-align:center;background:radial-gradient(ellipse 65% 65% at 50% 0%,rgba(229,40,30,.2),transparent 60%),radial-gradient(ellipse 40% 40% at 50% 108%,rgba(16,16,48,.35),transparent 56%),var(--black)}
@@ -149,11 +177,6 @@
     </div>
   </div>
 </nav>
-
-<!-- DRAFT BANNER (editorial — remove before publish) -->
-<div class="draftbar">
-  <div class="wrap"><b>Melnraksts</b><span data-en="Draft for approval — internal notes at the bottom of the page.">Melnraksts apstiprināšanai — iekšējās piezīmes lapas apakšā.</span></div>
-</div>
 
 <!-- HEADER -->
 <section class="faqhead">
@@ -252,17 +275,6 @@
         <button class="faq-q" aria-expanded="false"><span data-en="How and how far in advance should I book?">Kā un cik laicīgi rezervēt?</span><span class="faq-ic" aria-hidden="true"></span></button>
         <div class="faq-a"><div><p data-en="Contact us at tehnika@tv24.lv or +371 29242245. PTS availability is confirmed against the schedule, so we recommend booking as early as possible.">Sazinies ar mums pa e-pastu <a href="mailto:tehnika@tv24.lv">tehnika@tv24.lv</a> vai tālruni <a href="tel:+37129242245">+371 29242245</a>. PTS pieejamība tiek apstiprināta atbilstoši grafikam, tāpēc iesakām pieteikties pēc iespējas laicīgāk.</p></div></div>
       </div>
-    </div>
-
-    <!-- INTERNAL NOTES (editorial — remove before publish) -->
-    <div class="notes reveal">
-      <h3 data-en="Internal notes — open questions (remove before publish)">Iekšējās piezīmes — atvērtie jautājumi (pirms publicēšanas dzēst)</h3>
-      <ol>
-        <li data-en="Pricing: show an indicative range / starting price, or keep 'we'll prepare an offer'?">Cena: norādām indikatīvu diapazonu / sākuma cenu, vai paliekam pie “sagatavosim piedāvājumu”?</li>
-        <li data-en="Concrete setup/teardown hours?">Konkrēts uzstādīšanas/demontāžas stundu skaits?</li>
-        <li data-en="Is there a recommended booking lead time (e.g. 2 weeks)?">Vai ir ieteicamais rezervēšanas termiņš (piem., 2 nedēļas)?</li>
-        <li data-en="Any question to add or remove?">Kāds jautājums jāpievieno vai jāizņem?</li>
-      </ol>
     </div>
 
   </div>
