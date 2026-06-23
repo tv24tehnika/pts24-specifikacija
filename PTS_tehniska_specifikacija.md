@@ -1,7 +1,7 @@
 # PTS — Pārvietojamā televīzijas stacija
 ## Tehniskā specifikācija un pakalpojumu piedāvājums
 
-> **PTS 24** piedāvā profesionālu daudzkameru video producēšanu izbraukuma apstākļos — sporta sacensībām, koncertiem, konferencēm, korporatīvajiem un kultūras pasākumiem. Risinājums ir **modulārs**: bāzes komplekts nodrošina pilnvērtīgu raidījuma producēšanu, bet papildu moduļi ļauj mērogot tehniku atbilstoši konkrētā pasākuma apjomam.
+> **PTS 24** piedāvā profesionālu daudzkameru video producēšanu izbraukuma apstākļos — koncertiem, konferencēm, korporatīvajiem un kultūras pasākumiem, kā arī sporta sacensībām. Risinājums ir **modulārs**: bāzes komplekts nodrošina pilnvērtīgu raidījuma producēšanu, bet papildu moduļi ļauj mērogot tehniku atbilstoši konkrētā pasākuma apjomam.
 
 **Dokumenta versija:** v1.0 · darba versija
 **Sagatavots:** `[datums]`
