@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="lv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PTS 24 — GK Live Case · ATEM SDI Extreme ISO | Kompaktā tiešraide</title>
+<meta name="description" content="GK Live Case ar Blackmagic ATEM SDI Extreme ISO — portatīvā 8 kameru režijas un tiešraides vienība attēlam uz ekrāniem (IMAG) un mazākām tiešraidēm. Akumulators, ISO ieraksts, RTMP straumēšana.">
+
+<!-- PREVIEW / melnraksts — noindex, līdz izlems publicēt -->
+<meta name="robots" content="noindex, nofollow">
+
+<!-- Favicon / ikonas -->
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="icon" href="/favicon-16.png" sizes="16x16" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#050507">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --black:#050507;--near:#0e0e13;--panel:#13131b;--white:#fff;--gray:#f2f2f5;
+    --ink:#0f0f15;--muted:#636370;--muted-d:#9393a3;
+    --tally:#e5281e;--tally-glow:rgba(229,40,30,.5);--tally-soft:rgba(229,40,30,.1);
+    --line:rgba(255,255,255,.07);--line-d:rgba(0,0,0,.07);
+    --font:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    --cond:"Barlow Condensed",var(--font);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{font-family:var(--font);background:var(--black);color:var(--white);-webkit-font-smoothing:antialiased;line-height:1.5;overflow-x:hidden}
+  .wrap{max-width:1160px;margin:0 auto;padding:0 32px}
+
+  /* NAV */
+  nav{position:fixed;top:0;left:0;right:0;z-index:100;height:58px;display:flex;align-items:center;background:rgba(5,5,7,0);border-bottom:1px solid transparent;transition:background .4s,backdrop-filter .4s,border-color .4s}
+  nav.scrolled{background:rgba(5,5,7,.85);backdrop-filter:saturate(200%) blur(28px);-webkit-backdrop-filter:saturate(200%) blur(28px);border-bottom:1px solid var(--line)}
+  nav .wrap{display:flex;align-items:center;justify-content:space-between;width:100%;gap:16px}
+  .brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:17px;letter-spacing:-.02em;flex:none;color:#fff;text-decoration:none}
+  .brand .dot{width:8px;height:8px;border-radius:50%;background:var(--tally);box-shadow:0 0 14px var(--tally-glow)}
+  .navlinks{display:flex;gap:32px;font-size:13px;color:var(--muted-d);margin-left:auto}
+  .navlinks a{color:inherit;text-decoration:none;transition:color .2s;letter-spacing:.01em}
+  .navlinks a:hover{color:var(--white)}
+  .navlinks a.active{color:#fff}
+  .navright{display:flex;align-items:center;gap:12px;flex:none}
+  .lang{background:none;border:1px solid rgba(255,255,255,.18);color:#fff;font:inherit;font-size:11px;font-weight:700;letter-spacing:.1em;padding:6px 12px;border-radius:980px;cursor:pointer;transition:border-color .2s,background .2s;text-transform:uppercase}
+  .lang:hover{border-color:rgba(255,255,255,.45);background:rgba(255,255,255,.05)}
+  .nav-cta{font-size:13px;font-weight:600;color:#fff;text-decoration:none;background:var(--tally);padding:8px 16px;border-radius:980px;transition:transform .2s,opacity .2s;white-space:nowrap;letter-spacing:-.01em}
+  .nav-cta:hover{opacity:.85;transform:translateY(-1px)}
+  .nav-cta-mobile{display:none}
+  .menu-toggle{display:none;flex-direction:column;justify-content:center;gap:5px;width:36px;height:36px;background:none;border:0;cursor:pointer;padding:0;flex:none}
+  .menu-toggle span{display:block;width:20px;height:2px;background:#fff;border-radius:2px;margin:0 auto;transition:transform .28s,opacity .2s}
+  nav.menu-open .menu-toggle span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+  nav.menu-open .menu-toggle span:nth-child(2){opacity:0}
+  nav.menu-open .menu-toggle span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+  nav.menu-open{background:rgba(5,5,7,.97);backdrop-filter:saturate(200%) blur(28px);-webkit-backdrop-filter:saturate(200%) blur(28px)}
+  @media(max-width:820px){
+    .menu-toggle{display:flex}
+    .nav-cta-desk{display:none}
+    .navlinks{position:fixed;top:58px;left:0;right:0;flex-direction:column;gap:0;margin-left:0;
+      background:rgba(5,5,7,.97);backdrop-filter:saturate(200%) blur(28px);-webkit-backdrop-filter:saturate(200%) blur(28px);
+      border-bottom:1px solid var(--line);padding:8px 32px 24px;font-size:16px;
+      transform:translateY(-12px);opacity:0;visibility:hidden;transition:transform .28s,opacity .28s,visibility .28s}
+    nav.menu-open .navlinks{transform:none;opacity:1;visibility:visible}
+    .navlinks a{padding:15px 0;border-bottom:1px solid var(--line)}
+    .nav-cta-mobile{display:inline-block;align-self:flex-start;margin-top:18px;border-bottom:0!important;padding:11px 20px;font-size:14px}
+  }
+
+  section{position:relative}
+  .pad{padding:120px 0}
+  .eyebrow{font-family:var(--cond);text-transform:uppercase;letter-spacing:.24em;font-weight:700;font-size:13px;color:var(--tally);margin-bottom:20px}
+  h1,h2,h3{letter-spacing:-.03em;font-weight:700;line-height:1.05}
+  .reveal{opacity:0;transform:translateY(40px);transition:opacity 1s cubic-bezier(.16,.84,.34,1),transform 1s cubic-bezier(.16,.84,.34,1)}
+  .reveal.in{opacity:1;transform:none}
+
+  /* HERO */
+  .hero{padding-top:150px;padding-bottom:90px;overflow:hidden;
+    background:radial-gradient(ellipse 80% 55% at 50% -5%,rgba(229,40,30,.2),transparent 58%),radial-gradient(ellipse 60% 50% at 80% 95%,rgba(18,18,48,.4),transparent 55%),var(--black)}
+  .hero::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent 0%,rgba(229,40,30,.55) 50%,transparent 100%)}
+  .hero .wrap{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center}
+  .hero .onair{display:inline-flex;align-items:center;gap:9px;font-family:var(--cond);text-transform:uppercase;letter-spacing:.3em;font-size:12px;font-weight:700;color:#ff7272;border:1px solid rgba(229,40,30,.35);border-radius:980px;padding:7px 16px 7px 13px;margin-bottom:28px;background:rgba(229,40,30,.08)}
+  .hero .onair .led{width:8px;height:8px;border-radius:50%;background:var(--tally);box-shadow:0 0 12px var(--tally);animation:pulse 1.8s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 12px var(--tally)}50%{opacity:.35;box-shadow:0 0 4px var(--tally)}}
+  .hero h1{font-size:clamp(46px,6.4vw,82px);letter-spacing:-.045em;margin-bottom:20px;background:linear-gradient(172deg,#fff 0%,#fff 40%,#86868e);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero .lead{font-size:clamp(19px,2.4vw,24px);font-weight:500;color:rgba(255,255,255,.9);max-width:520px;margin-bottom:16px;letter-spacing:-.02em;line-height:1.25}
+  .hero .sub{font-size:16px;color:var(--muted-d);max-width:480px;line-height:1.62;margin-bottom:30px}
+  .hero .btns{display:flex;gap:12px;flex-wrap:wrap}
+  @media(max-width:900px){.hero .wrap{grid-template-columns:1fr;gap:48px}.hero{padding-top:120px}}
+
+  /* CASE VISUAL */
+  .case{perspective:1400px}
+  .case-shell{position:relative;background:linear-gradient(160deg,#23232b,#15151b 55%,#0d0d12);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:16px 16px 14px;box-shadow:0 40px 90px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.08);transform:rotateX(4deg) rotateY(-7deg);transition:transform .5s cubic-bezier(.16,.84,.34,1)}
+  .case:hover .case-shell{transform:rotateX(2deg) rotateY(-3deg)}
+  .case-shell::before{content:'';position:absolute;left:50%;top:-9px;transform:translateX(-50%);width:88px;height:9px;background:linear-gradient(#34343e,#1a1a20);border-radius:8px 8px 0 0;border:1px solid rgba(255,255,255,.07);border-bottom:none}
+  .case-screen{aspect-ratio:16/9;border-radius:7px;overflow:hidden;border:1px solid rgba(0,0,0,.6);box-shadow:inset 0 0 0 2px rgba(255,255,255,.04),0 8px 24px rgba(0,0,0,.5);background:#000}
+  .mv{width:100%;height:100%;display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(3,1fr);gap:3px;padding:3px;background:#070709}
+  .mv-tile{position:relative;overflow:hidden;border-radius:3px;background-size:300% 300%}
+  .mv-label{position:absolute;left:5px;bottom:4px;font-family:var(--cond);font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.72);z-index:4}
+  .mv-pgm{grid-column:span 3;grid-row:span 2;border:1.5px solid var(--tally);border-radius:4px}
+  .mv-pgm .mv-label{font-size:11px;font-weight:700;color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.85)}
+  .mv-pgm .tag{position:absolute;top:6px;right:6px;display:flex;align-items:center;gap:4px;font-family:var(--cond);font-size:10px;letter-spacing:.18em;color:#fff;background:var(--tally);padding:3px 7px;border-radius:3px;z-index:5;font-weight:700}
+  .mv-pgm .tag .led{width:5px;height:5px;border-radius:50%;background:#fff;animation:pulse 1.8s infinite}
+  .g1{background:linear-gradient(135deg,#0d1830,#162040,#2e4a7a);--cd:9.4s;--cf:0s}
+  .g2{background:linear-gradient(135deg,#280d1e,#321528,#6e2e4a);--cd:7.2s;--cf:-3.1s}
+  .g3{background:linear-gradient(135deg,#081a10,#102518,#245e3e);--cd:11s;--cf:-1.8s}
+  .g4{background:linear-gradient(135deg,#16110a,#221c10,#5a4c22);--cd:8.3s;--cf:-5.6s}
+  .g5{background:linear-gradient(135deg,#160a1e,#1e1228,#4a2e62);--cd:10.1s;--cf:-2.4s}
+  .g6{background:linear-gradient(135deg,#0c0c10,#141418,#2e2e3a);--cd:7.8s;--cf:-4.9s}
+  .g7{background:linear-gradient(135deg,#0a1622,#12202e,#244a5e);--cd:9.9s;--cf:-1.2s}
+  .gpgm{background:linear-gradient(135deg,#101a30,#1a2647,#34508a);--cd:12s;--cf:0s}
+  .mv-tile{animation:bgShift var(--cd,9s) ease-in-out infinite;animation-delay:var(--cf,0s)}
+  @keyframes bgShift{0%{background-position:0% 0%}33%{background-position:100% 30%}66%{background-position:30% 100%}100%{background-position:0% 0%}}
+  /* control deck */
+  .case-deck{display:flex;align-items:center;gap:10px;margin-top:13px;padding:11px 12px;background:linear-gradient(#1b1b22,#101015);border-radius:8px;border:1px solid rgba(255,255,255,.06)}
+  .btn-row{display:flex;gap:5px;flex-wrap:wrap}
+  .pad-btn{width:22px;height:16px;border-radius:3px;background:#2a2a33;border:1px solid rgba(255,255,255,.08)}
+  .pad-btn.pgm{background:var(--tally);box-shadow:0 0 10px var(--tally-glow)}
+  .pad-btn.pvw{background:#1ea64b;box-shadow:0 0 8px rgba(30,166,75,.45)}
+  .deck-sep{width:1px;align-self:stretch;background:rgba(255,255,255,.08)}
+  .tbar{font-family:var(--cond);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted-d);margin-left:auto}
+
+  /* FEATURE */
+  .feature{background:var(--near)}
+  .feature .wrap{display:grid;grid-template-columns:1fr 1fr;gap:72px;align-items:center}
+  .feature h2{font-size:clamp(32px,4.4vw,52px);margin-bottom:20px}
+  .feature p{font-size:17px;color:var(--muted-d);max-width:460px;margin-bottom:18px;line-height:1.65}
+  .spec-list{list-style:none;margin-top:26px;display:flex;flex-direction:column;gap:12px}
+  .spec-list li{display:flex;gap:14px;font-size:15px;align-items:flex-start;line-height:1.5;color:#fff}
+  .spec-list li::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--tally);margin-top:9px;flex:none;box-shadow:0 0 8px var(--tally-glow)}
+  @media(max-width:860px){.feature .wrap{grid-template-columns:1fr;gap:40px}}
+
+  /* USE CASES */
+  .uses{background:var(--gray);color:var(--ink)}
+  .uses h2{font-size:clamp(32px,4.6vw,52px);color:var(--ink);text-align:center;margin-bottom:14px}
+  .uses .intro{text-align:center;color:var(--muted);font-size:18px;max-width:600px;margin:0 auto 56px;line-height:1.6}
+  .cardgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .card{background:#fff;border-radius:20px;padding:32px;transition:transform .35s cubic-bezier(.16,.84,.34,1),box-shadow .35s;border:1px solid rgba(0,0,0,.04)}
+  .card:hover{transform:translateY(-6px);box-shadow:0 20px 60px rgba(0,0,0,.1)}
+  .card .ic{width:40px;height:40px;border-radius:11px;background:var(--gray);display:flex;align-items:center;justify-content:center;margin-bottom:20px;border:1px solid var(--line-d)}
+  .card .ic span{width:13px;height:13px;border-radius:50%;background:var(--tally);box-shadow:0 0 8px rgba(229,40,30,.4)}
+  .card h3{font-size:18px;color:var(--ink);margin-bottom:9px;letter-spacing:-.02em;font-weight:600}
+  .card p{font-size:14px;color:var(--muted);line-height:1.55}
+  @media(max-width:860px){.cardgrid{grid-template-columns:1fr 1fr}}
+  @media(max-width:560px){.cardgrid{grid-template-columns:1fr}}
+
+  /* SPEC TABLE */
+  .specsfull{background:var(--white);color:var(--ink)}
+  .specsfull .head{text-align:center;margin-bottom:52px}
+  .specsfull h2{font-size:clamp(32px,4.6vw,52px);color:var(--ink);margin-bottom:14px}
+  .specsfull .head p{color:var(--muted);font-size:17px}
+  .spectable{max-width:920px;margin:0 auto}
+  .specgroup{display:grid;grid-template-columns:190px 1fr;gap:24px;padding:28px 0;border-top:1px solid rgba(0,0,0,.07)}
+  .specgroup:last-child{border-bottom:1px solid rgba(0,0,0,.07)}
+  .specgroup .gt{font-size:12px;font-weight:700;color:var(--tally);letter-spacing:.1em;padding-top:10px;font-family:var(--cond);text-transform:uppercase}
+  .rows{display:flex;flex-direction:column;gap:14px}
+  .srow{display:flex;gap:20px;align-items:baseline}
+  .srow .k{flex:none;width:200px;font-size:13px;color:var(--muted)}
+  .srow .v{font-size:15px;color:var(--ink);font-weight:500}
+  @media(max-width:680px){.specgroup{grid-template-columns:1fr;gap:12px;padding:24px 0}.specgroup .gt{padding-top:0}.srow{gap:16px;flex-direction:column}.srow .k{width:auto}}
+
+  /* CTA */
+  .cta{text-align:center;background:radial-gradient(ellipse 65% 65% at 50% 0%,rgba(229,40,30,.2),transparent 60%),radial-gradient(ellipse 40% 40% at 50% 108%,rgba(16,16,48,.35),transparent 56%),var(--black)}
+  .cta h2{font-size:clamp(38px,5.6vw,72px);margin-bottom:20px;background:linear-gradient(170deg,#fff 0%,#fff 42%,#8c8c9a);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .cta p{font-size:19px;color:var(--muted-d);max-width:520px;margin:0 auto 40px;line-height:1.6}
+  .btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+  .btn-primary{background:var(--tally);color:#fff;padding:16px 34px;border-radius:980px;font-size:15px;font-weight:600;text-decoration:none;transition:transform .2s,opacity .2s;letter-spacing:-.01em}
+  .btn-primary:hover{opacity:.85;transform:translateY(-2px)}
+  .btn-ghost{border:1px solid rgba(255,255,255,.22);color:#fff;padding:16px 34px;border-radius:980px;font-size:15px;font-weight:600;text-decoration:none;transition:border-color .2s,background .2s;letter-spacing:-.01em}
+  .btn-ghost:hover{border-color:rgba(255,255,255,.5);background:rgba(255,255,255,.06)}
+
+  footer{background:var(--panel);border-top:1px solid var(--line);padding:44px 0;font-size:13px;color:var(--muted)}
+  footer .wrap{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap}
+  footer .fbrand{font-size:14px;color:rgba(255,255,255,.7);font-weight:600;letter-spacing:-.01em}
+  footer a{color:rgba(255,255,255,.78);text-decoration:none;transition:color .2s}
+  footer a:hover{color:#fff}
+</style>
+</head>
+<body>
+
+<nav id="nav">
+  <div class="wrap">
+    <a href="/" class="brand"><span class="dot"></span>PTS 24</a>
+    <div class="navlinks" id="navlinks">
+      <a href="/#stacija" data-en="Station">Stacija</a>
+      <a href="/#tehnika" data-en="Equipment">Tehnika</a>
+      <a href="/#moduli" data-en="Options">Moduļi</a>
+      <a href="/gk-live-case" class="active" data-en="Live Case">Live Case</a>
+      <a href="/faq" data-en="FAQ">BUJ</a>
+      <a href="/#kontakts" class="nav-cta nav-cta-mobile" data-en="Request a quote">Pieprasīt piedāvājumu</a>
+    </div>
+    <div class="navright">
+      <button id="langToggle" class="lang">EN</button>
+      <a href="/#kontakts" class="nav-cta nav-cta-desk" data-en="Request a quote">Pieprasīt piedāvājumu</a>
+      <button id="menuToggle" class="menu-toggle" aria-label="Atvērt izvēlni" aria-expanded="false" aria-controls="navlinks"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="wrap">
+    <div class="reveal">
+      <span class="onair"><span class="led"></span><span data-en="On Air · Compact kit">On Air · Kompaktais komplekts</span></span>
+      <h1>GK Live Case</h1>
+      <p class="lead" data-en="Multicamera live production in a single case.">Daudzkameru tiešraide vienā čemodānā.</p>
+      <p class="sub" data-en="A portable production unit built around the Blackmagic ATEM SDI Extreme ISO — for image magnification on venue screens (IMAG) and smaller live streams, where the full OB van isn't needed.">Portatīvā režijas vienība ap Blackmagic ATEM SDI Extreme ISO — attēlam uz pasākuma ekrāniem (IMAG) un mazākām tiešraidēm, kur pilnā PTS stacija nav vajadzīga.</p>
+      <div class="btns">
+        <a href="/#kontakts" class="btn-primary" data-en="Request a quote">Pieprasīt piedāvājumu</a>
+        <a href="#specifikacija" class="btn-ghost" data-en="Specifications">Specifikācija</a>
+      </div>
+    </div>
+    <div class="case reveal">
+      <div class="case-shell">
+        <div class="case-screen">
+          <div class="mv">
+            <div class="mv-tile mv-pgm gpgm"><div class="tag"><span class="led"></span>LIVE</div><div class="mv-label" data-en="Programme · 1080p50">Programma · 1080p50</div></div>
+            <div class="mv-tile g6"><div class="mv-label" data-en="Preview">Preview</div></div>
+            <div class="mv-tile g1"><div class="mv-label">CAM 1</div></div>
+            <div class="mv-tile g2"><div class="mv-label">CAM 2</div></div>
+            <div class="mv-tile g3"><div class="mv-label">CAM 3</div></div>
+            <div class="mv-tile g4"><div class="mv-label">CAM 4</div></div>
+            <div class="mv-tile g5"><div class="mv-label">CAM 5</div></div>
+            <div class="mv-tile g7"><div class="mv-label">CAM 6</div></div>
+            <div class="mv-tile g2"><div class="mv-label">CAM 7</div></div>
+            <div class="mv-tile g3"><div class="mv-label">CAM 8</div></div>
+          </div>
+        </div>
+        <div class="case-deck">
+          <div class="btn-row">
+            <span class="pad-btn pgm"></span><span class="pad-btn"></span><span class="pad-btn"></span><span class="pad-btn"></span>
+            <span class="pad-btn"></span><span class="pad-btn"></span><span class="pad-btn"></span><span class="pad-btn"></span>
+          </div>
+          <div class="deck-sep"></div>
+          <div class="btn-row">
+            <span class="pad-btn pvw"></span><span class="pad-btn"></span><span class="pad-btn"></span><span class="pad-btn"></span>
+          </div>
+          <span class="tbar">ATEM SDI Extreme ISO</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WHAT IS IT -->
+<section class="feature pad">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="eyebrow" data-en="The light setup">Vieglais variants</div>
+      <h2 data-en="When you don't need the full station.">Kad nevajag pilno staciju.</h2>
+      <p data-en="The GK Live Case packs a full multicamera vision mixer, monitoring, audio and streaming into one battery-powered, weatherproof case. One person can carry it in and be live in minutes.">GK Live Case ietver pilnvērtīgu daudzkameru video režiju, kontroles monitoru, skaņu un straumēšanu vienā akumulatora barotā, laikapstākļiem izturīgā čemodānā. To var ienest viens cilvēks un būt ēterā dažu minūšu laikā.</p>
+      <p data-en="It runs the same broadcast workflow as our OB van — just scaled to events that don't justify the big unit.">Tā strādā pēc tās pašas apraides loģikas kā mūsu PTS stacija — tikai mērogota pasākumiem, kuriem lielā vienība nav nepieciešama.</p>
+    </div>
+    <div class="reveal">
+      <ul class="spec-list">
+        <li data-en="Up to 8 SDI cameras switched live">Līdz 8 SDI kamerām komutētas tiešraidē</li>
+        <li data-en="Image magnification (IMAG) to LED walls and projectors">Attēls uz LED sienām un projektoriem (IMAG)</li>
+        <li data-en="ISO recording — every camera saved separately">ISO ieraksts — katra kamera saglabāta atsevišķi</li>
+        <li data-en="Direct streaming to YouTube, Facebook, RTMP">Tieša straumēšana uz YouTube, Facebook, RTMP</li>
+        <li data-en="Battery-powered — works without mains power">Darbojas no akumulatora — arī bez elektrības pieslēguma</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- USE CASES -->
+<section class="uses pad">
+  <div class="wrap">
+    <h2 class="reveal" data-en="Where it fits.">Kur tas noder.</h2>
+    <p class="intro reveal" data-en="The compact kit covers the jobs between a single camera and a full OB van.">Kompaktais komplekts sedz darbus starp vienu kameru un pilnu PTS staciju.</p>
+    <div class="cardgrid">
+      <div class="card reveal">
+        <div class="ic"><span></span></div>
+        <h3 data-en="Screens at the venue (IMAG)">Ekrāni norises vietā (IMAG)</h3>
+        <p data-en="Live multicamera image to LED walls and projectors so the audience sees the stage up close — conferences, concerts, ceremonies.">Daudzkameru attēls reālā laikā uz LED sienām un projektoriem, lai skatītāji redz skatuvi tuvplānā — konferences, koncerti, ceremonijas.</p>
+      </div>
+      <div class="card reveal">
+        <div class="ic"><span></span></div>
+        <h3 data-en="Smaller live streams">Mazākas tiešraides</h3>
+        <p data-en="Webinars, panel discussions, services and corporate broadcasts streamed in broadcast quality without the full station.">Webināri, paneļdiskusijas, dievkalpojumi un korporatīvās tiešraides apraides kvalitātē bez pilnās stacijas.</p>
+      </div>
+      <div class="card reveal">
+        <div class="ic"><span></span></div>
+        <h3 data-en="Hybrid events">Hibrīda pasākumi</h3>
+        <p data-en="Feed the room and the online audience at once — IMAG to screens and a clean stream out, plus an ISO record for editing later.">Vienlaikus apkalpo zāli un tiešsaistes auditoriju — IMAG uz ekrāniem un tīrs straumējums, plus ISO ieraksts vēlākai montāžai.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SPEC TABLE -->
+<section class="specsfull pad" id="specifikacija">
+  <div class="wrap">
+    <div class="head reveal">
+      <div class="eyebrow" data-en="Specifications">Specifikācija</div>
+      <h2 data-en="What's in the case.">Kas ir čemodānā.</h2>
+      <p data-en="Blackmagic ATEM SDI Extreme ISO in the GK Live Case chassis.">Blackmagic ATEM SDI Extreme ISO GK Live Case korpusā.</p>
+    </div>
+    <div class="spectable reveal">
+      <div class="specgroup">
+        <div class="gt" data-en="Vision mixing">Video režija</div>
+        <div class="rows">
+          <div class="srow"><span class="k" data-en="Switcher">Switcheris</span><span class="v">Blackmagic ATEM SDI Extreme ISO</span></div>
+          <div class="srow"><span class="k" data-en="Inputs">Ieejas</span><span class="v">8 × 3G-SDI</span></div>
+          <div class="srow"><span class="k" data-en="Outputs">Izejas</span><span class="v" data-en="4 × SDI (PGM / aux / multiview)">4 × SDI (PGM / aux / multiview)</span></div>
+          <div class="srow"><span class="k" data-en="Format">Formāts</span><span class="v" data-en="HD up to 1080p60">HD līdz 1080p60</span></div>
+          <div class="srow"><span class="k" data-en="Compositing">Kompozīcija</span><span class="v" data-en="Chroma key · DVE · upstream/downstream keyers">Chroma key · DVE · upstream/downstream keyers</span></div>
+        </div>
+      </div>
+      <div class="specgroup">
+        <div class="gt" data-en="Monitoring">Monitorings</div>
+        <div class="rows">
+          <div class="srow"><span class="k" data-en="Built-in display">Iebūvētais monitors</span><span class="v" data-en="18.5″ Full HD IPS · 120 Hz">18,5″ Full HD IPS · 120 Hz</span></div>
+          <div class="srow"><span class="k" data-en="Multiview">Multiview</span><span class="v" data-en="All sources + PGM/PVW on one screen">Visi avoti + PGM/PVW vienā ekrānā</span></div>
+        </div>
+      </div>
+      <div class="specgroup">
+        <div class="gt" data-en="Audio">Skaņa</div>
+        <div class="rows">
+          <div class="srow"><span class="k" data-en="Inputs">Ieejas</span><span class="v" data-en="2 × XLR/TRS (mic/line) + embedded SDI audio">2 × XLR/TRS (mic/line) + iegultā SDI skaņa</span></div>
+          <div class="srow"><span class="k" data-en="Mixer">Mikseris</span><span class="v" data-en="Fairlight digital mixer · monitoring out">Fairlight digitālais mikseris · monitoringa izeja</span></div>
+        </div>
+      </div>
+      <div class="specgroup">
+        <div class="gt" data-en="Recording &amp; streaming">Ieraksts un straumēšana</div>
+        <div class="rows">
+          <div class="srow"><span class="k" data-en="ISO recording">ISO ieraksts</span><span class="v" data-en="All inputs + programme as separate files">Visas ieejas + programma kā atsevišķi faili</span></div>
+          <div class="srow"><span class="k" data-en="Streaming">Straumēšana</span><span class="v" data-en="Built-in RTMP (YouTube, Facebook, custom)">Iebūvēts RTMP (YouTube, Facebook, custom)</span></div>
+          <div class="srow"><span class="k" data-en="Network">Tīkls</span><span class="v" data-en="Ethernet · USB-C webcam out">Ethernet · USB-C webcam izeja</span></div>
+          <div class="srow"><span class="k" data-en="Post project">Pēcapstrāde</span><span class="v" data-en="DaVinci Resolve project generated automatically">DaVinci Resolve projekts ģenerēts automātiski</span></div>
+        </div>
+      </div>
+      <div class="specgroup">
+        <div class="gt" data-en="Power &amp; build">Barošana un korpuss</div>
+        <div class="rows">
+          <div class="srow"><span class="k" data-en="Power">Barošana</span><span class="v" data-en="V-mount battery (up to ~2.5 h) + AC, power failover">V-mount akumulators (līdz ~2,5 h) + AC, power failover</span></div>
+          <div class="srow"><span class="k" data-en="Chassis">Korpuss</span><span class="v" data-en="Laser-cut aluminium · dust- and showerproof">Lāzergriezts alumīnijs · putekļu un lietus izturīgs</span></div>
+          <div class="srow"><span class="k" data-en="Dimensions">Izmēri</span><span class="v">48 × 38 × 18 cm</span></div>
+          <div class="srow"><span class="k" data-en="Weight">Svars</span><span class="v" data-en="≈ 10 kg">≈ 10 kg</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta pad">
+  <div class="wrap">
+    <h2 class="reveal" data-en="Live, in a smaller package.">Tiešraide kompaktā izmērā.</h2>
+    <p class="reveal" data-en="Tell us about your event and we'll suggest the right setup — the Live Case or the full station.">Pastāsti par savu pasākumu, un ieteiksim pareizo risinājumu — Live Case vai pilno staciju.</p>
+    <div class="btns reveal">
+      <a href="/#kontakts" class="btn-primary" data-en="Request a quote">Pieprasīt piedāvājumu</a>
+      <a href="/" class="btn-ghost" data-en="The full station">Pilnā stacija</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="fbrand"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--tally);margin-right:8px;vertical-align:middle"></span>PTS 24</div>
+    <div data-en="Mobile TV station · Riga, Latvia · <a href='tel:+37129242245'>+371 29242245</a> · <a href='mailto:tehnika@tv24.lv'>tehnika@tv24.lv</a>">Pārvietojamā televīzijas stacija · Rīga, Latvija · <a href="tel:+37129242245">+371 29242245</a> · <a href="mailto:tehnika@tv24.lv">tehnika@tv24.lv</a></div>
+  </div>
+</footer>
+
+<script>
+  // Nav scroll state
+  const nav = document.getElementById('nav');
+  const onScroll = () => nav.classList.toggle('scrolled', window.scrollY > 12);
+  onScroll(); window.addEventListener('scroll', onScroll, {passive:true});
+
+  // Mobile menu
+  const menuToggle = document.getElementById('menuToggle');
+  menuToggle.addEventListener('click', () => {
+    const open = nav.classList.toggle('menu-open');
+    menuToggle.setAttribute('aria-expanded', open);
+  });
+  document.querySelectorAll('#navlinks a').forEach(a =>
+    a.addEventListener('click', () => nav.classList.remove('menu-open')));
+
+  // LV / EN toggle (mirrors the main site's data-en pattern)
+  const langBtn = document.getElementById('langToggle');
+  let en = false;
+  langBtn.addEventListener('click', () => {
+    en = !en;
+    document.querySelectorAll('[data-en]').forEach(el => {
+      if (el.dataset.lv === undefined) el.dataset.lv = el.innerHTML;
+      el.innerHTML = en ? el.dataset.en : el.dataset.lv;
+    });
+    langBtn.textContent = en ? 'LV' : 'EN';
+    document.documentElement.lang = en ? 'en' : 'lv';
+  });
+
+  // Reveal on scroll
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+  }, {threshold:.12});
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+</script>
+</body>
+</html>
