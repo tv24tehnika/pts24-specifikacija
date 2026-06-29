@@ -9,3 +9,7 @@ GSC-pamaciba.txt
 
 # FAQ melnraksts ar iekšējām piezīmēm — tikai lokāli, ne uz git
 FAQ-melnraksts.md
+
+# PTS Mini foto oriģināli — tikai lokāli, ne uz git (lapā izmanto img/minipts.webp)
+miniPTS/
+minipts.jpg
