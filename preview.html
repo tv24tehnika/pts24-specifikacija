@@ -240,33 +240,8 @@
   .livecase h2{font-size:clamp(34px,4.4vw,52px);margin-bottom:20px}
   .livecase p{font-size:17px;color:var(--muted-d);max-width:460px;line-height:1.65}
   @media(max-width:860px){.livecase .wrap{grid-template-columns:1fr;gap:44px}}
-  .lc-case{perspective:1400px}
-  .lc-case-shell{position:relative;background:linear-gradient(160deg,#23232b,#15151b 55%,#0d0d12);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:16px 16px 14px;box-shadow:0 40px 90px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.08);transform:rotateX(4deg) rotateY(-7deg);transition:transform .5s cubic-bezier(.16,.84,.34,1)}
-  .lc-case:hover .lc-case-shell{transform:rotateX(2deg) rotateY(-3deg)}
-  .lc-case-shell::before{content:'';position:absolute;left:50%;top:-9px;transform:translateX(-50%);width:88px;height:9px;background:linear-gradient(#34343e,#1a1a20);border-radius:8px 8px 0 0;border:1px solid rgba(255,255,255,.07);border-bottom:none}
-  .lc-case-screen{aspect-ratio:16/9;border-radius:7px;overflow:hidden;border:1px solid rgba(0,0,0,.6);box-shadow:inset 0 0 0 2px rgba(255,255,255,.04),0 8px 24px rgba(0,0,0,.5);background:#000}
-  .lc-mv{width:100%;height:100%;display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(3,1fr);gap:3px;padding:3px;background:#070709}
-  .lc-mv-tile{position:relative;overflow:hidden;border-radius:3px;background-size:300% 300%;animation:bgShift var(--cd,9s) ease-in-out infinite;animation-delay:var(--cf,0s)}
-  .lc-mv-label{position:absolute;left:5px;bottom:4px;font-family:var(--cond);font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.72);z-index:4}
-  .lc-mv-pgm{grid-column:span 2;grid-row:span 2;border:1.5px solid var(--tally);border-radius:4px}
-  .lc-mv-pgm .lc-mv-label{font-size:11px;font-weight:700;color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.85)}
-  .lc-tag{position:absolute;top:6px;right:6px;display:flex;align-items:center;gap:4px;font-family:var(--cond);font-size:10px;letter-spacing:.18em;color:#fff;background:var(--tally);padding:3px 7px;border-radius:3px;z-index:5;font-weight:700}
-  .lc-tag .lc-led{width:5px;height:5px;border-radius:50%;background:#fff;animation:pulse 1.8s infinite}
-  .lc-g1{background:linear-gradient(135deg,#0d1830,#162040,#2e4a7a);--cd:9.4s;--cf:0s}
-  .lc-g2{background:linear-gradient(135deg,#280d1e,#321528,#6e2e4a);--cd:7.2s;--cf:-3.1s}
-  .lc-g3{background:linear-gradient(135deg,#081a10,#102518,#245e3e);--cd:11s;--cf:-1.8s}
-  .lc-g4{background:linear-gradient(135deg,#16110a,#221c10,#5a4c22);--cd:8.3s;--cf:-5.6s}
-  .lc-g5{background:linear-gradient(135deg,#160a1e,#1e1228,#4a2e62);--cd:10.1s;--cf:-2.4s}
-  .lc-g6{background:linear-gradient(135deg,#0c0c10,#141418,#2e2e3a);--cd:7.8s;--cf:-4.9s}
-  .lc-g7{background:linear-gradient(135deg,#0a1622,#12202e,#244a5e);--cd:9.9s;--cf:-1.2s}
-  .lc-gpgm{background:linear-gradient(135deg,#101a30,#1a2647,#34508a);--cd:12s;--cf:0s}
-  .lc-case-deck{display:flex;align-items:center;gap:10px;margin-top:13px;padding:11px 12px;background:linear-gradient(#1b1b22,#101015);border-radius:8px;border:1px solid rgba(255,255,255,.06)}
-  .lc-btn-row{display:flex;gap:5px;flex-wrap:wrap}
-  .lc-pad-btn{width:22px;height:16px;border-radius:3px;background:#2a2a33;border:1px solid rgba(255,255,255,.08)}
-  .lc-pad-btn.pgm{background:var(--tally);box-shadow:0 0 10px var(--tally-glow)}
-  .lc-pad-btn.pvw{background:#1ea64b;box-shadow:0 0 8px rgba(30,166,75,.45)}
-  .lc-deck-sep{width:1px;align-self:stretch;background:rgba(255,255,255,.08)}
-  .lc-tbar{font-family:var(--cond);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted-d);margin-left:auto}
+  .lc-photo{margin:0;border-radius:16px;overflow:hidden;border:1px solid rgba(255,255,255,.1);box-shadow:0 40px 90px rgba(0,0,0,.55);background:#0d0d12}
+  .lc-photo img{display:block;width:100%;height:auto}
 
   .cta{text-align:center;background:radial-gradient(ellipse 65% 65% at 50% 0%,rgba(229,40,30,.2),transparent 60%),radial-gradient(ellipse 40% 40% at 50% 108%,rgba(16,16,48,.35),transparent 56%),var(--black)}
   .cta h2{font-size:clamp(42px,6.5vw,84px);margin-bottom:20px;background:linear-gradient(170deg,#fff 0%,#fff 42%,#8c8c9a);-webkit-background-clip:text;background-clip:text;color:transparent}
@@ -555,37 +530,12 @@
         <li data-en="Live image to LED walls and projectors">Attēls uz LED sienām un projektoriem</li>
         <li data-en="ISO recording + direct streaming to YouTube, Facebook, RTMP">ISO ieraksts + tieša straumēšana uz YouTube, Facebook, RTMP</li>
         <li data-en="Also works where cabling from the PTS station can't reach">Darbojas arī vietās, kur vadus no PTS stacijas nevar ievilkt</li>
-        <li data-en="Integrates with the full PTS 24 station when needed">Vajadzības gadījumā sasaistāms ar pilno PTS 24 staciju</li>
+        <li data-en="Integrates with the PTS 24 station when needed">Vajadzības gadījumā sasaistāms ar PTS 24 staciju</li>
       </ul>
     </div>
-    <div class="lc-case reveal">
-      <div class="lc-case-shell">
-        <div class="lc-case-screen">
-          <div class="lc-mv">
-            <div class="lc-mv-tile lc-mv-pgm lc-gpgm"><div class="lc-tag"><span class="lc-led"></span>LIVE</div><div class="lc-mv-label" data-en="Programme · 1080p50">Programma · 1080p50</div></div>
-            <div class="lc-mv-tile lc-g1"><div class="lc-mv-label">CAM 1</div></div>
-            <div class="lc-mv-tile lc-g2"><div class="lc-mv-label">CAM 2</div></div>
-            <div class="lc-mv-tile lc-g3"><div class="lc-mv-label">CAM 3</div></div>
-            <div class="lc-mv-tile lc-g4"><div class="lc-mv-label">CAM 4</div></div>
-            <div class="lc-mv-tile lc-g5"><div class="lc-mv-label">CAM 5</div></div>
-            <div class="lc-mv-tile lc-g6"><div class="lc-mv-label">CAM 6</div></div>
-            <div class="lc-mv-tile lc-g7"><div class="lc-mv-label">CAM 7</div></div>
-            <div class="lc-mv-tile lc-g2"><div class="lc-mv-label">CAM 8</div></div>
-          </div>
-        </div>
-        <div class="lc-case-deck">
-          <div class="lc-btn-row">
-            <span class="lc-pad-btn pgm"></span><span class="lc-pad-btn"></span><span class="lc-pad-btn"></span><span class="lc-pad-btn"></span>
-            <span class="lc-pad-btn"></span><span class="lc-pad-btn"></span><span class="lc-pad-btn"></span><span class="lc-pad-btn"></span>
-          </div>
-          <div class="lc-deck-sep"></div>
-          <div class="lc-btn-row">
-            <span class="lc-pad-btn pvw"></span><span class="lc-pad-btn"></span><span class="lc-pad-btn"></span><span class="lc-pad-btn"></span>
-          </div>
-          <span class="lc-tbar">ATEM SDI Extreme ISO</span>
-        </div>
-      </div>
-    </div>
+    <figure class="lc-photo reveal">
+      <img src="img/minipts.webp" width="1080" height="1440" loading="lazy" decoding="async" alt="PTS Mini — atvērts čemodāns ar PTS 24 multiview ekrānu un vadības paneli">
+    </figure>
   </div>
 </section>
 
