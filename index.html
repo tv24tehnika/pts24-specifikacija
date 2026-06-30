@@ -56,6 +56,7 @@
   .navlinks{display:flex;gap:32px;font-size:13px;color:var(--muted-d);margin-left:auto}
   .navlinks a{color:inherit;text-decoration:none;transition:color .2s;letter-spacing:.01em}
   .navlinks a:hover{color:var(--white)}
+  .navlinks a.active{color:#fff}
   .navright{display:flex;align-items:center;gap:12px;flex:none}
   .lang{background:none;border:1px solid rgba(255,255,255,.18);color:#fff;font:inherit;font-size:11px;font-weight:700;letter-spacing:.1em;padding:6px 12px;border-radius:980px;cursor:pointer;transition:border-color .2s,background .2s;text-transform:uppercase}
   .lang:hover{border-color:rgba(255,255,255,.45);background:rgba(255,255,255,.05)}
@@ -232,6 +233,15 @@
   .srow .v{color:var(--ink);font-size:14px;font-weight:500;text-align:right}
   @media(max-width:680px){.specgroup{grid-template-columns:1fr;gap:12px;padding:24px 0}.specgroup .gt{padding-top:0}.srow{gap:16px}}
 
+  /* PTS MINI — patstāvīga tiešraides vienība */
+  .livecase{background:var(--near)}
+  .livecase .wrap{display:grid;grid-template-columns:1fr 1fr;gap:72px;align-items:center}
+  .livecase h2{font-size:clamp(34px,4.4vw,52px);margin-bottom:20px}
+  .livecase p{font-size:17px;color:var(--muted-d);max-width:460px;line-height:1.65}
+  @media(max-width:860px){.livecase .wrap{grid-template-columns:1fr;gap:44px}}
+  .lc-photo{margin:0;border-radius:16px;overflow:hidden;border:1px solid rgba(255,255,255,.1);box-shadow:0 40px 90px rgba(0,0,0,.55);background:#0d0d12}
+  .lc-photo img{display:block;width:100%;height:auto}
+
   .cta{text-align:center;background:radial-gradient(ellipse 65% 65% at 50% 0%,rgba(229,40,30,.2),transparent 60%),radial-gradient(ellipse 40% 40% at 50% 108%,rgba(16,16,48,.35),transparent 56%),var(--black)}
   .cta h2{font-size:clamp(42px,6.5vw,84px);margin-bottom:20px;background:linear-gradient(170deg,#fff 0%,#fff 42%,#8c8c9a);-webkit-background-clip:text;background-clip:text;color:transparent}
   .cta p{font-size:19px;color:var(--muted-d);max-width:520px;margin:0 auto 40px;line-height:1.6}
@@ -303,6 +313,7 @@
 </script>
 
 <script defer src="https://cloud.umami.is/script.js" data-website-id="50b9c497-a5fe-445a-951e-43f3e148fc08"></script>
+
 </head>
 <body>
 
@@ -312,9 +323,10 @@
     <div class="navlinks" id="navlinks">
       <a href="#stacija" data-en="Station">Stacija</a>
       <a href="#tehnika" data-en="Equipment">Tehnika</a>
-      <a href="#specifikacija" data-en="Specs">Parametri</a>
-      <a href="#moduli" data-en="Options">Moduļi</a>
       <a href="#galerija" data-en="Gallery">Galerija</a>
+      <a href="#moduli" data-en="Options">Moduļi</a>
+      <a href="#pts-mini" data-en="PTS Mini">PTS Mini</a>
+      <a href="#specifikacija" data-en="Specs">Parametri</a>
       <a href="/faq" data-en="FAQ">BUJ</a>
       <a href="#kontakts" class="nav-cta nav-cta-mobile" data-en="Request a quote">Pieprasīt piedāvājumu</a>
     </div>
@@ -505,6 +517,28 @@
   </div>
 </section>
 
+<!-- PTS MINI — patstāvīga tiešraides vienība -->
+<section class="livecase pad" id="pts-mini">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="eyebrow" data-en="Standalone unit · PTS Mini">Patstāvīga vienība · PTS Mini</div>
+      <h2 data-en="Standalone multicamera production.">Patstāvīga daudzkameru tiešraižu nodrošināšana.</h2>
+      <p data-en="PTS Mini is a standalone multicamera live and recording system. Vision mixing, monitoring and streaming are compactly built into a single transport case, while audio mixing sits in a separate module. It is built on a Blackmagic ATEM SDI Extreme ISO, which connects and switches up to 8 SDI cameras.">PTS Mini ir autonoma daudzkameru tiešraižu un ierakstu sistēma. Video režija, monitors un straumēšanas iekārtas ir kompaktā veidā iebūvētas vienā transportēšanas koferī, bet skaņas režija atrodas atsevišķā modulī. Sistēmas pamatā ir Blackmagic ATEM SDI Extreme ISO, kas ļauj pieslēgt un komutēt līdz pat 8 SDI kamerām.</p>
+      <div class="eyebrow" data-en="Applications and capabilities:">Pielietojums un iespējas:</div>
+      <ul class="spec-list">
+        <li data-en="Concert, conference and event live streams and recordings.">Koncertu, konferenču, pasākumu tiešraides un ieraksti.</li>
+        <li data-en="Image to LED screens and projectors.">Attēla nodrošināšana uz LED ekrāniem un projektoriem.</li>
+        <li data-en="ISO recording of all cameras and direct streaming to YouTube, Facebook and other RTMP servers.">Visu kameru (ISO) ieraksts un tiešā straumēšana uz YouTube, Facebook un citiem RTMP serveriem.</li>
+        <li data-en="Ideal for locations where cables physically cannot be run from the large PTS (mobile television station).">Ideāls risinājums lokācijās, kur fiziski nav iespējams ievilkt kabeļus no lielās PTS (Pārvietojamās televīzijas stacijas).</li>
+        <li data-en="Fully integrable with the PTS24 station when needed.">Nepieciešamības gadījumā pilnībā integrējama ar PTS24 staciju.</li>
+      </ul>
+    </div>
+    <figure class="lc-photo reveal">
+      <img src="img/minipts.webp" width="1080" height="1440" loading="lazy" decoding="async" alt="PTS Mini — atvērts čemodāns ar PTS 24 multiview ekrānu un vadības paneli">
+    </figure>
+  </div>
+</section>
+
 <!-- FULL SPECS -->
 <section class="specsfull pad" id="specifikacija">
   <div class="wrap">
@@ -614,6 +648,17 @@
           <div class="srow"><span class="k" data-en="Sync">Sinhronizācija</span><span class="v">Genlock (BB / Tri-Level)</span></div>
         </div>
       </div>
+      <div class="specgroup">
+        <div class="gt" data-en="PTS Mini (standalone unit)">PTS Mini (patstāvīga vienība)</div>
+        <div class="rows">
+          <div class="srow"><span class="k" data-en="Switcher">Switcheris</span><span class="v">Blackmagic ATEM SDI Extreme ISO</span></div>
+          <div class="srow"><span class="k" data-en="Inputs">Ieejas</span><span class="v" data-en="Up to 8 × 3G-SDI">Līdz 8 × 3G-SDI</span></div>
+          <div class="srow"><span class="k" data-en="Format">Formāts</span><span class="v">Full HD 1080p50</span></div>
+          <div class="srow"><span class="k" data-en="Recording">Ieraksts</span><span class="v" data-en="ISO (all inputs + programme)">ISO (visas ieejas + programma)</span></div>
+          <div class="srow"><span class="k" data-en="Streaming">Straumēšana</span><span class="v" data-en="Built-in RTMP (YouTube, Facebook)">Iebūvēts RTMP (YouTube, Facebook)</span></div>
+          <div class="srow"><span class="k" data-en="Audio">Skaņa</span><span class="v" data-en="In a separate case">Atsevišķā čemodānā</span></div>
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -656,6 +701,25 @@
     entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});
   },{threshold:0.15,rootMargin:'0px 0px -8% 0px'});
   document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+  // Scroll-spy: izceļ aktīvo izvēlnes punktu un tur dalāmu saiti uz sadaļu adreses joslā
+  const spyMap=new Map();
+  document.querySelectorAll('#navlinks a[href^="#"]').forEach(a=>{
+    const sec=document.getElementById(a.getAttribute('href').slice(1));
+    if(sec) spyMap.set(sec,a);
+  });
+  let activeLink=null;
+  function setActive(a){
+    if(!a||a===activeLink) return;
+    if(activeLink) activeLink.classList.remove('active');
+    activeLink=a; a.classList.add('active');
+    const hash=a.getAttribute('href');
+    if(location.hash!==hash) history.replaceState(null,'',hash);
+  }
+  const spy=new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{if(e.isIntersecting) setActive(spyMap.get(e.target));});
+  },{rootMargin:'-50% 0px -50% 0px',threshold:0});
+  spyMap.forEach((a,sec)=>spy.observe(sec));
 
   // language toggle (LV / EN)
   const tEls=[...document.querySelectorAll('[data-en]')];
