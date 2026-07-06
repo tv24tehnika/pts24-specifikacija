@@ -186,7 +186,7 @@ footer { margin-top: 26px; color: var(--muted); font-size: 13px; }
     <div class="settings-grid">
         <div class="field">
             <label for="listName">Saraksta nosaukums</label>
-            <input type="text" id="listName" placeholder="piem., Panorāma 2026-07-06" style="width:260px" oninput="onSettingChange()">
+            <input type="text" id="listName" placeholder="piem., Koncerts" style="width:260px" oninput="onSettingChange()">
             <small>Tiks izmantots faila nosaukumā.</small>
         </div>
         <div class="field">
@@ -590,6 +590,7 @@ document.getElementById('importFile').addEventListener('change', e => {
 });
 
 loadState();
+document.getElementById('listName').placeholder = 'piem., Koncerts ' + new Date().toISOString().slice(0, 10);
 </script>
 </body>
 </html>
