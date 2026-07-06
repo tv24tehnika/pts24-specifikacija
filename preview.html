@@ -245,6 +245,37 @@
   .lc-photo{margin:0;border-radius:16px;overflow:hidden;border:1px solid rgba(255,255,255,.1);box-shadow:0 40px 90px rgba(0,0,0,.55);background:#0d0d12}
   .lc-photo img{display:block;width:100%;height:auto}
 
+  /* PTS MINI — signāla plūsmas diagramma (8 × SDI → ATEM) */
+  .sflow-wrap{max-width:1160px;margin:72px auto 0;padding:0 32px}
+  .sflow-wrap .eyebrow{text-align:center;margin-bottom:26px}
+  .sflow{position:relative;overflow:hidden;max-width:860px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:44px;border:1px solid var(--line);border-radius:16px;background-color:#08080d;background-image:radial-gradient(rgba(255,255,255,.045) 1px,transparent 1px);background-size:22px 22px;padding:30px 36px}
+  .sflow::before{content:"";position:absolute;right:-80px;top:50%;width:320px;height:320px;transform:translateY(-50%);border-radius:50%;background:rgba(229,40,30,.09);filter:blur(60px);pointer-events:none}
+  .sflow-beams{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+  .sflow-beams .base{fill:none;stroke:rgba(255,255,255,.07);stroke-width:1.5}
+  .sflow-beams .pulse{fill:none;stroke:#ff4b40;stroke-width:2;stroke-linecap:round;filter:drop-shadow(0 0 5px rgba(229,40,30,.85))}
+  .sflow-cams{position:relative;z-index:2;display:flex;flex-direction:column;gap:13px}
+  .sflow-cam{display:flex;align-items:center;justify-content:flex-end;gap:12px}
+  .sflow-cam .lbl{font-family:var(--cond);font-size:11px;font-weight:600;letter-spacing:.16em;color:#71717e;white-space:nowrap}
+  .sflow-cam .nd{width:42px;height:42px;flex:none;display:flex;align-items:center;justify-content:center;border-radius:11px;border:1px solid rgba(255,255,255,.1);background:var(--panel);box-shadow:0 2px 12px rgba(0,0,0,.5);transition:border-color .3s}
+  .sflow-cam:hover .nd{border-color:rgba(229,40,30,.6)}
+  .sflow-cam .nd svg{width:18px;height:18px;stroke:var(--muted-d)}
+  .sflow-cam .nd svg,.sflow-atem>svg{fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+  .sflow-atem{position:relative;z-index:2;flex:none;display:flex;flex-direction:column;align-items:center;gap:12px;padding:26px 30px;border-radius:16px;border:1px solid rgba(255,255,255,.12);background:var(--panel);box-shadow:0 0 55px -10px var(--tally-glow)}
+  .sflow-atem .onair{display:inline-flex;align-items:center;gap:7px;font-family:var(--cond);font-size:10px;font-weight:700;letter-spacing:.25em;text-transform:uppercase;color:#ff7272;border:1px solid rgba(229,40,30,.4);background:var(--tally-soft);border-radius:980px;padding:4px 11px 4px 9px}
+  .sflow-atem .onair .led{width:6px;height:6px;border-radius:50%;background:var(--tally);animation:pulse 1.8s ease-in-out infinite}
+  .sflow-atem>svg{width:38px;height:38px;stroke:#fff}
+  .sflow-atem .nm{text-align:center;font-size:15px;font-weight:600;letter-spacing:-.01em;line-height:1.25}
+  .sflow-atem .nm small{display:block;font-size:12px;font-weight:400;color:var(--muted-d)}
+  .sflow-atem .port{font-family:var(--cond);font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:#71717e;border:1px solid var(--line);background:rgba(255,255,255,.04);border-radius:6px;padding:4px 8px}
+  @media(max-width:560px){
+    .sflow{gap:20px;padding:20px 16px}
+    .sflow-cams{gap:10px}
+    .sflow-cam .lbl{display:none}
+    .sflow-cam .nd{width:34px;height:34px;border-radius:9px}
+    .sflow-cam .nd svg{width:15px;height:15px}
+    .sflow-atem{padding:18px 16px}
+  }
+
   /* GLOBUSS — tiešraides ģeogrāfija (Three.js) */
   .globe-sec{background:radial-gradient(ellipse at 60% 50%,#0d1033 0%,#080b14 60%,#050712 100%);overflow:hidden}
   .globe-sec .wrap{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center}
@@ -551,6 +582,34 @@
     <figure class="lc-photo reveal">
       <img src="img/minipts.webp" width="1080" height="1440" loading="lazy" decoding="async" alt="PTS Mini — atvērts koferis ar PTS 24 multiview ekrānu un vadības paneli">
     </figure>
+  </div>
+
+  <!-- Signāla plūsma: 8 × SDI kameras → ATEM SDI Extreme ISO (Magic UI "Animated Beam" pārnesums uz SVG + GSAP) -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+    <symbol id="i-cam" viewBox="0 0 24 24"><path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5"/><rect x="2" y="6" width="14" height="12" rx="2"/></symbol>
+    <symbol id="i-switcher" viewBox="0 0 24 24"><path d="M10 7.75a.75.75 0 0 1 1.142-.638l3.664 2.249a.75.75 0 0 1 0 1.278l-3.664 2.25a.75.75 0 0 1-1.142-.64z"/><path d="M12 17v4"/><path d="M8 21h8"/><rect x="2" y="3" width="20" height="14" rx="2"/></symbol>
+  </defs></svg>
+  <div class="sflow-wrap reveal">
+    <div class="eyebrow" data-en="Signal flow · 8 cameras, one case">Signāla plūsma · 8 kameras, viens koferis</div>
+    <div class="sflow" id="sflow">
+      <svg class="sflow-beams" aria-hidden="true"></svg>
+      <div class="sflow-cams">
+        <div class="sflow-cam"><span class="lbl">CAM 01</span><span class="nd"><svg aria-hidden="true"><use href="#i-cam"/></svg></span></div>
+        <div class="sflow-cam"><span class="lbl">CAM 02</span><span class="nd"><svg aria-hidden="true"><use href="#i-cam"/></svg></span></div>
+        <div class="sflow-cam"><span class="lbl">CAM 03</span><span class="nd"><svg aria-hidden="true"><use href="#i-cam"/></svg></span></div>
+        <div class="sflow-cam"><span class="lbl">CAM 04</span><span class="nd"><svg aria-hidden="true"><use href="#i-cam"/></svg></span></div>
+        <div class="sflow-cam"><span class="lbl">CAM 05</span><span class="nd"><svg aria-hidden="true"><use href="#i-cam"/></svg></span></div>
+        <div class="sflow-cam"><span class="lbl">CAM 06</span><span class="nd"><svg aria-hidden="true"><use href="#i-cam"/></svg></span></div>
+        <div class="sflow-cam"><span class="lbl">CAM 07</span><span class="nd"><svg aria-hidden="true"><use href="#i-cam"/></svg></span></div>
+        <div class="sflow-cam"><span class="lbl">CAM 08</span><span class="nd"><svg aria-hidden="true"><use href="#i-cam"/></svg></span></div>
+      </div>
+      <div class="sflow-atem" id="sflowAtem">
+        <div class="onair"><span class="led"></span>On Air</div>
+        <svg aria-hidden="true"><use href="#i-switcher"/></svg>
+        <div class="nm">ATEM SDI<small>Extreme ISO</small></div>
+        <div class="port" data-en="8 × 3G-SDI in">8 × 3G-SDI ieejas</div>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -1032,6 +1091,58 @@
     gsap.fromTo(el,{y:34},{y:-34,ease:'none',
       scrollTrigger:{trigger:el,start:'top bottom',end:'bottom top',scrub:true}});
   });
+})();
+</script>
+
+<script>
+// PTS Mini — signāla plūsmas stari (8 × SDI → ATEM), Magic UI "Animated Beam" pārnesums uz SVG + GSAP.
+// Ceļi tiek pārrēķināti pie izmēra maiņas; bez GSAP / ar reduced-motion paliek statiskas līnijas.
+(function(){
+  const box=document.getElementById('sflow');
+  if(!box)return;
+  const svg=box.querySelector('.sflow-beams');
+  const cams=[...box.querySelectorAll('.sflow-cam .nd')];
+  const atem=document.getElementById('sflowAtem');
+  const NS='http://www.w3.org/2000/svg';
+  let tweens=[];
+
+  function center(el){
+    const b=box.getBoundingClientRect(),r=el.getBoundingClientRect();
+    return{x:r.left-b.left+r.width/2,y:r.top-b.top+r.height/2};
+  }
+
+  function build(){
+    tweens.forEach(t=>t.kill());tweens=[];
+    svg.innerHTML='';
+    const b=box.getBoundingClientRect();
+    if(!b.width)return;
+    svg.setAttribute('viewBox',`0 0 ${b.width} ${b.height}`);
+    const to=center(atem);
+    cams.forEach((nd,i)=>{
+      const from=center(nd);
+      // Simetrisks "vēdeklis": augšējie stari izliecas uz augšu, apakšējie — uz leju
+      const bend=((cams.length-1)/2-i)*14;
+      const d=`M ${from.x},${from.y} Q ${(from.x+to.x)/2},${(from.y+to.y)/2-bend} ${to.x},${to.y}`;
+      const base=document.createElementNS(NS,'path');
+      base.setAttribute('d',d);base.setAttribute('class','base');
+      svg.appendChild(base);
+      if(!window.__useGsap)return;
+      const pulse=document.createElementNS(NS,'path');
+      pulse.setAttribute('d',d);pulse.setAttribute('class','pulse');
+      svg.appendChild(pulse);
+      const len=pulse.getTotalLength();
+      const dash=Math.min(90,len*.35);
+      pulse.setAttribute('stroke-dasharray',`${dash} ${len+dash}`);
+      tweens.push(gsap.fromTo(pulse,{strokeDashoffset:dash},
+        {strokeDashoffset:-len,duration:Math.max(1.6,len/150),ease:'none',repeat:-1,repeatDelay:.9,delay:i*.35}));
+    });
+  }
+
+  let rt;
+  const queue=()=>{clearTimeout(rt);rt=setTimeout(build,150);};
+  new ResizeObserver(queue).observe(box);
+  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(queue);
+  build();
 })();
 </script>
 
