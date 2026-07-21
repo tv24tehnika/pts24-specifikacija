@@ -3,5 +3,6 @@ Allow: /
 Disallow: /calc.html
 Disallow: /piedavajums.html
 Disallow: /cg.html
+Disallow: /sync/
 
 Sitemap: https://pts24.lv/sitemap.xml
