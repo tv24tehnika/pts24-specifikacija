@@ -180,6 +180,19 @@
     <text id="status" class="lbl" x="80"   y="1040" font-size="21">Starting...</text>
     <text id="mode"   class="lbl" x="1840" y="1040" text-anchor="end" font-size="21">1080i50</text>
   </g>
+
+  <!-- Shown until the AudioContext is unlocked. Browsers (iOS/iPadOS Safari
+       in particular) create AudioContext suspended and refuse to advance its
+       clock until a user gesture resumes it - and this whole card reads its
+       timing from that clock. Without this overlay the card just sits on
+       frame 0 looking frozen/broken instead of visibly waiting for a tap. -->
+  <g id="startOverlay">
+    <rect x="0" y="0" width="1920" height="1080" fill="var(--ink)" opacity="0.88"/>
+    <text class="verd" x="960" y="520" text-anchor="middle" font-size="64"
+          font-weight="700" fill="var(--text)">PIESKARIES EKRĀNAM · TAP TO START</text>
+    <text class="lbl" x="960" y="580" text-anchor="middle" font-size="24" fill="var(--grid-hot)">
+      Pārlūkam nepieciešama lietotāja darbība, lai atļautu skaņu</text>
+  </g>
 </svg>
 </div>
 
@@ -261,7 +274,8 @@ const $card = $("card"), $ticks = $("ticks"), $ring = $("ring"),
       $sweeper = $("sweeper"), $flash = $("flashrect"),
       $bigms = $("bigms"), $bigfr = $("bigfr"), $verdict = $("verdict"),
       $marker = $("marker"), $mline = $("markerline"),
-      $status = $("status"), $mode = $("mode"), $clock = $("worldclock");
+      $status = $("status"), $mode = $("mode"), $clock = $("worldclock"),
+      $overlay = $("startOverlay");
 
 /* Dial ticks - built once. */
 (function buildTicks() {
@@ -378,11 +392,25 @@ function reschedule() {
 /* ==========================================================================
    RENDER LOOP - reads the audio clock, paints, triggers nothing
    ========================================================================== */
-let lastFrame = -1, flashOn = false, statusAcc = 0;
+let lastFrame = -1, flashOn = false, statusAcc = 0, overlayShown = true;
 
 function render() {
-  const t = ctx.currentTime - t0;
-  if (t < 0) { requestAnimationFrame(render); return; }
+  /* World clock is independent of the audio clock, so it - and the overlay
+     below - stay live even before the AudioContext is unlocked. */
+  $clock.textContent = fmtClock(new Date());
+
+  const running = ctx.state === "running";
+  const t = running ? ctx.currentTime - t0 : -1;
+
+  if (!running || t < 0) {
+    if (!overlayShown) { overlayShown = true; $overlay.setAttribute("opacity", "1"); }
+    $status.textContent = running
+      ? "Starting..."
+      : "Pieskaries ekrānam, lai atļautu skaņu · tap screen to allow audio";
+    requestAnimationFrame(render);
+    return;
+  }
+  if (overlayShown) { overlayShown = false; $overlay.setAttribute("opacity", "0"); }
 
   /* Absolute-clock derived: no accumulated drift, ever. */
   const phase = (t % CFG.CYCLE_S) / CFG.CYCLE_S;
@@ -397,10 +425,6 @@ function render() {
 
   $sweeper.setAttribute("transform", `rotate(${(phase*360).toFixed(3)} 960 212)`);
   $ring.setAttribute("stroke-dashoffset", (RING_C * (1 - phase)).toFixed(2));
-
-  /* World clock. Independent of the sync cycle - just the machine's local
-     time, refreshed every paint so the milliseconds digit stays live. */
-  $clock.textContent = fmtClock(new Date());
 
   /* Discrete: only touched when the frame number actually changes. */
   if (frame !== lastFrame) {
@@ -450,7 +474,9 @@ function ensureRunning() {
   }
 }
 window.addEventListener("load", ensureRunning);
-["pointerdown","keydown"].forEach(e => window.addEventListener(e, ensureRunning, { once:true }));
+/* Not { once:true } - iOS can re-suspend the AudioContext later (e.g. after
+   the screen locks), and the next tap needs to be able to resume it again. */
+["pointerdown","keydown"].forEach(e => window.addEventListener(e, ensureRunning));
 ensureRunning();
 
 /* ==========================================================================
