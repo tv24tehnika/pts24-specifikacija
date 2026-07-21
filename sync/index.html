@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="lv">
+<head>
+<meta charset="utf-8">
+<title>A/V SYNC TEST — 1080i50 self-reading</title>
+
+<!--
+  ============================================================================
+  A/V SYNC TEST CARD — CasparCG HTML Producer template
+  ----------------------------------------------------------------------------
+  Self-reading. Nothing to type in, nothing to calculate.
+
+    PLAY 1-20 [HTML] "file://C:/casparcg/templates/avsync/index.html"
+
+  HOW IT READS
+  Every frame carries its own timestamp in milliseconds relative to the beep.
+  The beep + flash land on frame 0 - the instant the dial hand at the top
+  reaches straight-up, 12 o'clock. So:
+
+      record the return -> step to the frame where the beep starts
+      -> the number on that frame IS the error.
+
+      -80 ms  audio arrived 2 frames early  -> AUDIO LEADS  (skana prieksa)
+        0 ms  in sync
+      +80 ms  audio arrived 2 frames late   -> AUDIO LAGS   (skana atpaliek)
+
+  Sign convention matches an audio delay unit: offset = audio - video, so a
+  negative reading is corrected by adding audio delay downstream.
+
+  The sweeping marker gives the same reading live and 1:1 in real time - it
+  crosses zero exactly on the beep, so if you hear the beep while the marker
+  is left of centre, audio is early.
+
+  Resolution is one frame (40 ms at 1080i50). That is a hard limit of any
+  visual method - finer than that needs a capture-card analyser.
+
+  OPTIONAL NULL TEST (not required): press I, then left/right arrows to
+  pre-compensate the beep by a known amount and confirm the reading.
+
+  NOTE: HTML producer carries audio on CasparCG 2.3.0+ only.
+  NOTE: Tailwind is loaded from the CDN as requested, but every layout-critical
+        rule is duplicated inline so this renders on an air-gapped machine.
+  ============================================================================
+-->
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+  html, body {
+    margin: 0; padding: 0;
+    width: 1920px; height: 1080px;
+    overflow: hidden;
+    background: rgba(0,0,0,0) !important;      /* transparent key */
+  }
+
+  :root {
+    --bg:       #05070a;
+    --ink:      #0a0c10;
+    --accent:   #d41e1e;
+    --grid:     #2c3440;
+    --grid-hot: #7d8b9c;
+    --text:     #e8edf3;
+    --ok:       #2ecc71;
+    --warn:     #e8b339;
+    --bad:      #d41e1e;
+    --mono:     "JetBrains Mono","Roboto Mono","Consolas",monospace;
+    --cond:     "Barlow Condensed","Oswald","Arial Narrow",sans-serif;
+  }
+
+  #stage { position: relative; width: 1920px; height: 1080px; background: transparent; }
+
+  .lbl  { font-family: var(--cond); letter-spacing:.26em; text-transform:uppercase; fill: var(--grid-hot); }
+  .num  { font-family: var(--mono); fill: var(--text); }
+  .verd { font-family: var(--cond); letter-spacing:.12em; text-transform:uppercase; }
+
+  /* On the flash frame the whole card inverts, so the readout stays legible
+     inside a full-screen white flash. CSS beats presentation attributes. */
+  .inv .num, .inv .lbl, .inv text { fill: var(--ink) !important; }
+
+  #sweeper, #ring, #marker, #markerline, #flashrect { will-change: transform, opacity; }
+</style>
+</head>
+
+<body class="bg-transparent">
+
+<div id="stage">
+<svg id="card" width="1920" height="1080" viewBox="0 0 1920 1080"
+     xmlns="http://www.w3.org/2000/svg" shape-rendering="geometricPrecision">
+
+  <!-- Dark backdrop. Bottom-most layer, so the white flash has maximum
+       contrast against it. Set CFG.BG_ALPHA to 0 to go back to a clean
+       transparent key for compositing over live video. -->
+  <rect id="bg" x="0" y="0" width="1920" height="1080" fill="var(--bg)" opacity="1"/>
+
+  <!-- ==================== WORLD CLOCK (top-left) ================== -->
+  <g id="clockgroup">
+    <text class="lbl" x="80" y="58" font-size="20">Pasaules laiks · local time</text>
+    <text id="worldclock" class="num" x="80" y="104" font-size="46" font-weight="700">00:00:00.000</text>
+  </g>
+
+  <!-- ===================== CYCLE DIAL (top) ====================== -->
+  <g id="dialgroup">
+    <circle cx="960" cy="212" r="132" fill="var(--ink)" fill-opacity="0.86"/>
+    <circle cx="960" cy="212" r="132" fill="none" stroke="#1b222c" stroke-width="2"/>
+    <g id="ticks"></g>
+    <circle id="ring" cx="960" cy="212" r="106" fill="none"
+            stroke="var(--accent)" stroke-width="5" stroke-linecap="butt"
+            transform="rotate(-90 960 212)"/>
+    <g id="sweeper">
+      <polygon points="960,92 968,212 952,212" fill="var(--accent)"/>
+      <circle cx="960" cy="212" r="7" fill="var(--accent)"/>
+    </g>
+  </g>
+
+  <!-- ======================= SCALE (bottom) ====================== -->
+  <g id="scalegroup">
+    <rect x="210" y="800" width="1500" height="40" fill="#0a0c10" fill-opacity="0.86"/>
+    <rect id="b_bad_l"  y="800" height="40" fill="var(--bad)"  fill-opacity="0.30"/>
+    <rect id="b_warn_l" y="800" height="40" fill="var(--warn)" fill-opacity="0.28"/>
+    <rect id="b_ok"     y="800" height="40" fill="var(--ok)"   fill-opacity="0.32"/>
+    <rect id="b_warn_r" y="800" height="40" fill="var(--warn)" fill-opacity="0.28"/>
+    <rect id="b_bad_r"  y="800" height="40" fill="var(--bad)"  fill-opacity="0.30"/>
+    <rect x="210" y="800" width="1500" height="40" fill="none" stroke="#1b222c" stroke-width="2"/>
+    <g id="scaleticks"></g>
+    <line x1="960" y1="786" x2="960" y2="854" stroke="var(--text)" stroke-width="3"/>
+  </g>
+
+  <!-- Full-screen flash. Sits under the text so the readout stays visible. -->
+  <rect id="flashrect" x="0" y="0" width="1920" height="1080" fill="#ffffff" opacity="0"/>
+
+  <!-- ==================== READOUT (drawn on top) ================= -->
+  <g id="readout">
+    <text class="lbl" x="960" y="420" text-anchor="middle" font-size="22">
+      Audio / Video Offset · nolasi kadrā, kur sākas pīkstiens</text>
+
+    <text id="bigms" class="num" x="960" y="580" text-anchor="middle"
+          font-size="184" font-weight="700">0 ms</text>
+
+    <text id="bigfr" class="lbl" x="960" y="646" text-anchor="middle" font-size="30">0 kadri</text>
+
+    <!-- Live, explicit direction call-out. Updates with the frame counter. -->
+    <text id="verdict" class="verd" x="960" y="700" text-anchor="middle"
+          font-size="46" font-weight="700" fill="var(--ok)">SASKAŅOTS</text>
+
+    <!-- sweeping marker -->
+    <line id="markerline" x1="960" y1="794" x2="960" y2="846"
+          stroke="var(--text)" stroke-width="5"/>
+    <polygon id="marker" points="960,782 976,754 944,754" fill="var(--text)"/>
+
+    <!-- Side legends. Explicit about sign, meaning and the corrective action,
+         so nobody has to remember the convention at 02:00 in the OB truck. -->
+    <text class="lbl" x="210" y="936" text-anchor="start" font-size="30" fill="var(--text)">
+      &#9668; MĪNUS · SKAŅA PRIEKŠĀ</text>
+    <text class="lbl" x="210" y="970" text-anchor="start" font-size="18">
+      audio leads · agrāk par attēlu</text>
+    <text class="lbl" x="210" y="1000" text-anchor="start" font-size="18" fill="var(--ok)">
+      labojums: pievieno audio aizkavi</text>
+
+    <text class="lbl" x="1710" y="936" text-anchor="end" font-size="30" fill="var(--text)">
+      PLUSS · SKAŅA ATPALIEK &#9658;</text>
+    <text class="lbl" x="1710" y="970" text-anchor="end" font-size="18">
+      audio lags · vēlāk par attēlu</text>
+    <text class="lbl" x="1710" y="1000" text-anchor="end" font-size="18" fill="var(--ok)">
+      labojums: aizkavē attēlu / samazini audio aizkavi</text>
+
+    <text class="lbl" x="960" y="936" text-anchor="middle" font-size="21">
+      EBU R37: −40 ms … +60 ms</text>
+
+    <text id="status" class="lbl" x="80"   y="1040" font-size="21">Starting...</text>
+    <text id="mode"   class="lbl" x="1840" y="1040" text-anchor="end" font-size="21">1080i50</text>
+  </g>
+</svg>
+</div>
+
+<script>
+(() => {
+"use strict";
+
+/* ==========================================================================
+   CONFIG
+   ========================================================================== */
+const CFG = {
+  FPS:          25,      // 1080i50 -> 25 frames/s. Set 50 for a true 50p channel.
+  CYCLE_S:      1.0,     // one sweep per second
+  TONE_HZ:      1000,
+  BEEP_FRAMES:  1,       // 1 frame = 40 ms @ 25p, a full frame (both fields)
+  ENV_MS:       1.5,     // attack/release, kills the edge click
+  PEAK:         0.5,     // approx -6 dBFS
+
+  LOOKAHEAD_S:  0.20,
+  TICK_MS:      40,
+
+  /* Backdrop. 1 = opaque dark card (best flash contrast, best readability),
+     0 = transparent key for compositing over live video. */
+  BG_ALPHA:     1,
+
+  SCALE_MS:     500,     // half-range; marker sweeps this 1:1 in real time
+  R37_LEAD:    -40,      // EBU R37: audio must not lead by more than 40 ms
+  R37_LAG:      60,      //          audio must not lag  by more than 60 ms
+  ACC_LEAD:    -90,      // ITU-R BT.1359 acceptability limits
+  ACC_LAG:     185
+};
+
+const FRAME_S     = CFG.CYCLE_S / CFG.FPS;
+const FRAME_MS    = FRAME_S * 1000;
+const BEEP_S      = FRAME_S * CFG.BEEP_FRAMES;
+
+/* Reference point = frame 0 = the dial hand at 12 o'clock. Beep and flash
+   both happen there, so what you SEE point straight up is exactly what you
+   HEAR. Labels still need to run symmetrically negative/positive so the
+   scale is self-reading without mental subtraction - that's done by
+   labelling every frame with its signed distance to the NEAREST occurrence
+   of frame 0 (this cycle's start, or next cycle's, whichever is closer),
+   not its raw frame index. That flips sign exactly at the bottom of the
+   dial (6 o'clock, half a cycle away from the reference in both directions). */
+const HALF_FRAME = Math.floor(CFG.FPS / 2);
+const frameLabelMs = frame => (frame <= HALF_FRAME ? frame : frame - CFG.FPS) * FRAME_MS;
+const phaseLabelMs = phase => (phase <= 0.5 ? phase : phase - 1) * CFG.CYCLE_S * 1000;
+
+const SC_X = 210, SC_W = 1500, SC_CX = SC_X + SC_W / 2;
+const msToX = ms => SC_CX + (Math.max(-CFG.SCALE_MS, Math.min(CFG.SCALE_MS, ms))
+                             / CFG.SCALE_MS) * (SC_W / 2);
+
+const bandOf = ms =>
+  (ms >= CFG.R37_LEAD && ms <= CFG.R37_LAG) ? "var(--ok)"
+  : (ms >= CFG.ACC_LEAD && ms <= CFG.ACC_LAG) ? "var(--warn)"
+  : "var(--bad)";
+
+/* Explicit, unambiguous direction call-out. Sign convention: offset = audio -
+   video, so ms < 0 means audio arrived before video (leads), ms > 0 means
+   audio arrived after video (lags). Spelled out in words every frame so
+   nobody has to hold the sign convention in their head. */
+const verdictOf = ms =>
+  ms === 0 ? "SASKAŅOTS · IN SYNC"
+  : ms < 0  ? "\u25C0 SKAŅA PRIEKŠĀ · AUDIO LEADS"
+            : "SKAŅA ATPALIEK · AUDIO LAGS \u25B6";
+
+/* HH:MM:SS.mmm in the machine's local time zone. */
+function fmtClock(d) {
+  const p2 = n => String(n).padStart(2, "0");
+  const p3 = n => String(n).padStart(3, "0");
+  return `${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}.${p3(d.getMilliseconds())}`;
+}
+
+/* ==========================================================================
+   DOM
+   ========================================================================== */
+const $ = id => document.getElementById(id);
+const $card = $("card"), $ticks = $("ticks"), $ring = $("ring"),
+      $sweeper = $("sweeper"), $flash = $("flashrect"),
+      $bigms = $("bigms"), $bigfr = $("bigfr"), $verdict = $("verdict"),
+      $marker = $("marker"), $mline = $("markerline"),
+      $status = $("status"), $mode = $("mode"), $clock = $("worldclock");
+
+/* Dial ticks - built once. */
+(function buildTicks() {
+  const CX = 960, CY = 212, R = 126;
+  let s = "";
+  for (let i = 0; i < CFG.FPS; i++) {
+    const major = i % 5 === 0, len = major ? 16 : 8;
+    const a = (i / CFG.FPS) * Math.PI * 2 - Math.PI / 2;
+    s += `<line x1="${(CX+Math.cos(a)*R).toFixed(2)}" y1="${(CY+Math.sin(a)*R).toFixed(2)}"`
+       + ` x2="${(CX+Math.cos(a)*(R-len)).toFixed(2)}" y2="${(CY+Math.sin(a)*(R-len)).toFixed(2)}"`
+       + ` stroke="${major?"var(--grid-hot)":"var(--grid)"}" stroke-width="${major?3:2}"/>`;
+  }
+  $ticks.innerHTML = s;
+})();
+
+/* Tolerance bands + one tick per frame - built once from CFG. */
+(function buildScale() {
+  const set = (el, a, b) => {
+    const x1 = msToX(a), x2 = msToX(b);
+    el.setAttribute("x", x1.toFixed(1));
+    el.setAttribute("width", Math.max(0, x2 - x1).toFixed(1));
+  };
+  set($("b_bad_l"),  -CFG.SCALE_MS, CFG.ACC_LEAD);
+  set($("b_warn_l"), CFG.ACC_LEAD,  CFG.R37_LEAD);
+  set($("b_ok"),     CFG.R37_LEAD,  CFG.R37_LAG);
+  set($("b_warn_r"), CFG.R37_LAG,   CFG.ACC_LAG);
+  set($("b_bad_r"),  CFG.ACC_LAG,   CFG.SCALE_MS);
+
+  let s = "";
+  const n = Math.floor(CFG.SCALE_MS / FRAME_MS);
+  for (let f = -n; f <= n; f++) {
+    const ms = f * FRAME_MS, x = msToX(ms), major = f % 5 === 0;
+    s += `<line x1="${x.toFixed(1)}" y1="${major?848:844}" x2="${x.toFixed(1)}" y2="${major?876:862}"`
+       + ` stroke="${major?"var(--grid-hot)":"var(--grid)"}" stroke-width="${major?3:2}"/>`;
+    if (major) s += `<text class="num" x="${x.toFixed(1)}" y="900" text-anchor="middle"`
+                  + ` font-size="22" fill="var(--grid-hot)">${ms>0?"+":""}${ms}</text>`;
+  }
+  $("scaleticks").innerHTML = s;
+})();
+
+const RING_C = 2 * Math.PI * 106;
+$("bg").setAttribute("opacity", String(CFG.BG_ALPHA));
+$ring.setAttribute("stroke-dasharray", RING_C.toFixed(2));
+$mode.textContent = CFG.FPS === 25 ? "1080i50 · 40 ms/kadrs"
+                                   : `${CFG.FPS} fps · ${FRAME_MS.toFixed(0)} ms/kadrs`;
+
+/* ==========================================================================
+   AUDIO - scheduled ahead on the audio thread, never fired from rAF
+   ========================================================================== */
+const AC  = window.AudioContext || window.webkitAudioContext;
+const ctx = new AC({ latencyHint: "interactive" });
+const bus = ctx.createGain();
+bus.gain.value = 1;
+bus.connect(ctx.destination);
+
+let t0 = ctx.currentTime + 0.30;    // shared origin for audio AND video
+let nextBeepIndex = 0;
+let pending = [];
+
+/* Optional pre-compensation for the null test. Zero by default. */
+let injectMs = 0, inject = false;
+
+function scheduleBeep(at) {
+  const osc = ctx.createOscillator();
+  const env = ctx.createGain();
+  osc.type = "sine";
+  osc.frequency.setValueAtTime(CFG.TONE_HZ, at);
+
+  const e = CFG.ENV_MS / 1000, g = env.gain;
+  g.setValueAtTime(0, at);
+  g.linearRampToValueAtTime(CFG.PEAK, at + e);
+  g.setValueAtTime(CFG.PEAK, at + BEEP_S - e);
+  g.linearRampToValueAtTime(0, at + BEEP_S);
+
+  osc.connect(env); env.connect(bus);
+  osc.start(at);
+  osc.stop(at + BEEP_S + 0.005);
+
+  const rec = { osc, env, at };
+  pending.push(rec);
+  osc.onended = () => {
+    osc.disconnect(); env.disconnect();
+    const i = pending.indexOf(rec);
+    if (i >= 0) pending.splice(i, 1);
+  };
+}
+
+/* The beep belongs to frame 0 - the instant the hand reaches 12 o'clock. */
+const beepTimeFor = i =>
+  t0 + i * CFG.CYCLE_S + (inject ? injectMs / 1000 : 0);
+
+/* Lookahead scheduler - immune to rAF jitter and dropped frames. */
+function pump() {
+  const horizon = ctx.currentTime + CFG.LOOKAHEAD_S;
+  while (beepTimeFor(nextBeepIndex) < horizon) {
+    const at = beepTimeFor(nextBeepIndex);
+    if (at > ctx.currentTime) scheduleBeep(at);
+    nextBeepIndex++;
+  }
+}
+setInterval(pump, CFG.TICK_MS);
+pump();
+
+function reschedule() {
+  const now = ctx.currentTime;
+  pending = pending.filter(r => {
+    if (r.at > now + 0.02) { try { r.osc.stop(now); } catch (_) {} return false; }
+    return true;
+  });
+  nextBeepIndex = Math.max(0, Math.ceil((now - t0) / CFG.CYCLE_S));
+  pump();
+}
+
+/* ==========================================================================
+   RENDER LOOP - reads the audio clock, paints, triggers nothing
+   ========================================================================== */
+let lastFrame = -1, flashOn = false, statusAcc = 0;
+
+function render() {
+  const t = ctx.currentTime - t0;
+  if (t < 0) { requestAnimationFrame(render); return; }
+
+  /* Absolute-clock derived: no accumulated drift, ever. */
+  const phase = (t % CFG.CYCLE_S) / CFG.CYCLE_S;
+  const frame = (phase * CFG.FPS) | 0;
+
+  /* Continuous: dial + marker. Marker runs 1:1 with real time and crosses
+     zero exactly on the beep, so it reads live as well as frame by frame. */
+  const relMs = phaseLabelMs(phase);
+  const x = msToX(relMs);
+  $marker.setAttribute("points", `${x},782 ${x+16},754 ${x-16},754`);
+  $mline.setAttribute("x1", x); $mline.setAttribute("x2", x);
+
+  $sweeper.setAttribute("transform", `rotate(${(phase*360).toFixed(3)} 960 212)`);
+  $ring.setAttribute("stroke-dashoffset", (RING_C * (1 - phase)).toFixed(2));
+
+  /* World clock. Independent of the sync cycle - just the machine's local
+     time, refreshed every paint so the milliseconds digit stays live. */
+  $clock.textContent = fmtClock(new Date());
+
+  /* Discrete: only touched when the frame number actually changes. */
+  if (frame !== lastFrame) {
+    lastFrame = frame;
+
+    const ms  = frameLabelMs(frame);   // this frame's label
+    const col = bandOf(ms);
+
+    $bigms.textContent = `${ms > 0 ? "+" : ""}${ms.toFixed(0)} ms`;
+    $bigms.setAttribute("fill", col);
+    $bigfr.textContent = `${ms > 0 ? "+" : ""}${((ms / FRAME_MS)).toFixed(0)} kadr.`;
+    $verdict.textContent = verdictOf(ms);
+    $verdict.setAttribute("fill", col);
+    $marker.setAttribute("fill", col);
+    $mline.setAttribute("stroke", col);
+
+    /* Flash on the zero frame. Card inverts so the number stays readable. */
+    const on = frame < CFG.BEEP_FRAMES;
+    if (on !== flashOn) {
+      flashOn = on;
+      $flash.setAttribute("opacity", on ? "1" : "0");
+      $card.classList.toggle("inv", on);
+    }
+  }
+
+  if (t - statusAcc > 0.5) {
+    statusAcc = t;
+    $status.textContent = `${CFG.TONE_HZ} Hz · ${(BEEP_S*1000).toFixed(0)} ms · `
+      + `cikls ${Math.floor(t/CFG.CYCLE_S)} · ac ${ctx.state}`
+      + (inject ? ` · INJECT ${injectMs > 0 ? "+" : ""}${injectMs} ms` : "");
+  }
+
+  requestAnimationFrame(render);
+}
+requestAnimationFrame(render);
+
+/* ==========================================================================
+   AUTO-START
+   ========================================================================== */
+function ensureRunning() {
+  if (ctx.state !== "running") {
+    ctx.resume().then(() => {
+      t0 = ctx.currentTime + 0.10;      // re-anchor so A and V realign
+      nextBeepIndex = 0; lastFrame = -1; pending = [];
+      pump();
+    }).catch(() => {});
+  }
+}
+window.addEventListener("load", ensureRunning);
+["pointerdown","keydown"].forEach(e => window.addEventListener(e, ensureRunning, { once:true }));
+ensureRunning();
+
+/* ==========================================================================
+   OPTIONAL CONTROLS - null test only, not needed for a normal measurement
+   ========================================================================== */
+function setInject(on) { inject = !!on; reschedule(); }
+function setOffset(ms) {
+  injectMs = Math.max(-CFG.SCALE_MS, Math.min(CFG.SCALE_MS, Number(ms) || 0));
+  if (inject) reschedule();
+}
+
+window.addEventListener("keydown", ev => {
+  switch (ev.key) {
+    case "ArrowLeft":   setOffset(injectMs - FRAME_MS); break;
+    case "ArrowRight":  setOffset(injectMs + FRAME_MS); break;
+    case "0":           setOffset(0); break;
+    case "i": case "I": setInject(!inject); break;
+    default: return;
+  }
+  ev.preventDefault();
+});
+
+/* AMCP hooks - the card loops on its own, these are extras:
+     CG 1-20 INVOKE 1 "setOffset(-40)"
+     CG 1-20 INVOKE 1 "setInject(true)"
+     CG 1-20 INVOKE 1 "stop()"                                            */
+window.setOffset = setOffset;
+window.setInject = setInject;
+window.setBackground = a => $("bg").setAttribute("opacity", String(Math.max(0, Math.min(1, Number(a)))));
+window.play   = () => { ensureRunning(); bus.gain.value = 1; };
+window.stop   = () => { bus.gain.value = 0; };
+window.next   = () => {};
+window.update = data => {
+  try {
+    const d = typeof data === "string" ? JSON.parse(data) : (data || {});
+    if ("offset" in d) setOffset(d.offset);
+    if ("inject" in d) setInject(d.inject);
+    if ("bg" in d) window.setBackground(d.bg);
+  } catch (_) {}
+};
+
+})();
+</script>
+</body>
+</html>
