@@ -186,7 +186,7 @@
        clock until a user gesture resumes it - and this whole card reads its
        timing from that clock. Without this overlay the card just sits on
        frame 0 looking frozen/broken instead of visibly waiting for a tap. -->
-  <g id="startOverlay">
+  <g id="startOverlay" opacity="0">
     <rect x="0" y="0" width="1920" height="1080" fill="var(--ink)" opacity="0.88"/>
     <text class="verd" x="960" y="520" text-anchor="middle" font-size="64"
           font-weight="700" fill="var(--text)">PIESKARIES EKRĀNAM · TAP TO START</text>
@@ -331,6 +331,40 @@ const bus = ctx.createGain();
 bus.gain.value = 1;
 bus.connect(ctx.destination);
 
+/* iOS SILENT-SWITCH FIX. By default iOS treats Web Audio as an "ambient"
+   sound and mutes it whenever the device is in silent mode - so the card's
+   visuals run but the beep is inaudible. Declaring the audio session as
+   "playback" tells iOS this is primary media that must play even in silent
+   mode (iPadOS/iOS 16.4+; harmless no-op elsewhere). Re-asserted on each
+   gesture in ensureRunning() because iOS can reset it. */
+function forcePlaybackSession() {
+  try {
+    if (navigator.audioSession) navigator.audioSession.type = "playback";
+  } catch (_) {}
+}
+forcePlaybackSession();
+
+/* Fallback for older iOS that lacks navigator.audioSession: keeping a silent
+   HTMLAudioElement playing flips the whole session to the media/playback
+   category, which likewise un-mutes Web Audio under the silent switch. Built
+   from a tiny generated silent WAV so nothing external is fetched. */
+const silentKeepAlive = (() => {
+  try {
+    const sr = 8000, n = sr; // 1 s of 8-bit mono silence
+    const buf = new ArrayBuffer(44 + n), dv = new DataView(buf);
+    const put = (o, s) => { for (let i = 0; i < s.length; i++) dv.setUint8(o + i, s.charCodeAt(i)); };
+    put(0, "RIFF"); dv.setUint32(4, 36 + n, true); put(8, "WAVE");
+    put(12, "fmt "); dv.setUint32(16, 16, true); dv.setUint16(20, 1, true);
+    dv.setUint16(22, 1, true); dv.setUint32(24, sr, true); dv.setUint32(28, sr, true);
+    dv.setUint16(32, 1, true); dv.setUint16(34, 8, true);
+    put(36, "data"); dv.setUint32(40, n, true);
+    for (let i = 0; i < n; i++) dv.setUint8(44 + i, 128); // 128 = silence for 8-bit PCM
+    const el = new Audio(URL.createObjectURL(new Blob([buf], { type: "audio/wav" })));
+    el.loop = true; el.volume = 0;
+    return el;
+  } catch (_) { return null; }
+})();
+
 let t0 = ctx.currentTime + 0.30;    // shared origin for audio AND video
 let nextBeepIndex = 0;
 let pending = [];
@@ -392,7 +426,15 @@ function reschedule() {
 /* ==========================================================================
    RENDER LOOP - reads the audio clock, paints, triggers nothing
    ========================================================================== */
-let lastFrame = -1, flashOn = false, statusAcc = 0, overlayShown = true;
+let lastFrame = -1, flashOn = false, statusAcc = 0, overlayShown = false;
+
+/* Grace period before the "tap to start" overlay is allowed to appear.
+   CasparCG's CEF auto-resumes the AudioContext without a gesture, within a
+   few frames of load - well under this - so the overlay never shows on air.
+   A browser that needs a real tap (iPad Safari) blows past this, so the
+   prompt appears there as intended. */
+const OVERLAY_GRACE_MS = 1000;
+const bootMs = performance.now();
 
 function render() {
   /* World clock is independent of the audio clock, so it - and the overlay
@@ -403,8 +445,9 @@ function render() {
   const t = running ? ctx.currentTime - t0 : -1;
 
   if (!running || t < 0) {
-    if (!overlayShown) { overlayShown = true; $overlay.setAttribute("opacity", "1"); }
-    $status.textContent = running
+    const graceOver = performance.now() - bootMs > OVERLAY_GRACE_MS;
+    if (graceOver && !overlayShown) { overlayShown = true; $overlay.setAttribute("opacity", "1"); }
+    $status.textContent = running || !graceOver
       ? "Starting..."
       : "Pieskaries ekrānam, lai atļautu skaņu · tap screen to allow audio";
     requestAnimationFrame(render);
@@ -465,6 +508,14 @@ requestAnimationFrame(render);
    AUTO-START
    ========================================================================== */
 function ensureRunning() {
+  /* Re-assert the playback session and start the silent keep-alive element -
+     both must happen inside the user gesture on iOS, and together they let
+     the beep sound even when the device is in silent mode. */
+  forcePlaybackSession();
+  if (silentKeepAlive && silentKeepAlive.paused) {
+    silentKeepAlive.play().catch(() => {});
+  }
+
   /* iOS/Safari quirk: resume() alone can report "running" while the actual
      hardware audio path stays closed, so oscillators started later (from the
      pump() interval, outside the gesture) render silently. Playing a
