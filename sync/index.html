@@ -2,6 +2,10 @@
 <html lang="lv">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <title>A/V SYNC TEST — 1080i50 self-reading</title>
 
 <!--
@@ -48,10 +52,17 @@
 <style>
   html, body {
     margin: 0; padding: 0;
-    width: 1920px; height: 1080px;
+    width: 100%; height: 100%;
     overflow: hidden;
     background: rgba(0,0,0,0) !important;      /* transparent key */
   }
+
+  /* CasparCG's headless window is already sized to the video mode (1920x1080),
+     so 100% == 1920x1080 there - pixel-identical to before. In a regular
+     browser (e.g. iPad Safari) this instead scales the whole 1920x1080 card
+     to fit the viewport, letterboxed, so the page opens usable on any screen. */
+  #stage { position: relative; width: 100%; height: 100%; background: transparent; }
+  #card  { display: block; width: 100%; height: 100%; }
 
   :root {
     --bg:       #05070a;
@@ -66,8 +77,6 @@
     --mono:     "JetBrains Mono","Roboto Mono","Consolas",monospace;
     --cond:     "Barlow Condensed","Oswald","Arial Narrow",sans-serif;
   }
-
-  #stage { position: relative; width: 1920px; height: 1080px; background: transparent; }
 
   .lbl  { font-family: var(--cond); letter-spacing:.26em; text-transform:uppercase; fill: var(--grid-hot); }
   .num  { font-family: var(--mono); fill: var(--text); }
@@ -84,7 +93,8 @@
 <body class="bg-transparent">
 
 <div id="stage">
-<svg id="card" width="1920" height="1080" viewBox="0 0 1920 1080"
+<svg id="card" width="100%" height="100%" viewBox="0 0 1920 1080"
+     preserveAspectRatio="xMidYMid meet"
      xmlns="http://www.w3.org/2000/svg" shape-rendering="geometricPrecision">
 
   <!-- Dark backdrop. Bottom-most layer, so the white flash has maximum
@@ -441,6 +451,25 @@ function ensureRunning() {
 window.addEventListener("load", ensureRunning);
 ["pointerdown","keydown"].forEach(e => window.addEventListener(e, ensureRunning, { once:true }));
 ensureRunning();
+
+/* ==========================================================================
+   SCREEN WAKE LOCK - keeps a monitoring tab (e.g. an iPad left showing this
+   page) from dimming/locking. No-op where unsupported (older Safari). The
+   lock is released by the OS whenever the tab is hidden, so it's
+   re-requested on visibilitychange and on the same first-gesture events
+   used above for the audio unlock.
+   ========================================================================== */
+let wakeLock = null;
+async function requestWakeLock() {
+  if (!("wakeLock" in navigator)) return;
+  try { wakeLock = await navigator.wakeLock.request("screen"); }
+  catch (_) { /* e.g. tab not visible yet - will retry on visibilitychange */ }
+}
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") requestWakeLock();
+});
+["pointerdown","keydown"].forEach(e => window.addEventListener(e, requestWakeLock));
+requestWakeLock();
 
 /* ==========================================================================
    OPTIONAL CONTROLS - null test only, not needed for a normal measurement
