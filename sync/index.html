@@ -465,6 +465,17 @@ requestAnimationFrame(render);
    AUTO-START
    ========================================================================== */
 function ensureRunning() {
+  /* iOS/Safari quirk: resume() alone can report "running" while the actual
+     hardware audio path stays closed, so oscillators started later (from the
+     pump() interval, outside the gesture) render silently. Playing a
+     near-silent buffer synchronously, inside the gesture handler itself,
+     opens that path. Cheap, so it's fine to redo on every tap. */
+  try {
+    const b = ctx.createBuffer(1, 1, 22050);
+    const s = ctx.createBufferSource();
+    s.buffer = b; s.connect(ctx.destination); s.start(0);
+  } catch (_) {}
+
   if (ctx.state !== "running") {
     ctx.resume().then(() => {
       t0 = ctx.currentTime + 0.10;      // re-anchor so A and V realign
