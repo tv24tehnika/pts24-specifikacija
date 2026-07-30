@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="lv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Kameras FOV Kalkulators</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+
+    <div class="max-w-md w-full p-6 bg-white rounded-lg shadow-md border border-gray-200 font-sans">
+        <h2 class="text-xl font-bold text-gray-800 mb-2">
+            Kameras FOV Kalkulators
+        </h2>
+        <p class="text-sm text-gray-500 mb-6">
+            Standarta 2/3" sensors
+        </p>
+
+        <div class="space-y-6">
+            <!-- Objektīva izvēle -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Izvēlies objektīvu
+                </label>
+                <select id="lensSelect" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                    <option value="ua14">Fujinon UA14x4.5BERD-S10B (4.5-63mm)</option>
+                    <option value="ua46">Fujinon UA46X9.5BERD-U1 (9.5-437mm)</option>
+                    <option value="ua22">Fujinon UA22x8BERD-S8 (8-176mm)</option>
+                </select>
+            </div>
+
+            <!-- Distances ievade -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Distance līdz skatuvei
+                </label>
+                <div class="flex items-center space-x-4">
+                    <input
+                        type="range"
+                        id="distanceSlider"
+                        min="1"
+                        max="150"
+                        step="0.5"
+                        value="40"
+                        class="w-2/3"
+                    />
+                    <div class="w-1/3 flex items-center border border-gray-300 rounded-md px-2 bg-white">
+                        <input
+                            type="number"
+                            id="distanceInput"
+                            min="1"
+                            value="40"
+                            class="w-full py-2 text-right focus:outline-none"
+                        />
+                        <span class="ml-2 text-sm text-gray-500">m</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fokusa attāluma ievade -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Fokusa attālums (Zoom)
+                </label>
+                <div class="flex items-center space-x-4">
+                    <input
+                        type="range"
+                        id="focalSlider"
+                        min="4.5"
+                        max="63"
+                        step="0.1"
+                        value="4.5"
+                        class="w-2/3"
+                    />
+                    <div class="w-1/3 flex items-center border border-gray-300 rounded-md px-2 bg-white">
+                        <input
+                            type="number"
+                            id="focalInput"
+                            min="4.5"
+                            max="63"
+                            step="0.1"
+                            value="4.5"
+                            class="w-full py-2 text-right focus:outline-none"
+                        />
+                        <span class="ml-2 text-sm text-gray-500">mm</span>
+                    </div>
+                </div>
+                <div class="flex justify-between text-xs text-gray-500 mt-1 w-2/3">
+                    <span id="wideLabel">Wide (4.5)</span>
+                    <span id="teleLabel">Tele (63)</span>
+                </div>
+            </div>
+
+            <!-- Rezultātu izvade -->
+            <div class="bg-blue-50 p-4 rounded-md mt-6">
+                <h3 class="text-sm font-semibold text-blue-900 mb-2">
+                    Redzamais skatuves laukums:
+                </h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-xs text-blue-700 uppercase">Platums</p>
+                        <p class="text-2xl font-bold text-blue-900"><span id="widthResult">0.00</span> m</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-blue-700 uppercase">Augstums</p>
+                        <p class="text-2xl font-bold text-blue-900"><span id="heightResult">0.00</span> m</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Standarta 2/3" sensora izmēri (16:9 formātam)
+        const sensorWidth = 9.6;
+        const sensorHeight = 5.4;
+
+        // Objektīvu datubāze
+        const lensData = {
+            ua14: { min: 4.5, max: 63 },
+            ua46: { min: 9.5, max: 437 },
+            ua22: { min: 8, max: 176 }
+        };
+
+        // Elementu piesaiste
+        const lensSelect = document.getElementById('lensSelect');
+        
+        const distanceInput = document.getElementById('distanceInput');
+        const distanceSlider = document.getElementById('distanceSlider');
+        
+        const focalInput = document.getElementById('focalInput');
+        const focalSlider = document.getElementById('focalSlider');
+        
+        const wideLabel = document.getElementById('wideLabel');
+        const teleLabel = document.getElementById('teleLabel');
+        
+        const widthResult = document.getElementById('widthResult');
+        const heightResult = document.getElementById('heightResult');
+
+        // Objektīva nomaiņas loģika
+        function handleLensChange() {
+            const selectedLens = lensData[lensSelect.value];
+            
+            // Atjaunina min/max vērtības
+            focalInput.min = selectedLens.min;
+            focalInput.max = selectedLens.max;
+            focalSlider.min = selectedLens.min;
+            focalSlider.max = selectedLens.max;
+            
+            // Pārslēdzoties uzliek platāko leņķi kā noklusējumu
+            focalInput.value = selectedLens.min;
+            focalSlider.value = selectedLens.min;
+            
+            // Atjaunina tekstus zem slaidera
+            wideLabel.textContent = `Wide (${selectedLens.min})`;
+            teleLabel.textContent = `Tele (${selectedLens.max})`;
+            
+            calculateAndDisplay();
+        }
+
+        function handleDistanceChange(e) {
+            const val = e.target.value;
+            distanceInput.value = val;
+            distanceSlider.value = val;
+            calculateAndDisplay();
+        }
+
+        function handleFocalChange(e) {
+            let val = e.target.value;
+            const currentLens = lensData[lensSelect.value];
+            
+            // Neļauj nokrist zem 0
+            if (val <= 0) val = currentLens.min; 
+            
+            focalInput.value = val;
+            focalSlider.value = val;
+            calculateAndDisplay();
+        }
+
+        function calculateAndDisplay() {
+            const distance = parseFloat(distanceInput.value) || 0;
+            const focalLength = parseFloat(focalInput.value) || 4.5;
+
+            if (distance > 0 && focalLength > 0) {
+                const fovWidth = (sensorWidth * distance) / focalLength;
+                const fovHeight = (sensorHeight * distance) / focalLength;
+
+                widthResult.textContent = fovWidth.toFixed(2);
+                heightResult.textContent = fovHeight.toFixed(2);
+            }
+        }
+
+        // Event listeneri
+        lensSelect.addEventListener('change', handleLensChange);
+        
+        distanceInput.addEventListener('input', handleDistanceChange);
+        distanceSlider.addEventListener('input', handleDistanceChange);
+        
+        focalInput.addEventListener('input', handleFocalChange);
+        focalSlider.addEventListener('input', handleFocalChange);
+
+        // Sākotnējais aprēķins
+        calculateAndDisplay();
+    </script>
+</body>
+</html>
