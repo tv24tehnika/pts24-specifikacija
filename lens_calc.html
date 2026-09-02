@@ -27,11 +27,16 @@
                     <option value="ua14">Fujinon UA14x4.5BERD-S10B (4.5-63mm)</option>
                     <option value="ua46">Fujinon UA46X9.5BERD-U1 (9.5-437mm)</option>
                     <option value="ua22">Fujinon UA22x8BERD-S8 (8-176mm)</option>
-                    <option value="ua27">Fujinon UA27x6.5BESM box (6.5-180mm)</option>
+                    <option value="ha27">Fujinon HA27x6.5BESM-F48B box (6.5-180mm)</option>
                     <option value="xa76">Fujinon XA76x9.3BESM box (9.3-710mm)</option>
                     <option value="xa101">Fujinon XA101x8.9BESM box (8.9-900mm)</option>
                     <option value="c86">Canon XJ86x9.3B DIGISUPER 86AF (9.3-800mm)</option>
                 </select>
+                <label id="extenderLabel" class="flex items-center mt-3 text-sm text-gray-700">
+                    <input type="checkbox" id="extenderToggle" class="mr-2 h-4 w-4 accent-blue-600" />
+                    <span id="extenderName">2x ekstenders</span>
+                    <span id="extenderRange" class="ml-2 text-xs text-gray-500"></span>
+                </label>
             </div>
 
             <!-- Distances ievade -->
@@ -122,17 +127,21 @@
 
         // Objektīvu datubāze
         const lensData = {
-            ua14: { min: 4.5, max: 63 },
-            ua46: { min: 9.5, max: 437 },
-            ua22: { min: 8, max: 176 },
-            ua27: { min: 6.5, max: 180 },
-            xa76: { min: 9.3, max: 710 },
-            xa101: { min: 8.9, max: 900 },
-            c86: { min: 9.3, max: 800 }
+            ua14: { min: 4.5, max: 63, ext: 2 },
+            ua46: { min: 9.5, max: 437, ext: 2 },
+            ua22: { min: 8, max: 176, ext: 2 },
+            ha27: { min: 6.5, max: 180, ext: 2 },
+            xa76: { min: 9.3, max: 710, ext: 2 },
+            xa101: { min: 8.9, max: 900, ext: 2 },
+            c86: { min: 9.3, max: 800, ext: 2 }
         };
 
         // Elementu piesaiste
         const lensSelect = document.getElementById('lensSelect');
+        const extenderToggle = document.getElementById('extenderToggle');
+        const extenderLabel = document.getElementById('extenderLabel');
+        const extenderName = document.getElementById('extenderName');
+        const extenderRange = document.getElementById('extenderRange');
         
         const distanceInput = document.getElementById('distanceInput');
         const distanceSlider = document.getElementById('distanceSlider');
@@ -146,25 +155,74 @@
         const widthResult = document.getElementById('widthResult');
         const heightResult = document.getElementById('heightResult');
 
-        // Objektīva nomaiņas loģika
-        function handleLensChange() {
-            const selectedLens = lensData[lensSelect.value];
-            
-            // Atjaunina min/max vērtības
-            focalInput.min = selectedLens.min;
-            focalInput.max = selectedLens.max;
-            focalSlider.min = selectedLens.min;
-            focalSlider.max = selectedLens.max;
-            
-            // Pārslēdzoties uzliek platāko leņķi kā noklusējumu
-            focalInput.value = selectedLens.min;
-            focalSlider.value = selectedLens.min;
-            
+        // Efektīvais fokusa diapazons — ar vai bez ekstendera
+        function getRange() {
+            const lens = lensData[lensSelect.value];
+            const factor = extenderToggle.checked ? extFactor(lens) : 1;
+            return {
+                min: Math.round(lens.min * factor * 10) / 10,
+                max: Math.round(lens.max * factor * 10) / 10
+            };
+        }
+
+        // Uzliek diapazonu slaiderim un ievadei, noapaļojot vērtību tā robežās
+        function applyRange(focal) {
+            const range = getRange();
+
+            focalInput.min = range.min;
+            focalInput.max = range.max;
+            focalSlider.min = range.min;
+            focalSlider.max = range.max;
+
+            const val = Math.min(range.max, Math.max(range.min, focal));
+            focalInput.value = val;
+            focalSlider.value = val;
+
             // Atjaunina tekstus zem slaidera
-            wideLabel.textContent = `Wide (${selectedLens.min})`;
-            teleLabel.textContent = `Tele (${selectedLens.max})`;
-            
+            wideLabel.textContent = `Wide (${range.min})`;
+            teleLabel.textContent = `Tele (${range.max})`;
+
             calculateAndDisplay();
+        }
+
+        // Ekstendera reizinātājs; 1 vai bez lauka = objektīvam ekstendera nav
+        function extFactor(lens) {
+            return lens.ext > 1 ? lens.ext : 1;
+        }
+
+        // Ekstendera rūtiņa pieejama tikai tiem objektīviem, kuriem ekstenderis ir
+        function updateExtenderUI() {
+            const lens = lensData[lensSelect.value];
+            const factor = extFactor(lens);
+            const hasExtender = factor > 1;
+
+            if (!hasExtender) extenderToggle.checked = false;
+            extenderToggle.disabled = !hasExtender;
+            extenderLabel.classList.toggle('text-gray-400', !hasExtender);
+            extenderLabel.classList.toggle('text-gray-700', hasExtender);
+
+            if (hasExtender) {
+                extenderName.textContent = `${factor}x ekstenders`;
+                const min = Math.round(lens.min * factor * 10) / 10;
+                const max = Math.round(lens.max * factor * 10) / 10;
+                extenderRange.textContent = `(${min}-${max}mm)`;
+            } else {
+                extenderName.textContent = 'Ekstenderis nav pieejams';
+                extenderRange.textContent = '';
+            }
+        }
+
+        // Objektīva nomaiņas loģika — pārslēdzoties uzliek platāko leņķi kā noklusējumu
+        function handleLensChange() {
+            updateExtenderUI();
+            applyRange(getRange().min);
+        }
+
+        // Ekstenderis maina fokusa attālumu tajā pašā zoom pozīcijā
+        function handleExtenderChange() {
+            const factor = extFactor(lensData[lensSelect.value]);
+            const current = parseFloat(focalInput.value) || 0;
+            applyRange(extenderToggle.checked ? current * factor : current / factor);
         }
 
         function handleDistanceChange(e) {
@@ -176,11 +234,11 @@
 
         function handleFocalChange(e) {
             let val = parseFloat(e.target.value);
-            const currentLens = lensData[lensSelect.value];
+            const range = getRange();
 
             // Neļauj iziet ārpus objektīva fokusa diapazona
-            if (isNaN(val) || val <= 0) val = currentLens.min;
-            if (val > currentLens.max) val = currentLens.max;
+            if (isNaN(val) || val <= 0) val = range.min;
+            if (val > range.max) val = range.max;
 
             focalInput.value = val;
             focalSlider.value = val;
@@ -205,6 +263,7 @@
 
         // Event listeneri
         lensSelect.addEventListener('change', handleLensChange);
+        extenderToggle.addEventListener('change', handleExtenderChange);
         
         distanceInput.addEventListener('input', handleDistanceChange);
         distanceSlider.addEventListener('input', handleDistanceChange);
@@ -213,7 +272,8 @@
         focalSlider.addEventListener('input', handleFocalChange);
 
         // Sākotnējais aprēķins
-        calculateAndDisplay();
+        updateExtenderUI();
+        applyRange(parseFloat(focalInput.value));
     </script>
 </body>
 </html>
