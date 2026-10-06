@@ -32,7 +32,31 @@
                     <option value="xa101">Fujinon XA101x8.9BESM box (8.9-900mm)</option>
                     <option value="c86">Canon XJ86x9.3B DIGISUPER 86AF (9.3-800mm)</option>
                     <option value="cj15">Canon J15ax8B4 IAS Sx12 (8-120mm)</option>
+                    <option value="custom">Cits objektīvs (ievadīt manuāli)</option>
                 </select>
+                <div id="customLens" class="hidden grid grid-cols-3 gap-3 mt-3">
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1">Wide (mm)</label>
+                        <input type="number" id="customMin" min="0.1" step="0.1" value="8"
+                            class="w-full px-2 py-2 border border-gray-300 rounded-md text-right focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1">Tele (mm)</label>
+                        <input type="number" id="customMax" min="0.1" step="0.1" value="120"
+                            class="w-full px-2 py-2 border border-gray-300 rounded-md text-right focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1">Ekstenders</label>
+                        <select id="customExt" class="w-full px-2 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="1">Nav</option>
+                            <option value="1.5">1.5x</option>
+                            <option value="2" selected>2x</option>
+                        </select>
+                    </div>
+                    <p id="customError" class="hidden col-span-3 text-xs text-red-600">
+                        Tele jābūt lielākam par Wide, abiem — lielākiem par 0.
+                    </p>
+                </div>
                 <label id="extenderLabel" class="flex items-center mt-3 text-sm text-gray-700">
                     <input type="checkbox" id="extenderToggle" class="mr-2 h-4 w-4 accent-blue-600" />
                     <span id="extenderName">2x ekstenders</span>
@@ -135,7 +159,9 @@
             xa76: { min: 9.3, max: 710, ext: 2 },
             xa101: { min: 8.9, max: 900, ext: 2 },
             c86: { min: 9.3, max: 800, ext: 2 },
-            cj15: { min: 8, max: 120, ext: 2 }
+            cj15: { min: 8, max: 120, ext: 2 },
+            // Manuāli ievadīts objektīvs — vērtības pārraksta customLens lauki
+            custom: { min: 8, max: 120, ext: 2 }
         };
 
         // Elementu piesaiste
@@ -144,7 +170,13 @@
         const extenderLabel = document.getElementById('extenderLabel');
         const extenderName = document.getElementById('extenderName');
         const extenderRange = document.getElementById('extenderRange');
-        
+
+        const customLens = document.getElementById('customLens');
+        const customMin = document.getElementById('customMin');
+        const customMax = document.getElementById('customMax');
+        const customExt = document.getElementById('customExt');
+        const customError = document.getElementById('customError');
+
         const distanceInput = document.getElementById('distanceInput');
         const distanceSlider = document.getElementById('distanceSlider');
         
@@ -216,8 +248,23 @@
 
         // Objektīva nomaiņas loģika — pārslēdzoties uzliek platāko leņķi kā noklusējumu
         function handleLensChange() {
+            customLens.classList.toggle('hidden', lensSelect.value !== 'custom');
             updateExtenderUI();
             applyRange(getRange().min);
+        }
+
+        // Manuālā objektīva dati — nederīgu ievadi neņem vērā, paturot pēdējās derīgās vērtības
+        function handleCustomChange() {
+            const min = parseFloat(customMin.value);
+            const max = parseFloat(customMax.value);
+            const valid = min > 0 && max > min;
+
+            customError.classList.toggle('hidden', valid);
+            if (!valid) return;
+
+            lensData.custom = { min, max, ext: parseFloat(customExt.value) };
+            updateExtenderUI();
+            applyRange(parseFloat(focalInput.value) || min);
         }
 
         // Ekstenderis maina fokusa attālumu tajā pašā zoom pozīcijā
@@ -266,14 +313,20 @@
         // Event listeneri
         lensSelect.addEventListener('change', handleLensChange);
         extenderToggle.addEventListener('change', handleExtenderChange);
-        
+
+        customMin.addEventListener('input', handleCustomChange);
+        customMax.addEventListener('input', handleCustomChange);
+        customExt.addEventListener('change', handleCustomChange);
+
         distanceInput.addEventListener('input', handleDistanceChange);
         distanceSlider.addEventListener('input', handleDistanceChange);
         
         focalInput.addEventListener('input', handleFocalChange);
         focalSlider.addEventListener('input', handleFocalChange);
 
-        // Sākotnējais aprēķins
+        // Sākotnējais aprēķins (pārlūks pēc pārlādes var atjaunot iepriekšējo izvēli)
+        customLens.classList.toggle('hidden', lensSelect.value !== 'custom');
+        handleCustomChange();
         updateExtenderUI();
         applyRange(parseFloat(focalInput.value));
     </script>
