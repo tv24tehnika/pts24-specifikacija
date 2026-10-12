@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="lv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Pulkstenis</title>
+    <style>
+        html, body {
+            margin: 0;
+            height: 100%;
+            background: #000;
+            color: #fff;
+            overflow: hidden;
+            cursor: none;
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            font-variant-numeric: tabular-nums;
+            -webkit-font-smoothing: antialiased;
+            user-select: none;
+        }
+        #main {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: min(22vw, 60vh);
+            font-weight: 500;
+            letter-spacing: -0.02em;
+            line-height: 1;
+            white-space: nowrap;
+        }
+        #riga {
+            position: fixed;
+            right: 2.2vw;
+            bottom: 2vh;
+            font-size: 2.4vh;
+            color: #555;
+            letter-spacing: 0.04em;
+        }
+        #status {
+            position: fixed;
+            left: 2vw;
+            bottom: 2.4vh;
+            width: 0.8vh;
+            height: 0.8vh;
+            border-radius: 50%;
+            background: #a33;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="main">--:--:--</div>
+    <div id="riga">Rīga --:--:--</div>
+    <div id="status" title="Nav sinhronizēts ar interneta laiku"></div>
+
+<script>
+// Laiks tiek ņemts no Cloudflare servera (/cdn-cgi/trace → ts=...),
+// nevis no datora pulksteņa. Starp sinhronizācijām laiku skaita ar
+// performance.now(), kas nav atkarīgs no datora pulksteņa izmaiņām.
+//
+// Serveris laiku dod ar sekundes precizitāti, tāpēc tiek veikti vairāki
+// pieprasījumi ~1,5 s garumā: katrs ierobežo nobīdi (servera laiks −
+// performance.now()) līdz intervālam, un to šķēlums noķer sekundes maiņas
+// brīdi ar pieprasījuma latentuma precizitāti.
+const RESYNC_MS = 10 * 60 * 1000;
+const RETRY_MS = 30 * 1000;
+const SAMPLES = 14;
+const SAMPLE_GAP_MS = 110;
+
+let offset = null;      // servera laiks (ms) = performance.now() + offset
+let lastSyncPerf = -Infinity;
+
+const fmt = tz => new Intl.DateTimeFormat('en-GB', {
+    timeZone: tz, hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23'
+});
+const fmtBrussels = fmt('Europe/Brussels');
+const fmtRiga = fmt('Europe/Riga');
+
+const elMain = document.getElementById('main');
+const elRiga = document.getElementById('riga');
+const elStatus = document.getElementById('status');
+
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+function now() {
+    if (offset === null) return Date.now();
+    return performance.now() + offset;
+}
+
+// Atgriež pieļaujamo nobīdes intervālu [lo, hi] vienam pieprasījumam
+async function sampleTrace() {
+    const t0 = performance.now();
+    const res = await fetch('/cdn-cgi/trace?_=' + Math.random(), { cache: 'no-store' });
+    const text = await res.text();
+    const t1 = performance.now();
+    const m = text.match(/^ts=(\d+)(?:\.(\d+))?$/m);
+    if (!m) throw new Error('no ts');
+    const ms = parseFloat(m[1] + '.' + (m[2] || '0')) * 1000;
+    const res_ms = /[1-9]/.test(m[2] || '') ? 1 : 1000;
+    return { lo: ms - t1, hi: ms + res_ms - t0 };
+}
+
+async function sampleDateHeader() {
+    // Rezerve: HTTP Date galvene (sekunžu precizitāte)
+    const t0 = performance.now();
+    const res = await fetch(location.pathname + '?_=' + Math.random(), { method: 'HEAD', cache: 'no-store' });
+    const t1 = performance.now();
+    const ms = Date.parse(res.headers.get('Date'));
+    if (isNaN(ms)) throw new Error('no Date');
+    return { lo: ms - t1, hi: ms + 1000 - t0 };
+}
+
+async function measure(sample) {
+    let lo = -Infinity, hi = Infinity, n = 0;
+    for (let i = 0; i < SAMPLES; i++) {
+        let s;
+        try { s = await sample(); } catch (e) { break; }
+        if (s.lo > hi || s.hi < lo) {   // nesaderīgi dati — sāk no jauna
+            lo = s.lo; hi = s.hi;
+        } else {
+            lo = Math.max(lo, s.lo); hi = Math.min(hi, s.hi);
+        }
+        n++;
+        if (hi - lo < 30) break;
+        await sleep(SAMPLE_GAP_MS + Math.random() * 40);
+    }
+    return n ? (lo + hi) / 2 : null;
+}
+
+async function sync() {
+    let off = await measure(sampleTrace);
+    if (off === null) off = await measure(sampleDateHeader);
+    if (off !== null) {
+        offset = off;
+        lastSyncPerf = performance.now();
+    }
+    const fresh = performance.now() - lastSyncPerf < 2 * RESYNC_MS;
+    elStatus.style.display = fresh ? 'none' : 'block';
+    setTimeout(sync, off !== null ? RESYNC_MS : RETRY_MS);
+}
+
+function render() {
+    const t = now();
+    elMain.textContent = fmtBrussels.format(t);
+    elRiga.textContent = 'Rīga ' + fmtRiga.format(t);
+    // Nākamais atjauninājums tieši pēc nākamās sekundes robežas
+    setTimeout(render, 1000 - (t % 1000) + 5);
+}
+
+// Neļauj ekrānam aiziet miegā (ja pārlūks atbalsta)
+async function keepAwake() {
+    try { await navigator.wakeLock.request('screen'); } catch (e) {}
+}
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') keepAwake();
+});
+
+// Klikšķis / dubultklikšķis → pilnekrāns
+document.addEventListener('click', () => {
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen?.().catch(() => {});
+});
+
+keepAwake();
+render();
+sync();
+</script>
+</body>
+</html>
