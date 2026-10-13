@@ -80,14 +80,17 @@
 // brīdi ar pieprasījuma latentuma precizitāti.
 const RESYNC_MS = 10 * 60 * 1000;
 const RETRY_MS = 30 * 1000;
-const PING_MS = 15 * 1000;
+const PING_MS = 15 * 1000;          // savienojuma pārbaude, kad internets ir
+const PING_OFFLINE_MS = 2 * 1000;   // un kad tā nav — lai atjaunošanos pamana ātri
+const PING_TIMEOUT_MS = 3000;
 const SAMPLES = 14;
 const SAMPLE_GAP_MS = 110;
 const FETCH_TIMEOUT_MS = 5000;
 
 let offset = null;      // servera laiks (ms) = performance.now() + offset
 let lastSyncPerf = -Infinity;
-let connected = true;   // vai pēdējais pieprasījums uz serveri izdevās
+let connected = true;   // vai jaunākais pieprasījums uz serveri izdevās
+let statusAt = -Infinity;   // kad sākās pieprasījums, kas pēdējais noteica `connected`
 
 const fmt = tz => new Intl.DateTimeFormat('en-GB', {
     timeZone: tz, hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23'
@@ -109,9 +112,9 @@ function now() {
 }
 
 // Atgriež pieļaujamo nobīdes intervālu [lo, hi] vienam pieprasījumam
-async function sampleTrace() {
+async function sampleTrace(timeout = FETCH_TIMEOUT_MS) {
     const t0 = performance.now();
-    const res = await fetch('/cdn-cgi/trace?_=' + Math.random(), { cache: 'no-store', signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+    const res = await fetch('/cdn-cgi/trace?_=' + Math.random(), { cache: 'no-store', signal: AbortSignal.timeout(timeout) });
     const text = await res.text();
     const t1 = performance.now();
     const m = text.match(/^ts=(\d+)(?:\.(\d+))?$/m);
@@ -148,16 +151,31 @@ async function measure(sample) {
     return n ? (lo + hi) / 2 : null;
 }
 
+let syncTimer = null, syncing = false;
 async function sync() {
+    if (syncing) return;
+    syncing = true;
+    clearTimeout(syncTimer);
+    const started = performance.now();
     let off = await measure(sampleTrace);
     if (off === null) off = await measure(sampleDateHeader);
     if (off !== null) {
         offset = off;
         lastSyncPerf = performance.now();
     }
-    connected = off !== null;
+    setConnected(off !== null, started);
+    syncing = false;
+    syncTimer = setTimeout(sync, off !== null ? RESYNC_MS : RETRY_MS);
+}
+
+function setConnected(ok, startedAt) {
+    // Pieprasījums, kas sākās vēl bez interneta, nedrīkst pārrakstīt jaunāku rezultātu
+    if (startedAt < statusAt) return;
+    statusAt = startedAt;
+    const wasConnected = connected;
+    connected = ok;
     updateStatus();
-    setTimeout(sync, off !== null ? RESYNC_MS : RETRY_MS);
+    if (ok && !wasConnected) sync();   // internets atgriezies → uzreiz pārsinhronizē
 }
 
 // Sarkans brīdinājums: nav interneta šobrīd vai laiks nav sinhronizēts ilgāk par 20 min
@@ -169,12 +187,24 @@ function updateStatus() {
 }
 
 // Ātra savienojuma pārbaude starp sinhronizācijām
+let pingTimer = null, pinging = false;
 async function ping() {
-    try { await sampleTrace(); connected = true; } catch (e) { connected = false; }
-    updateStatus();
+    if (pinging) return;
+    pinging = true;
+    clearTimeout(pingTimer);
+    const started = performance.now();
+    let ok = true;
+    try { await sampleTrace(PING_TIMEOUT_MS); } catch (e) { ok = false; }
+    setConnected(ok, started);
+    pinging = false;
+    pingTimer = setTimeout(ping, connected ? PING_MS : PING_OFFLINE_MS);
 }
-setInterval(ping, PING_MS);
-window.addEventListener('offline', () => { connected = false; updateStatus(); });
+pingTimer = setTimeout(ping, PING_MS);
+window.addEventListener('offline', () => {
+    setConnected(false, performance.now());
+    clearTimeout(pingTimer);
+    pingTimer = setTimeout(ping, PING_OFFLINE_MS);
+});
 window.addEventListener('online', ping);
 
 function render() {
