@@ -79,12 +79,14 @@
 // brīdi ar pieprasījuma latentuma precizitāti.
 const RESYNC_MS = 10 * 60 * 1000;
 const RETRY_MS = 30 * 1000;
+const PING_MS = 15 * 1000;
 const SAMPLES = 14;
 const SAMPLE_GAP_MS = 110;
 const FETCH_TIMEOUT_MS = 5000;
 
 let offset = null;      // servera laiks (ms) = performance.now() + offset
 let lastSyncPerf = -Infinity;
+let connected = true;   // vai pēdējais pieprasījums uz serveri izdevās
 
 const fmt = tz => new Intl.DateTimeFormat('en-GB', {
     timeZone: tz, hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23'
@@ -152,10 +154,25 @@ async function sync() {
         offset = off;
         lastSyncPerf = performance.now();
     }
-    const fresh = performance.now() - lastSyncPerf < 2 * RESYNC_MS;
-    elStatus.style.display = fresh ? 'none' : 'block';
+    connected = off !== null;
+    updateStatus();
     setTimeout(sync, off !== null ? RESYNC_MS : RETRY_MS);
 }
+
+// Sarkanais punkts: nav interneta šobrīd vai laiks nav sinhronizēts ilgāk par 20 min
+function updateStatus() {
+    const fresh = performance.now() - lastSyncPerf < 2 * RESYNC_MS;
+    elStatus.style.display = connected && fresh ? 'none' : 'block';
+}
+
+// Ātra savienojuma pārbaude starp sinhronizācijām
+async function ping() {
+    try { await sampleTrace(); connected = true; } catch (e) { connected = false; }
+    updateStatus();
+}
+setInterval(ping, PING_MS);
+window.addEventListener('offline', () => { connected = false; updateStatus(); });
+window.addEventListener('online', ping);
 
 function render() {
     const t = now();
