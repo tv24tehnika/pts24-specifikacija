@@ -22,26 +22,35 @@
             position: fixed;
             inset: 0;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
+        }
+        #main-label {
+            font-size: 7.2vh;
+            color: #555;
+            letter-spacing: 0.04em;
+        }
+        #main-time {
             font-size: min(22vw, 60vh);
             font-weight: 500;
             letter-spacing: -0.02em;
             line-height: 1;
             white-space: nowrap;
         }
-        #riga {
+        .corner {
             position: fixed;
-            right: 2.2vw;
             bottom: 2vh;
             font-size: 7.2vh;
             color: #555;
             letter-spacing: 0.04em;
         }
+        #london { left: 2.2vw; }
+        #riga { right: 2.2vw; }
         #status {
             position: fixed;
-            left: 2vw;
-            bottom: 2.4vh;
+            right: 2vw;
+            top: 2.4vh;
             width: 0.8vh;
             height: 0.8vh;
             border-radius: 50%;
@@ -51,8 +60,12 @@
     </style>
 </head>
 <body>
-    <div id="main">--:--:--</div>
-    <div id="riga">Rīga --:--:--</div>
+    <div id="main">
+        <div id="main-label">Brisele</div>
+        <div id="main-time">--:--:--</div>
+    </div>
+    <div id="london" class="corner">Londona --:--:--</div>
+    <div id="riga" class="corner">Rīga --:--:--</div>
     <div id="status" title="Nav sinhronizēts ar interneta laiku"></div>
 
 <script>
@@ -78,8 +91,10 @@ const fmt = tz => new Intl.DateTimeFormat('en-GB', {
 });
 const fmtBrussels = fmt('Europe/Brussels');
 const fmtRiga = fmt('Europe/Riga');
+const fmtLondon = fmt('Europe/London');
 
-const elMain = document.getElementById('main');
+const elMain = document.getElementById('main-time');
+const elLondon = document.getElementById('london');
 const elRiga = document.getElementById('riga');
 const elStatus = document.getElementById('status');
 
@@ -145,6 +160,7 @@ async function sync() {
 function render() {
     const t = now();
     elMain.textContent = fmtBrussels.format(t);
+    elLondon.textContent = 'Londona ' + fmtLondon.format(t);
     elRiga.textContent = 'Rīga ' + fmtRiga.format(t);
     // Nākamais atjauninājums tieši pēc nākamās sekundes robežas
     setTimeout(render, 1000 - (t % 1000) + 5);
