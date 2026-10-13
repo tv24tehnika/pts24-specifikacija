@@ -49,12 +49,13 @@
         #riga { right: 2.2vw; }
         #status {
             position: fixed;
-            right: 2vw;
-            top: 2.4vh;
-            width: 0.8vh;
-            height: 0.8vh;
-            border-radius: 50%;
-            background: #a33;
+            left: 0;
+            right: 0;
+            top: 3vh;
+            text-align: center;
+            font-size: 4.5vh;
+            color: #d33;
+            letter-spacing: 0.02em;
             display: none;
         }
     </style>
@@ -66,7 +67,7 @@
     </div>
     <div id="london" class="corner">Londona --:--:--</div>
     <div id="riga" class="corner">Rīga --:--:--</div>
-    <div id="status" title="Nav sinhronizēts ar interneta laiku"></div>
+    <div id="status"></div>
 
 <script>
 // Laiks tiek ņemts no Cloudflare servera (/cdn-cgi/trace → ts=...),
@@ -159,10 +160,12 @@ async function sync() {
     setTimeout(sync, off !== null ? RESYNC_MS : RETRY_MS);
 }
 
-// Sarkanais punkts: nav interneta šobrīd vai laiks nav sinhronizēts ilgāk par 20 min
+// Sarkans brīdinājums: nav interneta šobrīd vai laiks nav sinhronizēts ilgāk par 20 min
 function updateStatus() {
     const fresh = performance.now() - lastSyncPerf < 2 * RESYNC_MS;
-    elStatus.style.display = connected && fresh ? 'none' : 'block';
+    elStatus.textContent = !connected ? 'Nav savienojuma ar internetu'
+        : !fresh ? 'Laiks nav sinhronizēts' : '';
+    elStatus.style.display = elStatus.textContent ? 'block' : 'none';
 }
 
 // Ātra savienojuma pārbaude starp sinhronizācijām
