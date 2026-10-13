@@ -68,6 +68,7 @@ const RESYNC_MS = 10 * 60 * 1000;
 const RETRY_MS = 30 * 1000;
 const SAMPLES = 14;
 const SAMPLE_GAP_MS = 110;
+const FETCH_TIMEOUT_MS = 5000;
 
 let offset = null;      // servera laiks (ms) = performance.now() + offset
 let lastSyncPerf = -Infinity;
@@ -92,7 +93,7 @@ function now() {
 // Atgriež pieļaujamo nobīdes intervālu [lo, hi] vienam pieprasījumam
 async function sampleTrace() {
     const t0 = performance.now();
-    const res = await fetch('/cdn-cgi/trace?_=' + Math.random(), { cache: 'no-store' });
+    const res = await fetch('/cdn-cgi/trace?_=' + Math.random(), { cache: 'no-store', signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
     const text = await res.text();
     const t1 = performance.now();
     const m = text.match(/^ts=(\d+)(?:\.(\d+))?$/m);
@@ -105,7 +106,7 @@ async function sampleTrace() {
 async function sampleDateHeader() {
     // Rezerve: HTTP Date galvene (sekunžu precizitāte)
     const t0 = performance.now();
-    const res = await fetch(location.pathname + '?_=' + Math.random(), { method: 'HEAD', cache: 'no-store' });
+    const res = await fetch(location.pathname + '?_=' + Math.random(), { method: 'HEAD', cache: 'no-store', signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
     const t1 = performance.now();
     const ms = Date.parse(res.headers.get('Date'));
     if (isNaN(ms)) throw new Error('no Date');
@@ -161,6 +162,11 @@ document.addEventListener('visibilitychange', () => {
 document.addEventListener('click', () => {
     if (!document.fullscreenElement) document.documentElement.requestFullscreen?.().catch(() => {});
 });
+
+// Saglabā lapu pārlūkā, lai tā ielādētos arī bez interneta
+if ('serviceWorker' in navigator && window.isSecureContext) {
+    navigator.serviceWorker.register('/clock-sw.js', { scope: '/clock' }).catch(() => {});
+}
 
 keepAwake();
 render();
