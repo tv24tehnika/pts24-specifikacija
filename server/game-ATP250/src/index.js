@@ -4,6 +4,7 @@ import { DurableObject } from 'cloudflare:workers';
 // each plays their own copy and reports scores; results are ranked when everyone is done or time runs out.
 const GAME_MS = (480 + 30) * 1000;  // 8 min game clock + grace
 const COUNTDOWN_MS = 5000;
+const AUTO_MS = 60e3;  // with 2+ ready, wait this long for the rest, then start without them
 const MAX_PLAYERS = 16;
 const CHAT_KEEP = 40;
 const STALE_MS = 75e3;  // clients ping every 25 s; silence this long means the connection is dead
@@ -29,7 +30,7 @@ export class Room extends DurableObject {
     ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair('ping', 'pong'));
     this.seen = new Map();
     ctx.blockConcurrencyWhile(async () => {
-      this.room = (await ctx.storage.get('room')) || { phase: 'lobby', startAt: 0, endAt: 0, round: 0, left: [], last: null };
+      this.room = (await ctx.storage.get('room')) || { phase: 'lobby', startAt: 0, endAt: 0, autoAt: 0, round: 0, left: [], last: null };
       this.chat = (await ctx.storage.get('chat')) || [];
     });
   }
@@ -54,7 +55,7 @@ export class Room extends DurableObject {
     const players = this.named(except).map(p => pub(p.a));
     if (this.room.phase === 'playing') players.push(...this.room.left.map(p => ({ ...p, inGame: true, left: true })));
     const r = this.room;
-    this.broadcast({ t: 'state', phase: r.phase, startAt: r.startAt, endAt: r.endAt, now: Date.now(), players, last: r.last }, except);
+    this.broadcast({ t: 'state', phase: r.phase, startAt: r.startAt, endAt: r.endAt, autoAt: r.autoAt || 0, now: Date.now(), players, last: r.last }, except);
   }
   async sys(text, except) {
     const msg = { sys: true, text, ts: Date.now() };
@@ -142,7 +143,7 @@ export class Room extends DurableObject {
 
   async webSocketClose(ws) { await this.gone(ws); try { ws.close(1000, 'bye'); } catch {} }
   async webSocketError(ws) { await this.gone(ws); }
-  async gone(ws) {
+  async gone(ws, why = 'izgāja') {
     const me = ws.deserializeAttachment();
     if (!me || !me.name || me.gone) return;
     me.gone = true;
@@ -151,22 +152,26 @@ export class Room extends DurableObject {
       this.room.left.push({ id: me.id, name: me.name, score: me.score, cables: me.cables, done: me.done });
       await this.save();
     }
-    await this.sys(`${me.name} izgāja`, ws);
+    await this.sys(`${me.name} ${why}`, ws);
     await this.checkStart(ws);
     if (!(await this.checkEnd(ws))) this.state(ws);
   }
 
+  // all ready → short countdown; 2+ ready but someone isn't → start without them after AUTO_MS
   async checkStart(except) {
-    const r = this.room, ps = this.named(except), all = ps.length > 0 && ps.every(p => p.a.ready);
-    if (r.phase === 'lobby' && all) {
-      Object.assign(r, { phase: 'countdown', startAt: Date.now() + COUNTDOWN_MS });
-      await this.ctx.storage.setAlarm(r.startAt);
-      await this.save();
-    } else if (r.phase === 'countdown' && !all) {
+    const r = this.room;
+    if (r.phase === 'playing') return;
+    const ps = this.named(except), ready = ps.filter(p => p.a.ready).length, all = ps.length > 0 && ready === ps.length;
+    if (all) {
+      if (r.phase !== 'countdown') Object.assign(r, { phase: 'countdown', startAt: Date.now() + COUNTDOWN_MS });
+      r.autoAt = 0;
+    } else {
       r.phase = 'lobby';
-      await this.ctx.storage.deleteAlarm();
-      await this.save();
+      r.autoAt = ready >= 2 ? r.autoAt || Date.now() + AUTO_MS : 0;
     }
+    const at = r.phase === 'countdown' ? r.startAt : r.autoAt;
+    if (at) await this.ctx.storage.setAlarm(at); else await this.ctx.storage.deleteAlarm();
+    await this.save();
   }
 
   // true when the round ended (results already broadcast)
@@ -192,6 +197,17 @@ export class Room extends DurableObject {
 
   async alarm() {
     const r = this.room;
+    if (r.phase === 'lobby' && r.autoAt) {
+      r.autoAt = 0;
+      for (const { ws, a } of this.named()) {
+        if (a.ready) continue;
+        this.send(ws, { t: 'kicked', text: 'Tu nenospiedi „Esmu gatavs”, tāpēc raunds sākās bez tevis. Vari ienākt atpakaļ un spēlēt nākamajā raundā.' });
+        try { ws.close(4003, 'not ready'); } catch {}
+        await this.gone(ws, 'izmests: nebija gatavs');
+      }
+      await this.checkStart();
+      return this.state();
+    }
     if (r.phase === 'countdown') {
       const ps = this.named();
       if (!ps.some(p => p.a.ready)) { r.phase = 'lobby'; await this.save(); return this.state(); }

@@ -1094,7 +1094,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden){Object.key
 const qs=new URLSearchParams(location.search);
 const MP_URL=qs.get('ws')||(/^(localhost|127\.0\.0\.1)$/.test(location.hostname)?'ws://localhost:8787/ws':'wss://game.pts24.lv/ws');
 const MP={on:false,inRound:false,ws:null,id:null,name:'',phase:'lobby',players:[],startAt:0,off:0,last:null,lastRound:0,
-  msgs:[],timer:null,cdTimer:null,ping:null,retry:0,wall:0,sendT:0,chatOpen:false,myDone:false};
+  msgs:[],timer:null,cdTimer:null,ping:null,autoAt:0,retry:0,wall:0,sendT:0,chatOpen:false,myDone:false};
 try{$('mpName').value=localStorage.getItem('atp250-mp-name')||'';}catch(e){}
 const mk=(tag,cls,txt)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e;};
 const mpSend=m=>{if(MP.ws&&MP.ws.readyState===1)MP.ws.send(JSON.stringify(m));};
@@ -1112,7 +1112,7 @@ function mpConnect(){
   MP.ws=ws;
   ws.onopen=()=>{MP.retry=0;clearInterval(MP.ping);MP.ping=setInterval(()=>{if(ws.readyState===1)ws.send('ping');},25000);ws.send(JSON.stringify({t:'hello',name:MP.name,id:MP.id,resume:MP.inRound}));renderLobby();};
   ws.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(err){return;}mpMsg(m);};
-  ws.onclose=e=>{if(MP.ws!==ws)return;MP.ws=null;clearInterval(MP.ping);if(e.code===4000)MP.on=false;if(MP.on){renderLobby();mpRetry();}};}
+  ws.onclose=e=>{if(MP.ws!==ws)return;MP.ws=null;clearInterval(MP.ping);if(e.code===4000||e.code===4003)MP.on=false;if(MP.on){renderLobby();mpRetry();}};}
 function mpRetry(){MP.retry++;setTimeout(mpConnect,Math.min(10000,1000*MP.retry));}
 function mpLeave(){MP.on=false;const ws=MP.ws;MP.ws=null;try{ws&&ws.close();}catch(e){}
   clearTimeout(MP.timer);MP.timer=null;$('lobby').hidden=true;$('start').hidden=false;}
@@ -1123,10 +1123,11 @@ function mpMsg(m){
   else if(m.t==='chat'){MP.msgs.push(m.msg);if(MP.msgs.length>60)MP.msgs.shift();renderLog();
     if(MP.inRound&&S.running&&!m.msg.sys&&m.msg.id!==MP.id)beep(1500,.05,'sine',.03);}
   else if(m.t==='error'){$('lText').textContent=m.text;}
+  else if(m.t==='kicked'){mpLeave();$('mpErr').textContent=m.text;$('mpErr').hidden=false;}
   else if(m.t==='state')mpState(m);}
 
 function mpState(m){
-  MP.off=m.now-Date.now();MP.phase=m.phase;MP.players=m.players;MP.startAt=m.startAt;MP.last=m.last;
+  MP.off=m.now-Date.now();MP.phase=m.phase;MP.autoAt=m.autoAt||0;MP.players=m.players;MP.startAt=m.startAt;MP.last=m.last;
   const me=m.players.find(p=>p.id===MP.id);
   if(m.phase==='countdown'&&me&&me.ready&&MP.timer==null&&!MP.inRound)
     MP.timer=setTimeout(mpStart,Math.max(0,m.startAt-srvNow()));
@@ -1181,7 +1182,11 @@ function renderLobby(){
     let t=named.length<2?'Vari gaidīt citus vai sākt viens. ':'';
     t+=waiting?`Spēle sāksies, kad visi būs nospieduši „Esmu gatavs” (vēl gaida: ${waiting}).`:'';
     if(MP.last&&MP.last.results.length){const w=MP.last.results[0];t+=` Pēdējā raundā uzvarēja ${w.name} ar ${w.score} punktiem.`;}
-    $('lText').textContent=t.trim();}}
+    $('lText').textContent=t.trim();
+    // 2+ ready: the server starts without the rest when this runs out
+    if(MP.autoAt){const tick=()=>{const s=Math.max(0,Math.ceil((MP.autoAt-srvNow())/1000));
+      $('lText').textContent=me&&me.ready?`Sāksim pēc ${s} s arī bez tiem, kas nav gatavi.`:`Spied „Esmu gatavs”! Pēc ${s} s raunds sāksies bez tevis, un tevi izmetīs no istabas.`;};
+      tick();MP.cdTimer=setInterval(tick,250);}}}
 
 function openChat(){if(MP.chatOpen)return;MP.chatOpen=true;Object.keys(keys).forEach(k=>keys[k]=false);touchAct=false;joyV={x:0,y:0};$('knob').style.transform='';
   try{if(document.pointerLockElement)document.exitPointerLock();}catch(e){}
