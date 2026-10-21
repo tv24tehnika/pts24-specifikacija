@@ -1,0 +1,4 @@
+/game-ATP250/three.min.js
+  Cache-Control: public, max-age=31536000, immutable
+/game-ATP250/*
+  X-Content-Type-Options: nosniff
