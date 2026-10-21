@@ -2,7 +2,7 @@ import { DurableObject } from 'cloudflare:workers';
 
 // One shared room: players enter a name, everyone presses "ready", the round starts for all at once,
 // each plays their own copy and reports scores; results are ranked when everyone is done or time runs out.
-const GAME_MS = (480 + 30) * 1000;  // 8 min game clock + grace
+const GAME_MS = (480 + 2 * 45 + 30) * 1000;  // 8 min game clock + 2 driver bribes + grace
 const COUNTDOWN_MS = 5000;
 const AUTO_MS = 60e3;  // with 2+ ready, wait this long for the rest, then start without them
 const MAX_PLAYERS = 16;

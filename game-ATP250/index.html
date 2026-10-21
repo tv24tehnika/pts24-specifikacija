@@ -33,6 +33,7 @@ body{background:var(--ink);color:var(--hud);overflow:hidden;font-family:var(--mo
 .chip span{font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
 .chip.warn b{color:#FF5A4E}
 .chip.rain b{color:#8fc7ff}
+.chip.beer b{color:#F2B705}
 .pbtn{pointer-events:auto;border:0;color:var(--hud);font:inherit;cursor:pointer;text-align:left;min-width:56px}
 .pbtn:hover{background:var(--ink2)}
 .pbtn:focus-visible{outline:2px solid var(--hivis)}
@@ -147,6 +148,7 @@ input.txt:focus{outline:2px solid var(--hivis);outline-offset:1px}
   <div class="chip"><b id="tMeters">0</b><span>Metri satīti</span></div>
   <div class="chip"><b id="tScore">0</b><span>Punkti</span></div>
   <div class="chip rain" id="tRain" hidden><b>LĪST</b><span>OB laukumā</span></div>
+  <div class="chip beer" id="tBeer" hidden><b>🍺</b><span>Šoferim</span></div>
   <button class="chip pbtn" id="pbtn" aria-label="Pauze"><b>II</b><span>Pauze · P</span></button>
   <button class="chip pbtn" id="cbtn" aria-label="Rakstīt čatā" hidden><b>ČATS</b><span class="deskonly">Enter</span><span class="touchonly">Rakstīt</span></button>
 </div>
@@ -189,7 +191,7 @@ input.txt:focus{outline:2px solid var(--hivis);outline-offset:1px}
       <span><i style="background:#23A05F"></i>GreenGo intercom</span>
       <span><i style="background:#6b7178"></i>Hawk-Eye (neaiztikt)</span>
     </div>
-    <p style="color:#5D6976;font-size:12px">Ieejot hallē, apsargs skenē akreditāciju, un skeneri mēdz nestrādāt. Apsardze runā tikai franciski un var skriet pakaļ. Producents rācijā prasa atnest lietas. Tribīnes demontē, un ejas uz laiku aizveras. Fatū ar kopējmašīnu atstāj slidenu grīdu. Ar ratiem nes vieglāk, bet caur faniem netiksi. Ja ārā līst, SMPTE savienotājs pirms bungām jānotīra.</p>
+    <p style="color:#5D6976;font-size:12px">Ieejot hallē, apsargs skenē akreditāciju, un skeneri mēdz nestrādāt. Apsardze runā tikai franciski un var skriet pakaļ. Producents rācijā prasa atnest lietas. Tribīnes demontē, un ejas uz laiku aizveras. Fatū ar kopējmašīnu atstāj slidenu grīdu. Ar ratiem nes vieglāk, bet caur faniem netiksi. Kravas auto šoferi var piekukuļot ar aliņu: nopērc to bārā vai atrodi kaut kur hallē, un šoferis pagaidīs ilgāk. Ja ārā līst, SMPTE savienotājs pirms bungām jānotīra.</p>
     <label class="field">Tavs vārds<input class="txt" id="mpName" maxlength="20" autocomplete="nickname" placeholder="piem. Jānis"></label>
     <p class="err" id="mpErr" hidden></p>
     <div class="btns">
@@ -269,7 +271,7 @@ const solids=[
  [72,8,24,10,'room','Spēlētāju lounge'],[96,8,22,10,'room','Spēlētāju restorāns'],[126,8,16,12,'room','Preses konference'],
  [118,19,8,6,'room','Hawk-Eye'],
  [146,34,10,20,'room','Treniņu skatuve'],[146,64,10,18,'room','Fitness'],
- [40,104,6,6,'booth','Stends'],[58,104,6,6,'booth','Stends'],[76,104,6,6,'booth','Stends'],
+ [40,104,6,6,'booth','Bārs · aliņš'],[58,104,6,6,'booth','Stends'],[76,104,6,6,'booth','Stends'],
  [122,106,10,6,'booth','Multiball'],[148,104,10,10,'booth','Flexcourt'],
  [176,34,16,9,'van','OB VAN'],[176,58,16,9,'truck','Kravas auto'],
  [75.4,57.95,13.2,.1,'net']
@@ -648,7 +650,7 @@ function reset(){
      rain:false,rainT:100,rainSaid:false,
      psgT:30,wet:[],wetAcc:0,
      sf:{state:'none',cd:22,t:0,x:0,y:0,g:null,cd2:0},fanCartWarn:0};
-  S.cables.forEach(cableMeshes);buildKnots();buildRows();
+  S.cables.forEach(cableMeshes);buildKnots();buildRows();beerReset();
 }
 
 /* ---------- collision ---------- */
@@ -657,6 +659,7 @@ function blocked(x,y,r){
   if(x<r||y<r||x>WW-r||y>WH-r)return true;
   for(const s of solids)if(hitRect(s,x,y,r))return true;
   for(const q of PASSAGES)if(q.closed>0&&hitRect(q,x,y,r))return true;
+  if(drvObj&&(x-DRV.x)**2+(y-DRV.y)**2<(r+.35)**2)return true;
   return false;
 }
 function onWet(x,y){for(const w of S.wet)if((x-w.x)**2+(y-w.y)**2<1.0)return true;return false;}
@@ -717,14 +720,14 @@ function rainSound(on,vol){if(!ac)return;try{
   if(!rainNode){const len=ac.sampleRate*2,b=ac.createBuffer(1,len,ac.sampleRate),d=b.getChannelData(0);for(let i=0;i<len;i++)d[i]=Math.random()*2-1;
     const s=ac.createBufferSource();s.buffer=b;s.loop=true;const f=ac.createBiquadFilter();f.type='highpass';f.frequency.value=1800;const g=ac.createGain();g.gain.value=0;s.connect(f).connect(g).connect(ac.destination);s.start();rainNode=g;}
   rainNode.gain.setTargetAtTime(on&&opt.sound?vol*.05:0,ac.currentTime,.4);}catch(e){}}
-function whoPos(who){const g=GATES.find(x=>x.key===who);if(g)return{x:g.gx,y:g.gy,h:2.5};
+function whoPos(who){if(who==='drv')return{x:DRV.x,y:DRV.y,h:2.5};const g=GATES.find(x=>x.key===who);if(g)return{x:g.gx,y:g.gy,h:2.5};
   const f=FANS.find(x=>x.key===who);if(f)return f.x!=null?{x:f.x,y:f.y,h:2.9}:null;
   const q=PASSAGES.find(x=>x.key===who);if(q)return{x:q.obj.position.x,y:q.obj.position.z,h:2.6};
   if(who==='sf')return{x:S.sf.x,y:S.sf.y,h:2.5};
   if(who==='he')return{x:S.heAt.x,y:S.heAt.y,h:3.2};
   const n=S.npcs.find(x=>x.key===who);return n&&n.x!=null?{x:n.x,y:n.y,h:n.kind==='fork'?3:2.5}:null;}
 function speak(text,who,radio){
-  if(!opt.voice||S.paused||!('speechSynthesis' in window))return;const pos=whoPos(who);
+  if(!opt.voice||S.paused||who==='drv'||!('speechSynthesis' in window))return;const pos=whoPos(who);
   if(pos&&Math.hypot(pos.x-S.p.x,pos.y-S.p.y)>(radio?40:26))return;
   try{if(speechSynthesis.pending)return;const u=new SpeechSynthesisUtterance(text);u.lang='fr-FR';if(frVoice)u.voice=frVoice;const v=VOICE[who]||{};u.pitch=v.pitch||1;u.rate=v.rate||1;u.volume=radio?.7:1;speechSynthesis.speak(u);}catch(e){}
 }
@@ -747,7 +750,7 @@ function updateHud(dt){hudT-=dt;if(hudT>0)return;hudT=.1;
   $('tTime').textContent=fmt(S.time);$('tChip').classList.toggle('warn',S.time<60);
   const done=S.cables.filter(c=>c.st==='done').length;$('tCables').textContent=done+'/'+S.cables.length;
   $('tMeters').textContent=Math.round(S.meters+(S.held?S.held.s:0));$('tScore').textContent=S.score;
-  $('tRain').hidden=!S.rain;
+  $('tRain').hidden=!S.rain;$('tBeer').hidden=!S.beer;
   const tk=S.task;$('prod').hidden=!tk;if(tk){$('prodT').textContent=Math.ceil(tk.t);$('prodM').textContent=tk.carried?`${cap(tk.item.name)} rokās. Nes uz OB VAN!`:`„${tk.item.msg}”`;}
   S.cables.forEach((c,i)=>{const r=$('row'+i);r.className='row'+(c.st==='done'?' done':'')+(c===S.held?' held':'');
     r.querySelector('.s').textContent=c.st==='live'?`${Math.round(c.L)} m · ${TYPE[c.type].n}`:c.st==='held'?`${Math.round(c.s)}/${Math.round(c.L)} m`:'uz bungas';});
@@ -773,7 +776,7 @@ function update(dt){
     if(n.kind==='clean'&&n.moving){S.wetAcc+=n.v*dt;if(S.wetAcc>.9){S.wetAcc=0;S.wet.push({x:n.x+Math.sin(n.head)*1.0,y:n.y+Math.cos(n.head)*1.0,life:30});if(S.wet.length>wetPool.length)S.wet.shift();}}
     if(p.grace<=0&&!S.check&&Math.hypot(p.x-n.x,p.y-n.y)<n.r+p.r)bump(n);}
   for(const w of S.wet)w.life-=dt;S.wet=S.wet.filter(w=>w.life>0);
-  gatesTick(dt);chatTick(dt);fansTick(dt);selfieTick(dt);passTick(dt);taskTick(dt);weatherTick(dt);
+  gatesTick(dt);chatTick(dt);fansTick(dt);selfieTick(dt);passTick(dt);taskTick(dt);weatherTick(dt);beerTick(dt);
   HE.forEach(h=>{h.cd=Math.max(0,h.cd-dt);});
   // movement
   let ix=(keys['d']||keys['arrowright']?1:0)-(keys['a']||keys['arrowleft']?1:0)+joyV.x;
@@ -816,6 +819,7 @@ function update(dt){
   if(!ctxAct||(ctxAct.k!=='tape'&&ctxAct.k!=='knot'&&ctxAct.k!=='clean')){const g=gateHere();if(g)ctxAct={k:'scan',t:.6,txt:`Skenēt akreditāciju · Ieeja ${g.id}`,g};}
   if(S.sf.state==='ask')ctxAct={k:'selfie',t:2.5,txt:'Selfijs ar fanu (vai ej prom, bet viņš sekos)'};
   if(S.check)ctxAct={k:'check',t:.7,txt:'Apsargs prasa akreditāciju'};
+  if(!ctxAct)ctxAct=beerAct();
   if(!ctxAct){
     if(Math.hypot(p.x-S.cart.x,p.y-S.cart.y)<2.3&&!S.cart.held)ctxAct={k:'info',txt:`${touch?'RATI':'Q'}: paņemt kabeļu ratus`};
     else if(S.held){const kn=nextKnot(S.held),tp=nextTape(S.held);
@@ -839,6 +843,7 @@ function doAction(a){const p=S.p;
   else if(a.k==='tape'){a.tp.done=true;scene.remove(a.tp.m);S.score+=40;float(p.x,p.y,'+40 līmlente');beep(1200,.06,'sawtooth',.04);}
   else if(a.k==='knot'){const k=a.kn;k.done=true;k.m.forEach(m=>scene.remove(m));S.score+=20;float(p.x,p.y,'+20 mezgls');beep(700,.08);beep(900,.08,'square',.03);}
   else if(a.k==='clean'){S.held.cleaned=true;float(p.x,p.y,'savienotājs tīrs');beep(1300,.1,'sine',.05);}
+  else if(a.k==='beerBuy'||a.k==='beerTake'||a.k==='bribe')beerDo(a);
   else if(a.k==='selfie'){const sf=S.sf;S.score+=60;float(p.x,p.y,'+60 selfijs');say('sf',pick(FR.selfieOk));sf.state='leave';sf.cd=38;beep(2000,.04,'square',.06);setTimeout(()=>beep(2000,.04,'square',.06),120);toast('Klik! Selfijs ar fanu');}
 }
 function d7(){const c=S.held;if(!c)return false;const a=P(c,c.s);return Math.hypot(S.p.x-a.x,S.p.y-a.y)>6.5;}
@@ -848,6 +853,41 @@ function toggleCart(){const p=S.p,cs=S.cart;
   if(blocked(p.x,p.y,1.0)){toast('Te par šauru ratiem');return;}
   cs.held=true;beep(500,.08);toast('Rati rokās · kabelis uz ratiem');
 }
+
+/* ---------- beer: buy at the bar or find one in the hall, give it to the truck driver for more time ---------- */
+const DRV={x:174.4,y:62.4},BAR={x:43,y:102.6},BEER_COST=150,BRIBE_SEC=45,BRIBE_MAX=2;
+const BEER_SPOTS=[[30,100],[22,40],[122,100],[142,96],[104,23],[150,28],[64,100],[154,60],[90,101],[22,112],[140,113],[66,23]];
+const DRV_OK=["Nu labi, vēl brītiņu pagaidīšu.","Paldies! Pēc šitā nekur nesteidzos.","Tikai lai neviens neredz, ja?","Ak, aukstais! Labi, minūti vēl."];
+let drvObj=null,beerObj=null;
+function bottle(){const g=new THREE.Group();const b=new THREE.Mesh(new THREE.CylinderGeometry(.09,.09,.32,12),M(0x7a4a14,{emissive:0x3a2004}));b.position.y=.16;
+  const n=new THREE.Mesh(new THREE.CylinderGeometry(.035,.07,.14,10),M(0x7a4a14));n.position.y=.39;const c=new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,.03,10),M(0xF2B705));c.position.y=.47;
+  const l=new THREE.Mesh(new THREE.CylinderGeometry(.092,.092,.11,12),M(0xF2B705));l.position.y=.15;g.add(b,n,c,l);g.traverse(m=>{m.castShadow=true;});scene.add(g);return g;}
+function beerReset(){
+  if(!drvObj){drvObj=person(0x2c3d5a,{stripe:0xE8F04A,cap:0xD8433B});drvObj.position.set(DRV.x,0,DRV.y);drvObj.rotation.y=-Math.PI/2;
+    beerObj=bottle();beerObj.scale.setScalar(1.6);beerObj.visible=false;}
+  Object.assign(S,{beer:0,bribes:0,beerSpot:null,beerT:0,drvSaid:0});spawnBeer();}
+function spawnBeer(){const free=BEER_SPOTS.filter(([x,y])=>!blocked(x,y,.6)&&Math.hypot(x-S.p.x,y-S.p.y)>25);const q=free.length?pick(free):null;S.beerSpot=q?{x:q[0],y:q[1]}:null;}
+function beerTick(dt){S.drvSaid=Math.max(0,S.drvSaid-dt);if(!S.beerSpot&&S.beerT>0){S.beerT-=dt;if(S.beerT<=0)spawnBeer();}}
+function beerAct(){const p=S.p,near=(q,r)=>Math.hypot(p.x-q.x,p.y-q.y)<r;
+  if(near(DRV,2.8)){
+    if(S.bribes>=BRIBE_MAX)return{k:'info',txt:'Šoferis: „Draugs, man tiešām jābrauc! Vairāk nevaru.”'};
+    if(S.beer)return{k:'bribe',t:1.2,txt:`Iedot šoferim aliņu (+${BRIBE_SEC} s līdz kravai)`};
+    return{k:'info',txt:'Šoferis: „Bez aliņa nekavēšos…” (aliņš ir bārā vai kaut kur hallē)'};}
+  if(S.beerSpot&&near(S.beerSpot,2))return S.beer?{k:'info',txt:'Viens aliņš jau ir rokās, nes šoferim'}:{k:'beerTake',t:.5,txt:'Paņemt aliņu'};
+  if(near(BAR,3)){if(S.beer)return{k:'info',txt:'Aliņš jau ir rokās, nes šoferim pie kravas auto'};
+    return S.score>=BEER_COST?{k:'beerBuy',t:1,txt:`Nopirkt aliņu šoferim (−${BEER_COST} punkti)`}:{k:'info',txt:`Aliņš maksā ${BEER_COST} punktus, tev ir ${S.score}`};}
+  return null;}
+function beerDo(a){const p=S.p;
+  if(a.k==='beerBuy'){S.score-=BEER_COST;S.beer=1;float(p.x,p.y,`−${BEER_COST} aliņš`,true);toast('Aliņš nopirkts · nes šoferim');beep(700,.06);beep(1050,.08,'square',.03);}
+  else if(a.k==='beerTake'){S.beer=1;S.beerSpot=null;S.beerT=75+Math.random()*35;float(p.x,p.y,'aliņš atrasts!');toast('Atradi aliņu · nes šoferim');beep(880,.08);setTimeout(()=>beep(1320,.1),90);}
+  else if(a.k==='bribe'){S.beer=0;S.bribes++;S.time+=BRIBE_SEC;float(p.x,p.y,`+${BRIBE_SEC} s · šoferis gaida`);toast(`Kravas auto gaida vēl ${BRIBE_SEC} s`);say('drv',pick(DRV_OK));
+    beep(520,.1);setTimeout(()=>beep(780,.12),110);setTimeout(()=>beep(1040,.16),230);}}
+function beerSync(now){
+  beerObj.visible=!!S.beerSpot&&(S.running||S.over);if(beerObj.visible){beerObj.position.set(S.beerSpot.x,.05+Math.abs(Math.sin(now*2))*.12,S.beerSpot.y);beerObj.rotation.y=now*1.5;}
+  // driver leans on the cab; perks up and waves when you bring a beer
+  const u=drvObj.userData,wave=S.beer&&Math.hypot(S.p.x-DRV.x,S.p.y-DRV.y)<10;
+  drvObj.rotation.y=wave?Math.atan2(S.p.x-DRV.x,S.p.y-DRV.y):-Math.PI/2;u.aR.rotation.x=wave?-2.6+Math.sin(now*8)*.3:0;u.aR.rotation.z=0;
+  if(wave&&!S.drvSaid&&S.bribes<BRIBE_MAX){S.drvSaid=12;say('drv',pick(['Ooo, vai tas man?','Nu nāc, nāc!','Aliņš? Tad varu vēl pagaidīt.']));}}
 
 /* ---------- subsystems ---------- */
 function patrolPt(n){const ph=n.t%2,f=ph<1?ph:2-ph,dir=ph<1?1:-1;return{x:n.a.x+(n.b.x-n.a.x)*f,y:n.a.y+(n.b.y-n.a.y)*f,head:Math.atan2((n.b.x-n.a.x)*dir,(n.b.y-n.a.y)*dir)};}
@@ -1005,6 +1045,7 @@ function sync(dt,now){
     else{ld.visible=false;coil.visible=true;coil.material.color.setHex(TYPE[c.type].c);coil.scale.set(sc,sc,sc+Math.min(1.5,c.s/120));
       coil.position.set(p.x-Math.sin(p.head)*.05,1.45,p.y-Math.cos(p.head)*.05);coil.rotation.set(0,p.head+Math.PI/2,.5);}
   }else{coil.visible=false;ld.visible=false;}
+  beerSync(now);
   // markers
   const tg=target();if(tg&&S.running){marker.visible=true;marker.position.set(tg.x,2.5,tg.y);marker.material.opacity=.16+Math.sin(now*4)*.07;}else marker.visible=false;
   const tk=S.task;itemObj.visible=!!tk&&!tk.carried;
@@ -1053,8 +1094,10 @@ function drawRadar(now){
   rg.fillStyle='#FDDA24';for(const g of FANS){if(g.x==null)continue;rg.beginPath();rg.arc(g.x,g.y,2.4,0,7);rg.fill();}
   if(S.sf.state!=='none'){rg.fillStyle='#FDDA24';rg.beginPath();rg.arc(S.sf.x,S.sf.y,1.3,0,7);rg.fill();}
   if(!S.cart.held){rg.fillStyle='#F4F6F8';rg.fillRect(S.cart.x-1,S.cart.y-1.4,2,2.8);}
+  if(S.beerSpot){rg.fillStyle='#F2B705';rg.strokeStyle='#141B23';rg.lineWidth=.4;rg.beginPath();rg.arc(S.beerSpot.x,S.beerSpot.y,1.4,0,7);rg.fill();rg.stroke();}
   rg.strokeStyle='#141B23';rg.lineWidth=.5;for(const g of ghosts.values()){if(!g.o.visible)continue;rg.fillStyle=g.css;rg.beginPath();rg.arc(g.x,g.y,1.7,0,7);rg.fill();rg.stroke();}
   rg.restore();
+  if(S.running&&S.beer&&S.bribes<BRIBE_MAX)blip(R,k,fa,DRV.x,DRV.y,'#F2B705',5);
   if(S.running){const pt=prodTarget();if(pt)blip(R,k,fa,pt.x,pt.y,'#B388FF',5);const tg=target();if(tg)blip(R,k,fa,tg.x,tg.y,'#FF7A1A',6);}
   rg.save();rg.translate(R,R);const rel=-(S.p.head-yaw);rg.rotate(Math.PI+rel);rg.fillStyle='#fff';rg.strokeStyle='#141B23';rg.lineWidth=1.5;
   rg.beginPath();rg.moveTo(0,7);rg.lineTo(5,-5);rg.lineTo(0,-2);rg.lineTo(-5,-5);rg.closePath();rg.fill();rg.stroke();rg.restore();
