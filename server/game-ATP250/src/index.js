@@ -162,6 +162,7 @@ export class Room extends DurableObject {
     const r = this.room;
     if (r.phase === 'playing') return;
     const ps = this.named(except), ready = ps.filter(p => p.a.ready).length, all = ps.length > 0 && ready === ps.length;
+    if (r.phase === 'countdown' && ready > 0) return;  // newcomers can't stop a countdown; they join by pressing ready or wait
     if (all) {
       if (r.phase !== 'countdown') Object.assign(r, { phase: 'countdown', startAt: Date.now() + COUNTDOWN_MS });
       r.autoAt = 0;

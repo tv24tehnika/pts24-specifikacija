@@ -1174,8 +1174,8 @@ function renderLobby(){
   rb.hidden=ph==='playing';rb.textContent=me&&me.ready?'Tomēr pagaidi':'Esmu gatavs';rb.classList.toggle('ghost',!!(me&&me.ready));
   if(!MP.ws||MP.ws.readyState!==1){$('lTitle').textContent='Savienojas…';$('lText').textContent='Pieslēdzas istabai. Ja tas ievelkas, pārbaudi internetu.';rb.disabled=true;return;}
   rb.disabled=false;
-  if(ph==='countdown'){$('lTitle').textContent='Sākam!';
-    const tick=()=>{const s=Math.max(0,Math.ceil((MP.startAt-srvNow())/1000));$('lText').textContent=s?`Visi gatavi. Derigs sākas pēc ${s} s…`:'Aiziet!';};tick();MP.cdTimer=setInterval(tick,200);}
+  if(ph==='countdown'){$('lTitle').textContent='Sākam!';const in_=me&&me.ready;
+    const tick=()=>{const s=Math.max(0,Math.ceil((MP.startAt-srvNow())/1000));$('lText').textContent=in_?(s?`Derigs sākas pēc ${s} s…`:'Aiziet!'):`Raunds sākas pēc ${s} s. Spied „Esmu gatavs”, lai paspētu pievienoties, citādi gaidi nākamo raundu.`;};tick();MP.cdTimer=setInterval(tick,200);}
   else if(ph==='playing'){$('lTitle').textContent=me&&me.inGame?'Gaidām pārējos':'Notiek raunds';
     $('lText').textContent=me&&me.inGame?'Rezultāti būs, kad visi pabeigs vai beigsies laiks.':'Pagaidi, kamēr šis raunds beigsies. Tad varēsi spēlēt nākamajā. Pa to laiku vari rakstīt čatā.';}
   else{const waiting=named.filter(p=>!p.ready).length;$('lTitle').textContent='Gaidām komandu';
