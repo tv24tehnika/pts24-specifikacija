@@ -2,11 +2,12 @@ import { DurableObject } from 'cloudflare:workers';
 
 // One shared room: players enter a name, everyone presses "ready", the round starts for all at once,
 // each plays their own copy and reports scores; results are ranked when everyone is done or time runs out.
-const GAME_MS = (480 + 2 * 45 + 30) * 1000;  // 8 min game clock + 2 driver bribes + grace
+const GAME_MS = 900e3;  // 8 min game clock + earned extra time (drums, producer, bribes, last call) + grace
 const COUNTDOWN_MS = 5000;
 const AUTO_MS = 60e3;  // with 2+ ready, wait this long for the rest, then start without them
 const MAX_PLAYERS = 16;
 const CHAT_KEEP = 40;
+const KEEP_MS = 3600e3;  // chat and the last round's results are forgotten after an hour
 const STALE_MS = 75e3;  // clients ping every 25 s; silence this long means the connection is dead
 const ORIGINS = [/^https:\/\/(www\.)?pts24\.lv$/, /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/];
 
@@ -59,9 +60,20 @@ export class Room extends DurableObject {
   }
   async sys(text, except) {
     const msg = { sys: true, text, ts: Date.now() };
-    this.chat = [...this.chat, msg].slice(-CHAT_KEEP);
+    this.chat = [...this.chat.filter(m => m.ts > msg.ts - KEEP_MS), msg].slice(-CHAT_KEEP);
     await this.ctx.storage.put('chat', this.chat);
     this.broadcast({ t: 'chat', msg }, except);
+  }
+
+  // drop chat and results older than KEEP_MS; with nobody around, wake up later so nothing lingers in storage
+  async purge(except) {
+    const r = this.room, cut = Date.now() - KEEP_MS;
+    const chat = this.chat.filter(m => m.ts > cut);
+    if (chat.length !== this.chat.length) { this.chat = chat; await this.ctx.storage.put('chat', chat); }
+    if (r.last && !(r.last.at > cut)) { r.last = null; await this.save(); }
+    if (r.phase !== 'lobby' || r.autoAt || this.named(except).length) return;
+    const next = Math.min(...this.chat.map(m => m.ts), r.last ? r.last.at : Infinity);
+    if (next < Infinity) await this.ctx.storage.setAlarm(next + KEEP_MS + 1000);
   }
 
   // a socket whose client vanished without a close frame would otherwise sit in the room forever and block the start
@@ -112,6 +124,7 @@ export class Room extends DurableObject {
       const isNew = !me.name;
       me.name = name;
       ws.serializeAttachment(me);
+      await this.purge();
       this.send(ws, { t: 'welcome', id: me.id, name });
       this.send(ws, { t: 'history', msgs: this.chat });
       if (isNew) await this.sys(`${name} ienāca istabā`, ws);
@@ -134,7 +147,7 @@ export class Room extends DurableObject {
       me.lastChat = now;
       ws.serializeAttachment(me);
       const msg = { from: me.name, id: me.id, text, ts: now };
-      this.chat = [...this.chat, msg].slice(-CHAT_KEEP);
+      this.chat = [...this.chat.filter(m => m.ts > now - KEEP_MS), msg].slice(-CHAT_KEEP);
       await this.ctx.storage.put('chat', this.chat);
       return this.broadcast({ t: 'chat', msg });
     }
@@ -162,6 +175,7 @@ export class Room extends DurableObject {
     await this.sys(`${me.name} ${why}`, ws);
     await this.checkStart(ws);
     if (!(await this.checkEnd(ws))) this.state(ws);
+    await this.purge(ws);
   }
 
   // all ready → short countdown; 2+ ready but someone isn't → start without them after AUTO_MS
@@ -195,7 +209,7 @@ export class Room extends DurableObject {
     const results = [...ps.filter(p => p.a.inGame).map(({ a }) => ({ id: a.id, name: a.name, score: a.score, cables: a.cables, done: a.done })),
       ...r.left.map(p => ({ ...p, left: true }))].sort((a, b) => b.score - a.score);
     r.round++;
-    r.last = { round: r.round, results };
+    r.last = { round: r.round, results, at: Date.now() };
     Object.assign(r, { phase: 'lobby', left: [] });
     for (const { ws, a } of ps) ws.serializeAttachment({ ...a, inGame: false, done: false, ready: false });
     await this.ctx.storage.deleteAlarm();
@@ -225,6 +239,7 @@ export class Room extends DurableObject {
       await this.save();
       return this.state();
     }
-    if (r.phase === 'playing') await this.endRound();
+    if (r.phase === 'playing') return this.endRound();
+    await this.purge();
   }
 }
