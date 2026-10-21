@@ -65,8 +65,9 @@ export class Room extends DurableObject {
 
   // a socket whose client vanished without a close frame would otherwise sit in the room forever and block the start
   stale(ws) {
-    const t = Math.max(this.seen.get(ws) || 0, this.ctx.getWebSocketAutoResponseTimestamp(ws)?.getTime() || 0);
-    return t > 0 && Date.now() - t > STALE_MS;
+    // only clients that send keepalive pings can be judged; older pages never ping
+    const ping = this.ctx.getWebSocketAutoResponseTimestamp(ws)?.getTime();
+    return !!ping && Date.now() - Math.max(ping, this.seen.get(ws) || 0) > STALE_MS;
   }
   async sweep() {
     for (const ws of this.ctx.getWebSockets()) {
