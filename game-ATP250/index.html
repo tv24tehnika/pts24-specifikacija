@@ -124,6 +124,7 @@ input.txt:focus{outline:2px solid var(--hivis);outline-offset:1px}
 #mpLog div{overflow-wrap:anywhere}
 #mpLog b{color:var(--hivis)}
 #mpLog .sys{color:var(--muted);font-style:italic}
+#pMap{width:min(100%,calc(46vh * 1.6));aspect-ratio:200/125;align-self:center;border-radius:3px;display:block;background:#1b232c}
 #mpSay{position:fixed;left:50%;top:28%;transform:translateX(-50%);width:min(480px,calc(100% - 32px));z-index:4;background:rgba(20,27,35,.95);padding:8px;border-radius:4px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
 #mpSay input{border-color:var(--ink2)}
 @media (max-width:700px){#mpHud{font-size:10px}}
@@ -222,6 +223,7 @@ input.txt:focus{outline:2px solid var(--hivis);outline-offset:1px}
       <label><input type="checkbox" id="optSound" checked> Skaņas efekti</label>
       <label><input type="checkbox" id="optVoice" checked> Franču balsis (apsardze, apkopēja, fani)</label>
     </div>
+    <canvas id="pMap" hidden aria-label="Halles karte: kur atrodas spēlētāji"></canvas>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn" id="resume">Turpināt</button>
       <button class="btn ghost" id="restart">Sākt no jauna</button>
@@ -1029,10 +1031,7 @@ const radar=$('radar'),rg=radar.getContext('2d');let RS=180;
 function sizeRadar(){RS=innerWidth<700?132:180;const d=Math.min(2,devicePixelRatio||1);radar.style.width=radar.style.height=RS+'px';radar.width=radar.height=RS*d;rg.setTransform(d,0,0,d,0,0);}
 function blip(R,k,fa,x,y,col,rad){const p=S.p;let dx=x-p.x,dy=y-p.y;const ang=-Math.PI/2-fa,cs=Math.cos(ang),sn=Math.sin(ang);let sx=(dx*cs-dy*sn)*k,sy=(dx*sn+dy*cs)*k;
   const dl=Math.hypot(sx,sy),lim=R-9;if(dl>lim){sx*=lim/dl;sy*=lim/dl;}rg.fillStyle=col;rg.strokeStyle='#141B23';rg.lineWidth=2;rg.beginPath();rg.arc(R+sx,R+sy,rad,0,7);rg.fill();rg.stroke();}
-function drawRadar(now){
-  const R=RS/2,k=R/55,p=S.p;rg.save();rg.clearRect(0,0,RS,RS);rg.beginPath();rg.arc(R,R,R,0,7);rg.clip();
-  rg.fillStyle='#1b232c';rg.fillRect(0,0,RS,RS);
-  rg.translate(R,R);const fa=Math.atan2(Math.cos(yaw),Math.sin(yaw));rg.rotate(-Math.PI/2-fa);rg.scale(k,k);rg.translate(-p.x,-p.y);
+function drawPlan(rg,now){
   rg.fillStyle='#5f6973';rg.fillRect(18,6,144,114);rg.fillStyle=S.rain?'#34506a':'#3d4650';rg.fillRect(162,8,35,105);
   for(const c of courts){rg.fillStyle='#3BB0DC';rg.fillRect(c.x,c.y,c.w,c.h);}
   for(const o of solids){if(o.k==='net')continue;rg.fillStyle=o.k==='stand'?'#7a62b4':o.k==='wall'?'#0d1218':o.k==='fence'?'#9aa6b2':o.k==='van'?'#FF7A1A':o.k==='truck'?'#2c3d5a':o.l==='Hawk-Eye'?'#1b5e3a':'#aeb6bf';rg.fillRect(o.x,o.y,o.w,o.h);}
@@ -1044,10 +1043,17 @@ function drawRadar(now){
   rg.fillStyle='#2bd46a';for(const h of HE){rg.fillRect(h.x-.8,h.y-.8,1.6,1.6);}
   for(const g of GATES){rg.fillStyle=g.off>0?(Math.sin(now*8)>0?'#ff3b30':'#7a1d18'):'#3ddc84';rg.fillRect(159.5,g.y0,3,g.y1-g.y0);
     rg.fillStyle='#1F3B66';rg.beginPath();rg.arc(g.gx,g.gy,1.1,0,7);rg.fill();}
+}
+function drawRadar(now){
+  const R=RS/2,k=R/55,p=S.p;rg.save();rg.clearRect(0,0,RS,RS);rg.beginPath();rg.arc(R,R,R,0,7);rg.clip();
+  rg.fillStyle='#1b232c';rg.fillRect(0,0,RS,RS);
+  rg.translate(R,R);const fa=Math.atan2(Math.cos(yaw),Math.sin(yaw));rg.rotate(-Math.PI/2-fa);rg.scale(k,k);rg.translate(-p.x,-p.y);
+  drawPlan(rg,now);
   for(const n of S.npcs){if(n.x==null)continue;const hot=n.mode==='chase'||n.mode==='check';rg.fillStyle=hot?(Math.sin(now*12)>0?'#ff3b30':'#fff'):n.kind==='guard'?'#8fb4ff':'#F4F6F8';rg.beginPath();rg.arc(n.x,n.y,hot?1.8:1,0,7);rg.fill();}
   rg.fillStyle='#FDDA24';for(const g of FANS){if(g.x==null)continue;rg.beginPath();rg.arc(g.x,g.y,2.4,0,7);rg.fill();}
   if(S.sf.state!=='none'){rg.fillStyle='#FDDA24';rg.beginPath();rg.arc(S.sf.x,S.sf.y,1.3,0,7);rg.fill();}
   if(!S.cart.held){rg.fillStyle='#F4F6F8';rg.fillRect(S.cart.x-1,S.cart.y-1.4,2,2.8);}
+  rg.strokeStyle='#141B23';rg.lineWidth=.5;for(const g of ghosts.values()){if(!g.o.visible)continue;rg.fillStyle=g.css;rg.beginPath();rg.arc(g.x,g.y,1.7,0,7);rg.fill();rg.stroke();}
   rg.restore();
   if(S.running){const pt=prodTarget();if(pt)blip(R,k,fa,pt.x,pt.y,'#B388FF',5);const tg=target();if(tg)blip(R,k,fa,tg.x,tg.y,'#FF7A1A',6);}
   rg.save();rg.translate(R,R);const rel=-(S.p.head-yaw);rg.rotate(Math.PI+rel);rg.fillStyle='#fff';rg.strokeStyle='#141B23';rg.lineWidth=1.5;
@@ -1064,7 +1070,7 @@ function loop(t){if(t-lastDraw<(!S.running||S.paused||S.over?190:touch?30:0)){re
   try{
   if(S.running&&!S.over&&!S.paused)update(dt);
   if(MP.inRound&&S.running&&!S.over)mpTick(dt);
-  if(S.running||S.over){sync(S.paused?0:dt,now);}
+  if(S.running||S.over){sync(S.paused?0:dt,now);if(ghosts.size)ghostSync(dt);if(S.paused&&!$('pMap').hidden)drawMap(now);}
   else{introA+=dt*.06;camera.position.set(100+Math.cos(introA)*95,55,62+Math.sin(introA)*75);camera.lookAt(100,0,62);
     S.npcs.forEach((n,i)=>{const len=Math.hypot(n.b.x-n.a.x,n.b.y-n.a.y);n.t+=dt*n.v/len;const q=patrolPt(n);n.x=q.x;n.y=q.y;n.head=q.head;
       const o=npcObjs[i];o.position.set(n.x,0,n.y);o.rotation.y=n.head;if(n.kind!=='fork')animPerson(o,n.v,dt);});
@@ -1096,7 +1102,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden){Object.key
 const qs=new URLSearchParams(location.search);
 const MP_URL=qs.get('ws')||(/^(localhost|127\.0\.0\.1)$/.test(location.hostname)?'ws://localhost:8787/ws':'wss://game.pts24.lv/ws');
 const MP={on:false,inRound:false,ws:null,id:null,name:'',phase:'lobby',players:[],startAt:0,off:0,last:null,lastRound:0,
-  msgs:[],timer:null,cdTimer:null,ping:null,autoAt:0,retry:0,wall:0,sendT:0,chatOpen:false,myDone:false};
+  msgs:[],timer:null,cdTimer:null,ping:null,autoAt:0,posT:0,retry:0,wall:0,sendT:0,chatOpen:false,myDone:false};
 try{$('mpName').value=localStorage.getItem('atp250-mp-name')||'';}catch(e){}
 const mk=(tag,cls,txt)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e;};
 const mpSend=m=>{if(MP.ws&&MP.ws.readyState===1)MP.ws.send(JSON.stringify(m));};
@@ -1126,6 +1132,7 @@ function mpMsg(m){
     if(MP.inRound&&S.running&&!m.msg.sys&&m.msg.id!==MP.id)beep(1500,.05,'sine',.03);}
   else if(m.t==='error'){$('lText').textContent=m.text;}
   else if(m.t==='kicked'){mpLeave();$('mpErr').textContent=m.text;$('mpErr').hidden=false;}
+  else if(m.t==='pos')ghostPos(m);
   else if(m.t==='state')mpState(m);}
 
 function mpState(m){
@@ -1135,22 +1142,24 @@ function mpState(m){
     MP.timer=setTimeout(mpStart,Math.max(0,m.startAt-srvNow()));
   else if(m.phase==='lobby'&&MP.timer!=null){clearTimeout(MP.timer);MP.timer=null;}
   // the round is over on the server (everyone finished or time ran out)
-  if(MP.inRound&&m.last&&m.last.round>MP.lastRound){if(S.running&&!S.over)finish(false);MP.inRound=false;
+  for(const id of ghosts.keys()){const p=m.players.find(q=>q.id===id);if(!p||!p.inGame||p.done||p.left)dropGhost(id);}
+  if(MP.inRound&&m.last&&m.last.round>MP.lastRound){if(S.running&&!S.over)finish(false);MP.inRound=false;clearGhosts();
     $('mpHud').hidden=true;$('cbtn').hidden=true;closeChat();$('eRoomH').textContent='Galīgie rezultāti';}
   renderLobby();renderBoard();renderRank();}
 
 function mpStart(){MP.timer=null;MP.inRound=true;MP.myDone=false;MP.lastRound=MP.last?MP.last.round:0;
-  $('lobby').hidden=true;start();MP.wall=performance.now()/1000;MP.sendT=0;
+  $('lobby').hidden=true;clearGhosts();start();MP.wall=performance.now()/1000;MP.sendT=0;MP.posT=0;$('pMap').hidden=false;
   $('mpHud').hidden=false;$('cbtn').hidden=false;$('restart').hidden=true;$('pEye').textContent='Laiks netiek apturēts · citi turpina spēlēt';
   $('again').hidden=true;$('eLobby').hidden=true;$('eRoom').hidden=true;$('eRoomH').textContent='Istabas rezultāti';renderBoard();}
 // game clock follows the wall clock in a room, so pausing or a background tab does not stop time
 function mpTick(dt){const w=performance.now()/1000,e=w-(MP.wall||w);MP.wall=w;
   S.time-=Math.max(0,e-(S.paused?0:dt));if(S.time<=0){S.time=0;finish(false);return;}
+  MP.posT-=e;if(MP.posT<=0){MP.posT=.25;mpSend({t:'pos',x:S.p.x,y:S.p.y,h:S.p.head,k:S.held?S.held.type:'',c:S.cart.held});}
   MP.sendT-=e;if(MP.sendT<=0){MP.sendT=2;mpSend({t:'score',score:S.score,cables:S.cables.filter(c=>c.st==='done').length});renderBoard();}}
 function mpFinished(cables){
   if(!MP.myDone){MP.myDone=true;mpSend({t:'done',score:S.score,cables});}
   closeChat();$('again').hidden=true;$('eRoom').hidden=false;$('eLobby').hidden=false;$('eLobby').focus();renderRank();}
-function backToLobby(){$('end').hidden=true;$('mpHud').hidden=true;$('cbtn').hidden=true;$('restart').hidden=false;$('again').hidden=false;$('eLobby').hidden=true;
+function backToLobby(){$('end').hidden=true;$('pMap').hidden=true;$('mpHud').hidden=true;$('cbtn').hidden=true;$('restart').hidden=false;$('again').hidden=false;$('eLobby').hidden=true;
   $('pEye').textContent='Spēle apturēta · laiks stāv';$('lobby').hidden=false;renderLobby();renderLog();}
 
 const ranked=()=>{const ps=MP.players.filter(p=>p.inGame).map(p=>p.id===MP.id&&MP.inRound?{...p,score:S.score}:p);return ps.sort((a,b)=>b.score-a.score);};
@@ -1189,6 +1198,36 @@ function renderLobby(){
     if(MP.autoAt){const tick=()=>{const s=Math.max(0,Math.ceil((MP.autoAt-srvNow())/1000));
       $('lText').textContent=me&&me.ready?`Sāksim pēc ${s} s arī bez tiem, kas nav gatavi.`:`Spied „Esmu gatavs”! Pēc ${s} s raunds sāksies bez tevis, un tevi izmetīs no istabas.`;};
       tick();MP.cdTimer=setInterval(tick,250);}}}
+
+/* other players as colleagues walking through your hall (no collision) + on the radar and pause map */
+const GHOST_COLS=[0x2F9BFF,0x3DDC84,0xE040FB,0xFFD400,0x00E5FF,0xFF5A8A,0xB388FF,0x8BC34A];
+const ghosts=new Map();
+function ghostPos(m){if(!MP.inRound&&!S.over)return;let g=ghosts.get(m.id);
+  if(!g){const p=MP.players.find(q=>q.id===m.id);if(!p)return;
+    const col=GHOST_COLS[[...m.id].reduce((a,c)=>a+c.charCodeAt(0),0)%GHOST_COLS.length],css='#'+col.toString(16).padStart(6,'0');
+    const coil=new THREE.Mesh(new THREE.TorusGeometry(.32,.07,8,20),M(0xffffff));coil.visible=false;scene.add(coil);
+    g={o:person(col,{stripe:0xF4F6F8,cap:col}),label:textSprite(p.name,{size:48,scale:.36,color:css,depth:false}),coil,css,name:p.name,x:m.x,y:m.y,h:m.h,spd:0};ghosts.set(m.id,g);}
+  Object.assign(g,{tx:m.x,ty:m.y,th:m.h,k:m.k,c:m.c,seen:performance.now()});}
+function ghostSync(dt){const now=performance.now(),f=Math.min(1,dt*8);
+  for(const g of ghosts.values()){const vis=now-g.seen<4000;g.o.visible=g.label.visible=vis;if(!vis){g.coil.visible=false;continue;}
+    const ox=g.x,oy=g.y;g.x+=(g.tx-g.x)*f;g.y+=(g.ty-g.y)*f;const dh=Math.atan2(Math.sin(g.th-g.h),Math.cos(g.th-g.h));g.h+=dh*f;
+    if(dt>0)g.spd+=(Math.hypot(g.x-ox,g.y-oy)/dt-g.spd)*Math.min(1,dt*5);
+    g.o.position.set(g.x,0,g.y);g.o.rotation.y=g.h;g.o.userData.carry=g.c?-1.3:null;animPerson(g.o,g.spd,dt);g.label.position.set(g.x,2.35,g.y);
+    g.coil.visible=!!(g.k&&TYPE[g.k])&&!g.c;if(g.coil.visible){g.coil.material.color.setHex(TYPE[g.k].c);g.coil.position.set(g.x-Math.sin(g.h)*.05,1.45,g.y-Math.cos(g.h)*.05);g.coil.rotation.set(0,g.h+Math.PI/2,.5);}}}
+function dropGhost(id){const g=ghosts.get(id);if(!g)return;scene.remove(g.o);scene.remove(g.coil);g.coil.geometry.dispose();disposeSprite(g.label);ghosts.delete(id);}
+function clearGhosts(){[...ghosts.keys()].forEach(dropGhost);}
+const pm=$('pMap'),pg=pm.getContext('2d');
+function drawMap(now){const w=pm.clientWidth;if(!w)return;const d=Math.min(2,devicePixelRatio||1),k=w/200;
+  if(pm.width!==Math.round(w*d)){pm.width=Math.round(w*d);pm.height=Math.round(w*125/200*d);}
+  pg.setTransform(d*k,0,0,d*k,0,0);pg.fillStyle='#1b232c';pg.fillRect(0,0,200,125);drawPlan(pg,now);
+  const dots=[...ghosts.values()].filter(g=>g.o.visible).map(g=>({x:g.x,y:g.y,c:g.css,n:g.name}));dots.push({x:S.p.x,y:S.p.y,c:'#FF7A1A',n:'Tu'});
+  pg.setTransform(d,0,0,d,0,0);pg.font='600 11px "IBM Plex Mono",monospace';pg.textBaseline='middle';
+  const placed=[];
+  for(const p of dots){const x=p.x*k,y=p.y*k;pg.fillStyle=p.c;pg.strokeStyle='#141B23';pg.lineWidth=2;pg.beginPath();pg.arc(x,y,5,0,7);pg.fill();pg.stroke();}
+  // name tags beside the dots, nudged down when they would overlap
+  for(const p of dots){const x=p.x*k+8,tw=pg.measureText(p.n).width+8;let y=p.y*k-8;
+    while(placed.some(r=>x<r.x+r.w&&r.x<x+tw&&y<r.y+16&&r.y<y+16))y+=17;placed.push({x,y,w:tw});
+    pg.fillStyle='rgba(20,27,35,.85)';pg.fillRect(x,y,tw,16);pg.fillStyle=p.c;pg.fillText(p.n,x+4,y+9);}}
 
 function openChat(){if(MP.chatOpen)return;MP.chatOpen=true;Object.keys(keys).forEach(k=>keys[k]=false);touchAct=false;joyV={x:0,y:0};$('knob').style.transform='';
   try{if(document.pointerLockElement)document.exitPointerLock();}catch(e){}

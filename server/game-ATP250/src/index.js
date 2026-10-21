@@ -80,11 +80,18 @@ export class Room extends DurableObject {
 
   async webSocketMessage(ws, raw) {
     this.seen.set(ws, Date.now());
-    await this.sweep();
     let m;
     try { m = JSON.parse(raw); } catch { return; }
     const me = ws.deserializeAttachment();
     const r = this.room;
+
+    // positions (4/s per player) are relayed as-is, never stored
+    if (m.t === 'pos') {
+      if (!me.inGame || r.phase !== 'playing') return;
+      const n = v => Math.round((+v || 0) * 100) / 100;
+      return this.broadcast({ t: 'pos', id: me.id, x: n(m.x), y: n(m.y), h: n(m.h), k: clean(m.k, 8), c: !!m.c }, ws);
+    }
+    await this.sweep();
 
     if (m.t === 'hello') {
       const name0 = clean(m.name, 20);
