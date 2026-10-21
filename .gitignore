@@ -19,3 +19,6 @@ og-cover.png.bak
 
 # Sadarbības materiāli — tikai lokāli, ne uz git
 sadarbibas/
+
+# Wrangler lokālā kešatmiņa (servera testēšana)
+.wrangler/

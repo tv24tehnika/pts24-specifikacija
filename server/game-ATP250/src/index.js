@@ -6,6 +6,7 @@ const GAME_MS = (480 + 30) * 1000;  // 8 min game clock + grace
 const COUNTDOWN_MS = 5000;
 const MAX_PLAYERS = 16;
 const CHAT_KEEP = 40;
+const STALE_MS = 75e3;  // clients ping every 25 s; silence this long means the connection is dead
 const ORIGINS = [/^https:\/\/(www\.)?pts24\.lv$/, /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/];
 
 export default {
@@ -24,6 +25,9 @@ const int = v => Math.max(0, Math.min(1e6, Math.round(+v || 0)));
 export class Room extends DurableObject {
   constructor(ctx, env) {
     super(ctx, env);
+    // keepalive from clients (idle connections get dropped by proxies) answered without waking the object
+    ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair('ping', 'pong'));
+    this.seen = new Map();
     ctx.blockConcurrencyWhile(async () => {
       this.room = (await ctx.storage.get('room')) || { phase: 'lobby', startAt: 0, endAt: 0, round: 0, left: [], last: null };
       this.chat = (await ctx.storage.get('chat')) || [];
@@ -59,7 +63,22 @@ export class Room extends DurableObject {
     this.broadcast({ t: 'chat', msg }, except);
   }
 
+  // a socket whose client vanished without a close frame would otherwise sit in the room forever and block the start
+  stale(ws) {
+    const t = Math.max(this.seen.get(ws) || 0, this.ctx.getWebSocketAutoResponseTimestamp(ws)?.getTime() || 0);
+    return t > 0 && Date.now() - t > STALE_MS;
+  }
+  async sweep() {
+    for (const ws of this.ctx.getWebSockets()) {
+      if (ws.readyState !== 1 || !this.stale(ws)) continue;
+      try { ws.close(4001, 'timeout'); } catch {}
+      await this.gone(ws);
+    }
+  }
+
   async webSocketMessage(ws, raw) {
+    this.seen.set(ws, Date.now());
+    await this.sweep();
     let m;
     try { m = JSON.parse(raw); } catch { return; }
     const me = ws.deserializeAttachment();
@@ -71,12 +90,14 @@ export class Room extends DurableObject {
       const others = this.named(ws);
       if (!me.name && others.length >= MAX_PLAYERS) { this.send(ws, { t: 'error', text: 'Istaba ir pilna.' }); return ws.close(4000, 'full'); }
       // keep the client's id across reconnects; rejoin a running round if this player dropped out of it
-      if (/^[0-9a-f]{8}$/.test(m.id || '') && !others.some(p => p.a.id === m.id)) {
+      if (/^[0-9a-f]{8}$/.test(m.id || '')) {
+        // same client reconnecting: drop its old socket first
+        for (const p of others.filter(p => p.a.id === m.id)) { try { p.ws.close(4002, 'replaced'); } catch {} await this.gone(p.ws); }
         me.id = m.id;
         const i = m.resume && r.phase === 'playing' ? r.left.findIndex(p => p.id === m.id) : -1;
         if (i >= 0) { const p = r.left.splice(i, 1)[0]; Object.assign(me, { inGame: true, score: p.score, cables: p.cables, done: p.done }); await this.save(); }
       }
-      const taken = new Set(others.map(p => p.a.name.toLowerCase()));
+      const taken = new Set(this.named(ws).map(p => p.a.name.toLowerCase()));
       let name = name0;
       for (let n = 2; taken.has(name.toLowerCase()); n++) name = `${name0.slice(0, 17)} ${n}`;
       const isNew = !me.name;

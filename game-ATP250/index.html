@@ -1094,7 +1094,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden){Object.key
 const qs=new URLSearchParams(location.search);
 const MP_URL=qs.get('ws')||(/^(localhost|127\.0\.0\.1)$/.test(location.hostname)?'ws://localhost:8787/ws':'wss://game.pts24.lv/ws');
 const MP={on:false,inRound:false,ws:null,id:null,name:'',phase:'lobby',players:[],startAt:0,off:0,last:null,lastRound:0,
-  msgs:[],timer:null,cdTimer:null,retry:0,wall:0,sendT:0,chatOpen:false,myDone:false};
+  msgs:[],timer:null,cdTimer:null,ping:null,retry:0,wall:0,sendT:0,chatOpen:false,myDone:false};
 try{$('mpName').value=localStorage.getItem('atp250-mp-name')||'';}catch(e){}
 const mk=(tag,cls,txt)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e;};
 const mpSend=m=>{if(MP.ws&&MP.ws.readyState===1)MP.ws.send(JSON.stringify(m));};
@@ -1110,9 +1110,9 @@ function mpConnect(){
   if(!MP.on)return;
   let ws;try{ws=new WebSocket(MP_URL);}catch(e){return mpRetry();}
   MP.ws=ws;
-  ws.onopen=()=>{MP.retry=0;ws.send(JSON.stringify({t:'hello',name:MP.name,id:MP.id,resume:MP.inRound}));renderLobby();};
+  ws.onopen=()=>{MP.retry=0;clearInterval(MP.ping);MP.ping=setInterval(()=>{if(ws.readyState===1)ws.send('ping');},25000);ws.send(JSON.stringify({t:'hello',name:MP.name,id:MP.id,resume:MP.inRound}));renderLobby();};
   ws.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(err){return;}mpMsg(m);};
-  ws.onclose=e=>{if(MP.ws!==ws)return;MP.ws=null;if(e.code===4000)MP.on=false;if(MP.on){renderLobby();mpRetry();}};}
+  ws.onclose=e=>{if(MP.ws!==ws)return;MP.ws=null;clearInterval(MP.ping);if(e.code===4000)MP.on=false;if(MP.on){renderLobby();mpRetry();}};}
 function mpRetry(){MP.retry++;setTimeout(mpConnect,Math.min(10000,1000*MP.retry));}
 function mpLeave(){MP.on=false;const ws=MP.ws;MP.ws=null;try{ws&&ws.close();}catch(e){}
   clearTimeout(MP.timer);MP.timer=null;$('lobby').hidden=true;$('start').hidden=false;}
