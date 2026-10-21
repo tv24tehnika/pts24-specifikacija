@@ -1,0 +1,13 @@
+// Multiplayer room server for pts24.lv/game-ATP250 (one shared room, chat, live scores).
+// Deploy: cd server/game-ATP250 && wrangler deploy
+{
+  "name": "atp250-derigs",
+  "main": "src/index.js",
+  "compatibility_date": "2026-06-01",
+  "routes": [{ "pattern": "game.pts24.lv", "custom_domain": true }],
+  "durable_objects": {
+    "bindings": [{ "name": "ROOM", "class_name": "Room" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Room"] }],
+  "observability": { "enabled": true }
+}

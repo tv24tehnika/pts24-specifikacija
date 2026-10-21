@@ -91,6 +91,43 @@ body{background:var(--ink);color:var(--hud);overflow:hidden;font-family:var(--mo
 #cartBtn{bottom:calc(env(safe-area-inset-bottom,0px) + 136px);right:max(30px,env(safe-area-inset-right,0px));width:68px;height:68px;background:rgba(244,246,248,.9);color:var(--ink);font-size:15px}
 #runBtn{bottom:calc(env(safe-area-inset-bottom,0px) + 40px);right:max(128px,env(safe-area-inset-right,0px));width:64px;height:64px;background:rgba(244,246,248,.25);color:var(--hud);font-size:14px;border:2px solid rgba(255,255,255,.4)}
 #runBtn.on{background:var(--hud);color:var(--ink)}
+/* multiplayer: lobby card, room board + chat under the radar, chat input bar */
+input.txt{font:16px var(--mono);padding:9px 10px;border:2px solid var(--ink);border-radius:3px;background:#fff;color:var(--ink);min-width:0;user-select:text;-webkit-user-select:text}
+input.txt:focus{outline:2px solid var(--hivis);outline-offset:1px}
+.field{display:flex;flex-direction:column;gap:5px;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#5D6976}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.err{color:#C0362C;font-size:12.5px;margin:0}
+.plist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;font-size:13px}
+.plist li{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:center;background:#fff;border:1px solid #D3D9DF;border-radius:3px;padding:6px 9px;font-variant-numeric:tabular-nums}
+.plist li.me{border-color:var(--hivis);box-shadow:inset 3px 0 0 var(--hivis)}
+.plist .k{font-family:var(--display);font-weight:700;font-size:17px;color:#5D6976}
+.plist .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.plist .st{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#5D6976}
+.plist .st.ok{color:#1F8A50;font-weight:600}
+.plist b{font-family:var(--display);font-size:20px}
+.chatbox{display:flex;flex-direction:column;gap:6px}
+.log{background:#fff;border:1px solid #D3D9DF;border-radius:3px;padding:8px 10px;height:132px;overflow-y:auto;font-size:12.5px;line-height:1.45;display:flex;flex-direction:column;gap:2px;user-select:text;-webkit-user-select:text;touch-action:pan-y}
+.log .sys{color:#5D6976;font-style:italic}
+.log b{color:#B35400}
+.say{display:flex;gap:6px}
+.say input{flex:1}
+.say .btn{font-size:16px;padding:8px 14px}
+#mpHud{display:flex;flex-direction:column;gap:8px;font-size:11px}
+#mpBoard,#mpLog{background:rgba(20,27,35,.84);border-radius:3px;padding:7px 9px;display:flex;flex-direction:column;gap:3px}
+#mpBoard h3{margin:0 0 2px;font-family:var(--display);font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700}
+#mpBoard .r{display:grid;grid-template-columns:14px 1fr auto;gap:6px;font-variant-numeric:tabular-nums}
+#mpBoard .r span:nth-child(2){overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#mpBoard .r.me{color:var(--hivis)}
+#mpBoard .r.fin span:nth-child(2)::after{content:" ✓";color:#5fd38d}
+#mpBoard .r.gone{opacity:.45}
+#mpLog{gap:2px;line-height:1.35}
+#mpLog div{overflow-wrap:anywhere}
+#mpLog b{color:var(--hivis)}
+#mpLog .sys{color:var(--muted);font-style:italic}
+#mpSay{position:fixed;left:50%;top:28%;transform:translateX(-50%);width:min(480px,calc(100% - 32px));z-index:4;background:rgba(20,27,35,.95);padding:8px;border-radius:4px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+#mpSay input{border-color:var(--ink2)}
+@media (max-width:700px){#mpHud{font-size:10px}}
+@media (max-height:520px){#mpBoard .r:nth-child(n+5),#mpLog div:nth-last-child(n+3){display:none}}
 @media (pointer:coarse){#joy,.tbtn{display:block}#prompt{bottom:calc(env(safe-area-inset-bottom,0px) + 168px)}#hint{display:none}.touchonly{display:contents}.deskonly{display:none}}
 @media (max-width:700px){#list{display:none}#side{width:210px}#top{max-width:calc(100% - 150px)}.chip b{font-size:18px}.card h1{font-size:36px}.stats{grid-template-columns:1fr 1fr}#toast{font-size:28px}}
 @media (max-height:520px){#list{display:none}}
@@ -110,10 +147,13 @@ body{background:var(--ink);color:var(--hud);overflow:hidden;font-family:var(--mo
   <div class="chip"><b id="tScore">0</b><span>Punkti</span></div>
   <div class="chip rain" id="tRain" hidden><b>LĪST</b><span>OB laukumā</span></div>
   <button class="chip pbtn" id="pbtn" aria-label="Pauze"><b>II</b><span>Pauze · P</span></button>
+  <button class="chip pbtn" id="cbtn" aria-label="Rakstīt čatā" hidden><b>ČATS</b><span class="deskonly">Enter</span><span class="touchonly">Rakstīt</span></button>
 </div>
+<form id="mpSay" class="say" hidden><input class="txt" id="mpInput" maxlength="200" placeholder="Ziņa visiem…" autocomplete="off" enterkeyhint="send" aria-label="Ziņa"><button class="btn">Sūtīt</button></form>
 <div class="hud" id="side">
   <div id="prod" hidden><div class="h"><span>Producents · rācija</span><b id="prodT">60</b></div><div class="m" id="prodM"></div></div>
   <div id="list"><h3>Kabeļu saraksts</h3><div id="rows" style="display:flex;flex-direction:column;gap:4px"></div></div>
+  <div id="mpHud" hidden><div id="mpBoard"></div><div id="mpLog"></div></div>
 </div>
 <div class="hud" id="prompt" hidden><span id="pText"></span><div class="bar"><div id="pBar"></div></div></div>
 <div class="hud" id="hint" hidden>Klikšķis uz ekrāna: pele griež kameru · Esc vai P: pauze · Q: rati</div>
@@ -149,12 +189,33 @@ body{background:var(--ink);color:var(--hud);overflow:hidden;font-family:var(--mo
       <span><i style="background:#6b7178"></i>Hawk-Eye (neaiztikt)</span>
     </div>
     <p style="color:#5D6976;font-size:12px">Ieejot hallē, apsargs skenē akreditāciju, un skeneri mēdz nestrādāt. Apsardze runā tikai franciski un var skriet pakaļ. Producents rācijā prasa atnest lietas. Tribīnes demontē, un ejas uz laiku aizveras. Fatū ar kopējmašīnu atstāj slidenu grīdu. Ar ratiem nes vieglāk, bet caur faniem netiksi. Ja ārā līst, SMPTE savienotājs pirms bungām jānotīra.</p>
-    <button class="btn" id="go" disabled>Ielādē…</button>
+    <label class="field">Tavs vārds<input class="txt" id="mpName" maxlength="20" autocomplete="nickname" placeholder="piem. Jānis"></label>
+    <p class="err" id="mpErr" hidden></p>
+    <div class="btns">
+      <button class="btn" id="mpJoin" disabled>Ielādē…</button>
+      <button class="btn ghost" id="go" disabled>Spēlēt vienam</button>
+    </div>
+  </div>
+</div>
+<div class="ov" id="lobby" hidden>
+  <div class="card">
+    <div class="eyebrow" id="lEye">Istaba · ATP250 derigs</div>
+    <h1 id="lTitle">Gaidām komandu</h1>
+    <p id="lText"></p>
+    <ul class="plist" id="lPlayers"></ul>
+    <div class="chatbox">
+      <div class="log" id="lLog" aria-live="polite"></div>
+      <form class="say" id="lSay"><input class="txt" id="lInput" maxlength="200" placeholder="Raksti ziņu…" autocomplete="off" enterkeyhint="send" aria-label="Ziņa"><button class="btn">Sūtīt</button></form>
+    </div>
+    <div class="btns">
+      <button class="btn" id="lReady">Esmu gatavs</button>
+      <button class="btn ghost" id="lLeave">Iziet</button>
+    </div>
   </div>
 </div>
 <div class="ov" id="pause" hidden>
   <div class="card">
-    <div class="eyebrow">Spēle apturēta · laiks stāv</div>
+    <div class="eyebrow" id="pEye">Spēle apturēta · laiks stāv</div>
     <h1>Pauze</h1>
     <p>Pele ir brīva. Spied Turpināt vai P, lai atgrieztos hallē.</p>
     <div class="opts">
@@ -180,7 +241,9 @@ body{background:var(--ink);color:var(--hud);overflow:hidden;font-family:var(--mo
       <div><b id="eProd">0</b><span>Producenta uzd.</span></div>
       <div><b id="eBest">0</b><span>Rekords</span></div>
     </div>
+    <div id="eRoom" hidden><div class="eyebrow" id="eRoomH" style="margin-bottom:6px">Istabas rezultāti</div><ul class="plist" id="eRank"></ul></div>
     <button class="btn" id="again">Vēlreiz</button>
+    <button class="btn" id="eLobby" hidden>Atpakaļ uz istabu</button>
   </div>
 </div>
 
@@ -599,7 +662,8 @@ function onWet(x,y){for(const w of S.wet)if((x-w.x)**2+(y-w.y)**2<1.0)return tru
 /* ---------- input & pause ---------- */
 const keys={};let joyV={x:0,y:0},touchAct=false,touchRun=false,yaw=-Math.PI/2,pitch=.32,camDist=6.5,pausedAt=0;
 let locked=false,drag=null;
-addEventListener('keydown',e=>{const k=e.key.toLowerCase();
+addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;const k=e.key.toLowerCase();
+  if(k==='enter'&&MP.inRound&&S.running&&!S.paused&&!S.over&&!e.repeat){e.preventDefault();openChat();return;}
   if((k==='p'||k==='escape')&&S&&S.running&&!S.over&&!e.repeat){e.preventDefault();if(S.paused){if(performance.now()-pausedAt>400)resume();}else pause();return;}
   if(S&&S.paused)return;
   if(k==='q'&&!e.repeat&&S&&S.running)toggleCart();
@@ -613,10 +677,10 @@ function pause(){if(!S.running||S.paused||S.over)return;S.paused=true;pausedAt=p
   $('optSound').checked=opt.sound;$('optVoice').checked=opt.voice;$('pause').hidden=false;$('hint').hidden=true;$('resume').focus();}
 function resume(){if(!S.paused)return;S.paused=false;try{ac&&ac.resume();}catch(e){}$('pause').hidden=true;$('hint').hidden=touch;lockPointer();}
 document.addEventListener('pointerlockchange',()=>{locked=document.pointerLockElement===cv;
-  if(!locked&&S&&S.running&&!S.paused&&!S.over)pause();
+  if(!locked&&S&&S.running&&!S.paused&&!S.over&&!MP.chatOpen)pause();
   $('hint').hidden=locked||!S||!S.running||S.paused||touch;});
 document.addEventListener('mousemove',e=>{if(locked)look(e.movementX,e.movementY,.0026);});
-cv.addEventListener('pointerdown',e=>{if(!S||!S.running||S.paused)return;
+cv.addEventListener('pointerdown',e=>{if(!S||!S.running||S.paused)return;if(MP.chatOpen)closeChat();
   if(e.pointerType==='mouse'&&!locked)lockPointer();
   drag={id:e.pointerId,x:e.clientX,y:e.clientY};try{cv.setPointerCapture(e.pointerId);}catch(err){}});
 cv.addEventListener('pointermove',e=>{if(!drag||e.pointerId!==drag.id||locked)return;look(e.clientX-drag.x,e.clientY-drag.y,e.pointerType==='mouse'?.005:.007);drag.x=e.clientX;drag.y=e.clientY;});
@@ -890,7 +954,8 @@ function finish(win){if(S.over)return;S.over=true;S.running=false;try{document.e
   $('eText').textContent=win?`Visi ${S.cables.length} kabeļi satīti, OB VAN var braukt. Laika bonuss: ${Math.round(S.time)*10} punkti.`:`Satīti ${done} no ${S.cables.length}. Pārējie paliek hallē līdz rītam.`;
   $('eScore').textContent=S.score;$('eCables').textContent=done+'/'+S.cables.length;$('eTime').textContent=fmt(TIME-S.time);
   $('eMeters').textContent=Math.round(S.meters);$('eProd').textContent=S.prodDone;$('eBest').textContent=best;
-  $('end').hidden=false;$('prompt').hidden=true;$('hint').hidden=true;$('again').focus();}
+  $('end').hidden=false;$('prompt').hidden=true;$('hint').hidden=true;
+  if(MP.inRound)mpFinished(done);else $('again').focus();}
 
 /* ---------- render sync ---------- */
 const ray=new THREE.Raycaster();let shake=0;const tmpV=new THREE.Vector3();
@@ -996,6 +1061,7 @@ let tPrev=0,introA=0;
 function loop(t){const now=t/1000,dt=Math.min(.05,now-(tPrev||now));tPrev=now;
   try{
   if(S.running&&!S.over&&!S.paused)update(dt);
+  if(MP.inRound&&S.running&&!S.over)mpTick(dt);
   if(S.running||S.over){sync(S.paused?0:dt,now);}
   else{introA+=dt*.06;camera.position.set(100+Math.cos(introA)*95,55,62+Math.sin(introA)*75);camera.lookAt(100,0,62);
     S.npcs.forEach((n,i)=>{const len=Math.hypot(n.b.x-n.a.x,n.b.y-n.a.y);n.t+=dt*n.v/len;const q=patrolPt(n);n.x=q.x;n.y=q.y;n.head=q.head;
@@ -1010,8 +1076,9 @@ function loop(t){const now=t/1000,dt=Math.min(.05,now-(tPrev||now));tPrev=now;
   }catch(err){console.error(err);}
   requestAnimationFrame(loop);}
 
-function start(){try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();ac.resume&&ac.resume();}catch(e){}
-  try{if('speechSynthesis' in window){const u=new SpeechSynthesisUtterance(' ');u.volume=0;speechSynthesis.speak(u);}}catch(e){}
+function unlockAudio(){try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();ac.resume&&ac.resume();}catch(e){}
+  try{if('speechSynthesis' in window){const u=new SpeechSynthesisUtterance(' ');u.volume=0;speechSynthesis.speak(u);}}catch(e){}}
+function start(){unlockAudio();
   floats.forEach(f=>f.el.remove());floats.length=0;
   reset();yaw=-Math.PI/2;pitch=.32;camera.position.set(S.p.x+6,4,S.p.y);touchRun=false;$('runBtn').classList.remove('on');
   $('start').hidden=true;$('end').hidden=true;$('pause').hidden=true;S.running=true;$('hint').hidden=touch;toast('Fināls beidzies · sāc derigu');
@@ -1022,11 +1089,119 @@ $('resume').onclick=resume;$('restart').onclick=()=>{S.paused=false;start();};
 const saveOpt=()=>{opt.sound=$('optSound').checked;opt.voice=$('optVoice').checked;try{localStorage.setItem('atp250-derig-opt',JSON.stringify(opt));}catch(e){}if(!opt.voice)try{speechSynthesis.cancel();}catch(e){}};
 $('optSound').onchange=saveOpt;$('optVoice').onchange=saveOpt;
 document.addEventListener('visibilitychange',()=>{if(document.hidden){Object.keys(keys).forEach(k=>keys[k]=false);if(S&&S.running)pause();}});
-window.__derig={get S(){return S},start,keys,update,sync};
+
+/* ---------- multiplayer room: name → lobby + chat → everyone ready → same start → ranked scores ---------- */
+const qs=new URLSearchParams(location.search);
+const MP_URL=qs.get('ws')||(/^(localhost|127\.0\.0\.1)$/.test(location.hostname)?'ws://localhost:8787/ws':'wss://game.pts24.lv/ws');
+const MP={on:false,inRound:false,ws:null,id:null,name:'',phase:'lobby',players:[],startAt:0,off:0,last:null,lastRound:0,
+  msgs:[],timer:null,cdTimer:null,retry:0,wall:0,sendT:0,chatOpen:false,myDone:false};
+try{$('mpName').value=localStorage.getItem('atp250-mp-name')||'';}catch(e){}
+const mk=(tag,cls,txt)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e;};
+const mpSend=m=>{if(MP.ws&&MP.ws.readyState===1)MP.ws.send(JSON.stringify(m));};
+const srvNow=()=>Date.now()+MP.off;
+
+function mpJoin(){
+  const name=$('mpName').value.replace(/\s+/g,' ').trim();
+  if(!name){$('mpErr').textContent='Ieraksti savu vārdu, lai citi zina, kas tu esi.';$('mpErr').hidden=false;$('mpName').focus();return;}
+  $('mpErr').hidden=true;try{localStorage.setItem('atp250-mp-name',name);}catch(e){}
+  unlockAudio();MP.on=true;MP.name=name;MP.msgs=[];MP.players=[];MP.phase='lobby';
+  $('start').hidden=true;$('lobby').hidden=false;renderLobby();renderLog();mpConnect();}
+function mpConnect(){
+  if(!MP.on)return;
+  let ws;try{ws=new WebSocket(MP_URL);}catch(e){return mpRetry();}
+  MP.ws=ws;
+  ws.onopen=()=>{MP.retry=0;ws.send(JSON.stringify({t:'hello',name:MP.name,id:MP.id,resume:MP.inRound}));renderLobby();};
+  ws.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(err){return;}mpMsg(m);};
+  ws.onclose=e=>{if(MP.ws!==ws)return;MP.ws=null;if(e.code===4000)MP.on=false;if(MP.on){renderLobby();mpRetry();}};}
+function mpRetry(){MP.retry++;setTimeout(mpConnect,Math.min(10000,1000*MP.retry));}
+function mpLeave(){MP.on=false;const ws=MP.ws;MP.ws=null;try{ws&&ws.close();}catch(e){}
+  clearTimeout(MP.timer);MP.timer=null;$('lobby').hidden=true;$('start').hidden=false;}
+
+function mpMsg(m){
+  if(m.t==='welcome'){MP.id=m.id;MP.name=m.name;}
+  else if(m.t==='history'){MP.msgs=m.msgs;renderLog();}
+  else if(m.t==='chat'){MP.msgs.push(m.msg);if(MP.msgs.length>60)MP.msgs.shift();renderLog();
+    if(MP.inRound&&S.running&&!m.msg.sys&&m.msg.id!==MP.id)beep(1500,.05,'sine',.03);}
+  else if(m.t==='error'){$('lText').textContent=m.text;}
+  else if(m.t==='state')mpState(m);}
+
+function mpState(m){
+  MP.off=m.now-Date.now();MP.phase=m.phase;MP.players=m.players;MP.startAt=m.startAt;MP.last=m.last;
+  const me=m.players.find(p=>p.id===MP.id);
+  if(m.phase==='countdown'&&me&&me.ready&&MP.timer==null&&!MP.inRound)
+    MP.timer=setTimeout(mpStart,Math.max(0,m.startAt-srvNow()));
+  else if(m.phase==='lobby'&&MP.timer!=null){clearTimeout(MP.timer);MP.timer=null;}
+  // the round is over on the server (everyone finished or time ran out)
+  if(MP.inRound&&m.last&&m.last.round>MP.lastRound){if(S.running&&!S.over)finish(false);MP.inRound=false;
+    $('mpHud').hidden=true;$('cbtn').hidden=true;closeChat();$('eRoomH').textContent='Galīgie rezultāti';}
+  renderLobby();renderBoard();renderRank();}
+
+function mpStart(){MP.timer=null;MP.inRound=true;MP.myDone=false;MP.lastRound=MP.last?MP.last.round:0;
+  $('lobby').hidden=true;start();MP.wall=performance.now()/1000;MP.sendT=0;
+  $('mpHud').hidden=false;$('cbtn').hidden=false;$('restart').hidden=true;$('pEye').textContent='Laiks netiek apturēts · citi turpina spēlēt';
+  $('again').hidden=true;$('eLobby').hidden=true;$('eRoom').hidden=true;$('eRoomH').textContent='Istabas rezultāti';renderBoard();}
+// game clock follows the wall clock in a room, so pausing or a background tab does not stop time
+function mpTick(dt){const w=performance.now()/1000,e=w-(MP.wall||w);MP.wall=w;
+  S.time-=Math.max(0,e-(S.paused?0:dt));if(S.time<=0){S.time=0;finish(false);return;}
+  MP.sendT-=e;if(MP.sendT<=0){MP.sendT=2;mpSend({t:'score',score:S.score,cables:S.cables.filter(c=>c.st==='done').length});renderBoard();}}
+function mpFinished(cables){
+  if(!MP.myDone){MP.myDone=true;mpSend({t:'done',score:S.score,cables});}
+  closeChat();$('again').hidden=true;$('eRoom').hidden=false;$('eLobby').hidden=false;$('eLobby').focus();renderRank();}
+function backToLobby(){$('end').hidden=true;$('mpHud').hidden=true;$('cbtn').hidden=true;$('restart').hidden=false;$('again').hidden=false;$('eLobby').hidden=true;
+  $('pEye').textContent='Spēle apturēta · laiks stāv';$('lobby').hidden=false;renderLobby();renderLog();}
+
+const ranked=()=>{const ps=MP.players.filter(p=>p.inGame).map(p=>p.id===MP.id&&MP.inRound?{...p,score:S.score}:p);return ps.sort((a,b)=>b.score-a.score);};
+function rankRow(p,i,status){const li=mk('li',p.id===MP.id?'me':'');li.append(mk('span','k',i+1+'.'),mk('span','nm',p.name),mk('b','',p.score));
+  if(status)li.querySelector('.nm').append(mk('span','st',' · '+status));return li;}
+function renderRank(){if($('eRoom').hidden)return;const ul=$('eRank');ul.replaceChildren();
+  const fin=MP.last&&MP.last.round>MP.lastRound&&!MP.inRound;
+  const list=fin?MP.last.results:ranked();
+  list.forEach((p,i)=>ul.append(rankRow(p,i,p.left?'izgāja':fin?`${p.cables}/8 kabeļi`:p.done?'pabeidza':'vēl spēlē…')));}
+function renderBoard(){if($('mpHud').hidden)return;const b=$('mpBoard');b.replaceChildren(mk('h3','','Istaba'));
+  ranked().slice(0,6).forEach((p,i)=>{const r=mk('div','r'+(p.id===MP.id?' me':'')+(p.done?' fin':'')+(p.left?' gone':''));r.append(mk('span','',i+1),mk('span','',p.name),mk('span','',p.score));b.append(r);});}
+function renderLog(){
+  const line=m=>{const d=mk('div',m.sys?'sys':'');if(m.sys)d.textContent=m.text;else d.append(mk('b','',m.from+': '),m.text);return d;};
+  const l=$('lLog'),stick=l.scrollTop+l.clientHeight>=l.scrollHeight-8;l.replaceChildren(...MP.msgs.map(line));if(stick)l.scrollTop=l.scrollHeight;
+  $('mpLog').replaceChildren(...MP.msgs.slice(-5).map(line));$('mpLog').hidden=!MP.msgs.length;}
+function renderLobby(){
+  if($('lobby').hidden)return;
+  const ph=MP.phase,named=MP.players.filter(p=>!p.left),me=named.find(p=>p.id===MP.id);
+  const ul=$('lPlayers');ul.replaceChildren();
+  named.forEach((p,i)=>{const li=mk('li',p.id===MP.id?'me':'');li.append(mk('span','k',i+1+'.'),mk('span','nm',p.name+(p.id===MP.id?' (tu)':'')));
+    li.append(ph==='playing'?mk('span','st',p.inGame?(p.done?'pabeidza':'spēlē'):'gaida'):mk('span','st'+(p.ready?' ok':''),p.ready?'gatavs':'vēl nav gatavs'));ul.append(li);});
+  const rb=$('lReady');clearInterval(MP.cdTimer);MP.cdTimer=null;
+  rb.hidden=ph==='playing';rb.textContent=me&&me.ready?'Tomēr pagaidi':'Esmu gatavs';rb.classList.toggle('ghost',!!(me&&me.ready));
+  if(!MP.ws||MP.ws.readyState!==1){$('lTitle').textContent='Savienojas…';$('lText').textContent='Pieslēdzas istabai. Ja tas ievelkas, pārbaudi internetu.';rb.disabled=true;return;}
+  rb.disabled=false;
+  if(ph==='countdown'){$('lTitle').textContent='Sākam!';
+    const tick=()=>{const s=Math.max(0,Math.ceil((MP.startAt-srvNow())/1000));$('lText').textContent=s?`Visi gatavi. Derigs sākas pēc ${s} s…`:'Aiziet!';};tick();MP.cdTimer=setInterval(tick,200);}
+  else if(ph==='playing'){$('lTitle').textContent=me&&me.inGame?'Gaidām pārējos':'Notiek raunds';
+    $('lText').textContent=me&&me.inGame?'Rezultāti būs, kad visi pabeigs vai beigsies laiks.':'Pagaidi, kamēr šis raunds beigsies. Tad varēsi spēlēt nākamajā. Pa to laiku vari rakstīt čatā.';}
+  else{const waiting=named.filter(p=>!p.ready).length;$('lTitle').textContent='Gaidām komandu';
+    let t=named.length<2?'Vari gaidīt citus vai sākt viens. ':'';
+    t+=waiting?`Spēle sāksies, kad visi būs nospieduši „Esmu gatavs” (vēl gaida: ${waiting}).`:'';
+    if(MP.last&&MP.last.results.length){const w=MP.last.results[0];t+=` Pēdējā raundā uzvarēja ${w.name} ar ${w.score} punktiem.`;}
+    $('lText').textContent=t.trim();}}
+
+function openChat(){if(MP.chatOpen)return;MP.chatOpen=true;Object.keys(keys).forEach(k=>keys[k]=false);touchAct=false;joyV={x:0,y:0};$('knob').style.transform='';
+  try{if(document.pointerLockElement)document.exitPointerLock();}catch(e){}
+  $('mpSay').hidden=false;$('mpInput').value='';$('mpInput').focus();}
+function closeChat(relock){if(!MP.chatOpen)return;MP.chatOpen=false;$('mpSay').hidden=true;$('mpInput').blur();if(relock&&S.running&&!S.paused&&!S.over)lockPointer();}
+const sendChat=input=>{const t=input.value.trim();if(t)mpSend({t:'chat',text:t});input.value='';};
+$('mpSay').onsubmit=e=>{e.preventDefault();sendChat($('mpInput'));closeChat(true);};
+$('mpInput').addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();closeChat(true);}});
+$('lSay').onsubmit=e=>{e.preventDefault();sendChat($('lInput'));};
+$('cbtn').onclick=()=>{if(MP.chatOpen)closeChat(true);else openChat();};
+$('mpJoin').onclick=mpJoin;
+$('mpName').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();mpJoin();}});
+$('lReady').onclick=()=>{unlockAudio();const me=MP.players.find(p=>p.id===MP.id);mpSend({t:'ready',v:!(me&&me.ready)});};
+$('lLeave').onclick=mpLeave;
+$('eLobby').onclick=backToLobby;
+window.__derig={get S(){return S},start,keys,update,sync,MP};
 
 const fontsReady=document.fonts&&document.fonts.load?Promise.race([document.fonts.load('700 40px "Barlow Condensed"'),new Promise(r=>setTimeout(r,1500))]):Promise.resolve();
 fontsReady.catch(()=>{}).then(()=>{buildWorld();buildActors();reset();resize();
-  const g=$('go');g.disabled=false;g.textContent='Sākt derigu';g.focus();requestAnimationFrame(loop);});
+  $('go').disabled=false;const j=$('mpJoin');j.disabled=false;j.textContent='Ienākt istabā';(touch?j:$('mpName').value?j:$('mpName')).focus();requestAnimationFrame(loop);});
 })();
 </script>
 
