@@ -357,8 +357,8 @@ try{if('speechSynthesis' in window){loadVoices();speechSynthesis.onvoiceschanged
 /* ---------- three setup ---------- */
 const cv=$('c');
 const renderer=new THREE.WebGLRenderer({canvas:cv,antialias:!touch,powerPreference:'high-performance'});
-renderer.setPixelRatio(Math.min(touch?1.5:2,devicePixelRatio||1));
-renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.setPixelRatio(Math.min(touch?1.25:2,devicePixelRatio||1));
+renderer.shadowMap.enabled=true;renderer.shadowMap.type=touch?THREE.PCFShadowMap:THREE.PCFSoftShadowMap;
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x0d131b);scene.fog=new THREE.Fog(0x0d131b,70,190);
 const camera=new THREE.PerspectiveCamera(62,1,.1,400);
 scene.add(new THREE.HemisphereLight(0xe6edf6,0x3a4048,.78));
@@ -1057,8 +1057,10 @@ function drawRadar(now){
 /* ---------- loop ---------- */
 function resize(){renderer.setSize(innerWidth,innerHeight,false);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();sizeRadar();}
 addEventListener('resize',resize);addEventListener('orientationchange',()=>setTimeout(resize,250));
-let tPrev=0,introA=0;
-function loop(t){const now=t/1000,dt=Math.min(.05,now-(tPrev||now));tPrev=now;
+let tPrev=0,introA=0,lastDraw=0;
+// battery: behind menus/lobby/results the scene is only a backdrop (~5 fps); phones play at 30 fps
+function loop(t){if(t-lastDraw<(!S.running||S.paused||S.over?190:touch?30:0)){requestAnimationFrame(loop);return;}lastDraw=t;
+  const now=t/1000,dt=Math.min(.05,now-(tPrev||now));tPrev=now;
   try{
   if(S.running&&!S.over&&!S.paused)update(dt);
   if(MP.inRound&&S.running&&!S.over)mpTick(dt);
