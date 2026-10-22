@@ -111,6 +111,14 @@ input.txt:focus{outline:2px solid var(--hivis);outline-offset:1px}
 .plist .st{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#5D6976}
 .plist .st.ok{color:#1F8A50;font-weight:600}
 .plist b{font-family:var(--display);font-size:20px}
+.plist .md{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#5D6976;margin-left:6px}
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mode{font:inherit;text-align:left;background:#fff;border:2px solid #D3D9DF;border-radius:3px;padding:8px 10px;cursor:pointer;display:flex;flex-direction:column;gap:3px;color:var(--ink)}
+.mode b{font-family:var(--display);font-size:19px;text-transform:uppercase;letter-spacing:.04em}
+.mode span{font-size:11.5px;line-height:1.4;color:#5D6976}
+.mode[aria-checked=true]{border-color:var(--hivis);box-shadow:inset 0 0 0 1px var(--hivis)}
+.mode:disabled{cursor:default;opacity:.7}
+@media (max-width:520px){.modes{grid-template-columns:1fr}}
 .chatbox{display:flex;flex-direction:column;gap:6px}
 .log{background:#fff;border:1px solid #D3D9DF;border-radius:3px;padding:8px 10px;height:132px;overflow-y:auto;font-size:12.5px;line-height:1.45;display:flex;flex-direction:column;gap:2px;user-select:text;-webkit-user-select:text;touch-action:pan-y}
 .log .sys{color:#5D6976;font-style:italic}
@@ -179,6 +187,7 @@ input.txt:focus{outline:2px solid var(--hivis);outline-offset:1px}
     <div class="eyebrow">BNP Paribas Fortis European Open · Hall 12 · Derigs</div>
     <h1>Fināls beidzies. <em>Tini vadus.</em></h1>
     <p>Kameras vēl karstas, publika iet ārā. Tev ir 8 minūtes, lai atvienotu visas pozīcijas un satītu kabeļus līdz OB VAN, pirms kravas auto izbrauc. Ej pa kabeļa trasi, uz ejām noplēs līmlenti un atšķetini mezglus, kur citi kabeļi guļ virsū.</p>
+    <div id="tops" hidden><div class="eyebrow" style="margin-bottom:6px">Rekordi · labākais rezultāts katram</div><ul class="plist" id="topList"></ul></div>
     <div class="keys deskonly">
       <kbd>WASD / bultas</kbd><span>Staigāt (Shift skriet)</span>
       <kbd>Pele</kbd><span>Kamera (klikšķis piesaista peli)</span>
@@ -204,7 +213,7 @@ input.txt:focus{outline:2px solid var(--hivis);outline-offset:1px}
       <span><i style="background:#6b7178"></i>Hawk-Eye (neaiztikt)</span>
     </div>
     <p style="color:#5D6976;font-size:12px">Ieejot hallē, apsargs skenē akreditāciju, un skeneri mēdz nestrādāt. Apsardze runā tikai franciski un var skriet pakaļ. Producents rācijā prasa atnest lietas. Tribīnes demontē, un ejas uz laiku aizveras. Fatū ar kopējmašīnu atstāj slidenu grīdu. Ar ratiem nes vieglāk, bet caur faniem netiksi. Laiku var pagarināt: katrs satīts kabelis dod +15 s, producenta uzdevums +20 s, un šoferi var piekukuļot ar aliņu (bārā vai kaut kur hallē). Ja satīti vismaz 6 kabeļi, šoferis vienu reizi gaida vēl pēdējās 45 s. Enerģijas dzēriens hallē ļauj kādu brīdi skriet ātrāk. Ja ārā līst, SMPTE savienotājs pirms satīšanas jānotīra.</p>
-    <label class="field">Tavs vārds<input class="txt" id="mpName" maxlength="20" autocomplete="nickname" placeholder="piem. Jānis"></label>
+    <label class="field">Tavs vārds · arī spēlējot vienam rezultāts nonāks rekordos<input class="txt" id="mpName" maxlength="20" autocomplete="nickname" placeholder="piem. Jānis"></label>
     <p class="err" id="mpErr" hidden></p>
     <div class="btns">
       <button class="btn" id="mpJoin" disabled>Ielādē…</button>
@@ -217,6 +226,10 @@ input.txt:focus{outline:2px solid var(--hivis);outline-offset:1px}
     <div class="eyebrow" id="lEye">Istaba · ATP250 derigs</div>
     <h1 id="lTitle">Gaidām komandu</h1>
     <p id="lText"></p>
+    <div class="modes" id="lModes" role="radiogroup" aria-label="Režīms">
+      <button class="mode" id="lRace" role="radio"><b>Sacensība</b><span>Katrs savā hallē satin savus 8 kabeļus. Uzvar tas, kuram vairāk punktu.</span></button>
+      <button class="mode" id="lTeam" role="radio"><b>Komanda</b><span>Visi vienā hallē, kopā jāsatin 8 kabeļi. Laiks kopīgs, kabelis pieder tam, kas to atvienoja.</span></button>
+    </div>
     <ul class="plist" id="lPlayers"></ul>
     <div class="chatbox">
       <div class="log" id="lLog" aria-live="polite"></div>
@@ -807,7 +820,7 @@ function updateHud(dt){hudT-=dt;if(hudT>0)return;hudT=.1;
   $('tRain').hidden=!S.rain;$('tBeer').hidden=!S.beer;$('tBoost').hidden=!(S.boost>0);if(S.boost>0)$('tBoostV').textContent='⚡'+Math.ceil(S.boost);
   const tk=S.task;$('prod').hidden=!tk;if(tk){$('prodT').textContent=Math.ceil(tk.t);$('prodM').textContent=tk.carried?`${cap(tk.item.name)} rokās. Nes uz OB VAN!`:`„${tk.item.msg}”`;}
   S.cables.forEach((c,i)=>{const r=$('row'+i);r.className='row'+(c.st==='done'?' done':'')+(c===S.held||c===S.held2?' held':'');
-    r.querySelector('.s').textContent=c.st==='live'?`${Math.round(c.L)} m · ${TYPE[c.type].n}`:c.st==='held'?`${Math.round(c.s)}/${Math.round(c.L)} m`:c.st==='left'?`atstāts ${Math.round(c.s)}/${Math.round(c.L)} m`:'satīts';});
+    r.querySelector('.s').textContent=c.st==='live'?`${Math.round(c.L)} m · ${TYPE[c.type].n}`:c.st==='held'?`${Math.round(c.s)}/${Math.round(c.L)} m`:c.st==='left'?`atstāts ${Math.round(c.s)}/${Math.round(c.L)} m`:c.st==='taken'?`${c.owner||'kolēģis'} tin ${Math.round(c.s)}/${Math.round(c.L)} m`:'satīts';});
 }
 const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
 
@@ -817,7 +830,7 @@ function nextKnot(c){for(const k of c.knots){if(k.done)continue;if(knotCleared(k
 function target(){if(S.held)return PATCH;let best=null,bd=1e9;for(const c of S.cables){if(c.st!=='live'&&c.st!=='left')continue;const e=c.st==='left'?P(c,c.s):c.pts[0],d=Math.hypot(e.x-S.p.x,e.y-S.p.y);if(d<bd){bd=d;best=e;}}return best;}
 function prodTarget(){const t=S.task;if(!t)return null;return t.carried?PATCH:t.item;}
 function update(dt){
-  const p=S.p;S.time-=dt;if(S.time<=0&&timeUp())return;
+  const p=S.p;S.time-=dt;S.played+=dt;if(S.time<=0&&timeUp())return;
   p.grace=Math.max(0,p.grace-dt);S.cleared=Math.max(0,S.cleared-dt);
   for(const n of S.npcs){
     if(n.kind==='guard'&&n.mode!=='patrol')guardAI(n,dt);
@@ -886,15 +899,17 @@ function update(dt){
       ctxAct=p.speed<.4?{k:'drop',t:1.5,txt:`${guide} · vai nolikt ${S.held.id} vēlākam`}:{k:'info',txt:guide};}
     else if(p.wet)ctxAct={k:'info',txt:'Slapja grīda, slīd!'};
     else ctxAct={k:'info',txt:S.cables.some(k=>k.st==='live')?'Ej pie kameras ar sarkano tally (radarā oranžais punkts)':''};}
-  if(ctxAct.t&&actionDown()&&p.stun<=0){S.hold+=dt;if(Math.random()<.15)beep(ctxAct.k==='tape'?900+Math.random()*400:300,.03,'sawtooth',.02);
+  // dropping a cable needs its own press: keeping Space down after unplugging must not put the cable straight back
+  if(!actionDown())S.holdK=null;else if(!S.holdK)S.holdK=ctxAct.k||'none';
+  if(ctxAct.t&&actionDown()&&p.stun<=0&&(ctxAct.k!=='drop'||S.holdK==='drop')){S.hold+=dt;if(Math.random()<.15)beep(ctxAct.k==='tape'?900+Math.random()*400:300,.03,'sawtooth',.02);
     if(S.hold>=ctxAct.t){S.hold=0;doAction(ctxAct);}}else S.hold=0;
   S.ctxAct=ctxAct;
   if(toastT>0){toastT-=dt;if(toastT<=0)$('toast').style.opacity=0;}
 }
 function doAction(a){const p=S.p;
-  if(a.k==='unplug'){const k=a.c;k.st='held';k.s=0;k.cleaned=false;if(S.held)S.held2=S.held;S.held=k;S.score+=50;float(p.x,p.y,'+50 atvienots');beep(520,.12);beep(780,.12,'square',.04);toast(k.id+' atvienots');if(Math.random()<.4)setTimeout(()=>{if(S.running&&!S.over)radio('van',pick([`${k.id} signāls pazuda. Tas tu?`,`Redzu, ${k.id} vairs nav ēterā. Labi.`,`${k.id} melns ekrāns, sapratu.`]));},1200);
+  if(a.k==='unplug'){const k=a.c;k.st='held';k.s=0;k.cleaned=false;if(S.held)S.held2=S.held;S.held=k;teamClaim(k);S.score+=50;float(p.x,p.y,'+50 atvienots');beep(520,.12);beep(780,.12,'square',.04);toast(k.id+' atvienots');if(Math.random()<.4)setTimeout(()=>{if(S.running&&!S.over)radio('van',pick([`${k.id} signāls pazuda. Tas tu?`,`Redzu, ${k.id} vairs nav ēterā. Labi.`,`${k.id} melns ekrāns, sapratu.`]));},1200);
     k.devObj.tally.color.setHex(0x2a0c0a);k.devObj.lab.visible=false;}
-  else if(a.k==='he'){const h=a.h;h.cd=20;S.time-=8;S.score=Math.max(0,S.score-150);S.heAt=h;float(p.x,p.y,'−150 · tā ir Hawk-Eye!',true);toast('Tā ir Hawk-Eye kamera!');beep(120,.4,'square',.07);
+  else if(a.k==='he'){const h=a.h;h.cd=20;addTime(-8);S.score=Math.max(0,S.score-150);S.heAt=h;float(p.x,p.y,'−150 · tā ir Hawk-Eye!',true);toast('Tā ir Hawk-Eye kamera!');beep(120,.4,'square',.07);
     const n=S.npcs.find(x=>x.key==='tech4');say(n&&Math.hypot(n.x-p.x,n.y-p.y)<25?'tech4':'he',pick(FR.he));}
   else if(a.k==='scan'){const g=a.g;
     if(g.off>0){g.flash=1.2;say(g.key,pick(FR.off));beep(150,.35,'square',.06);}
@@ -903,14 +918,14 @@ function doAction(a){const p=S.p;
   else if(a.k==='tape'){a.tp.done=true;scene.remove(a.tp.m);S.score+=40;float(p.x,p.y,'+40 līmlente');beep(1200,.06,'sawtooth',.04);}
   else if(a.k==='knot'){const k=a.kn;k.done=true;k.m.forEach(m=>scene.remove(m));S.score+=20;float(p.x,p.y,'+20 mezgls');beep(700,.08);beep(900,.08,'square',.03);}
   else if(a.k==='clean'){(a.c||S.held).cleaned=true;float(p.x,p.y,'savienotājs tīrs');beep(1300,.1,'sine',.05);}
-  else if(a.k==='drop'){const c=S.held;c.st='left';S.held=S.held2||null;S.held2=null;float(p.x,p.y,`${c.id} atstāts`);toast(`${c.id} nolikts · ${Math.round(c.s)}/${Math.round(c.L)} m`);beep(420,.1);beep(300,.12,'square',.03);}
-  else if(a.k==='pickup'){const c=a.c;c.st='held';if(S.held){S.held2=c;toast(`${c.id} ratos · divi kabeļi`);}else{S.held=c;toast(`${c.id} rokās · tin tālāk`);}beep(520,.08);beep(780,.1,'square',.03);}
+  else if(a.k==='drop'){const c=S.held;c.st='left';teamCab(c,'left');S.held=S.held2||null;S.held2=null;float(p.x,p.y,`${c.id} atstāts`);toast(`${c.id} nolikts · ${Math.round(c.s)}/${Math.round(c.L)} m`);beep(420,.1);beep(300,.12,'square',.03);}
+  else if(a.k==='pickup'){const c=a.c;c.st='held';teamClaim(c);if(S.held){S.held2=c;toast(`${c.id} ratos · divi kabeļi`);}else{S.held=c;toast(`${c.id} rokās · tin tālāk`);}beep(520,.08);beep(780,.1,'square',.03);}
   else if(a.k==='beerBuy'||a.k==='beerTake'||a.k==='bribe')beerDo(a);
   else if(a.k==='selfie'){const sf=S.sf;S.score+=60;float(p.x,p.y,'+60 selfijs');say('sf',pick(FR.selfieOk));sf.state='leave';sf.cd=38;beep(2000,.04,'square',.06);setTimeout(()=>beep(2000,.04,'square',.06),120);toast('Klik! Selfijs ar fanu');}
 }
 function d7(){const c=S.held;if(!c)return false;const a=P(c,c.s);return Math.hypot(S.p.x-a.x,S.p.y-a.y)>6.5;}
 function toggleCart(){const p=S.p,cs=S.cart;
-  if(cs.held){if(S.held2){S.held2.st='left';S.held2=null;}cs.held=false;cs.x=p.x+Math.sin(p.head)*1.2;cs.y=p.y+Math.cos(p.head)*1.2;cs.head=p.head;if(blocked(cs.x,cs.y,.6)){cs.x=p.x;cs.y=p.y;}beep(400,.08);toast('Rati nolikti');return;}
+  if(cs.held){if(S.held2){S.held2.st='left';teamCab(S.held2,'left');S.held2=null;}cs.held=false;cs.x=p.x+Math.sin(p.head)*1.2;cs.y=p.y+Math.cos(p.head)*1.2;cs.head=p.head;if(blocked(cs.x,cs.y,.6)){cs.x=p.x;cs.y=p.y;}beep(400,.08);toast('Rati nolikti');return;}
   if(Math.hypot(p.x-cs.x,p.y-cs.y)>2.4){toast(touch?'Rati ir pie OB VAN':'Rati ir pie OB VAN (Q pie tiem)');return;}
   if(blocked(p.x,p.y,1.0)){toast('Te par šauru ratiem');return;}
   cs.held=true;beep(500,.08);toast('Rati rokās · kabelis uz ratiem');
@@ -927,7 +942,7 @@ function bottle(){const g=new THREE.Group();const b=new THREE.Mesh(new THREE.Cyl
 function beerReset(){
   if(!drvObj){drvObj=person(0x2c3d5a,{stripe:0xE8F04A,cap:0xD8433B});drvObj.position.set(DRV.x,0,DRV.y);drvObj.rotation.y=-Math.PI/2;
     beerObj=bottle();beerObj.scale.setScalar(1.6);beerObj.visible=false;}
-  Object.assign(S,{beer:0,bribes:0,beerSpot:null,beerT:0,drvSaid:0,lastCall:false,boost:0,cans:[],canT:0,fmT:20+Math.random()*15,fmLast:'',vanHi:false});spawnBeer();spawnCan();spawnCan();}
+  Object.assign(S,{beer:0,bribes:0,beerSpot:null,beerT:0,drvSaid:0,lastCall:false,boost:0,cans:[],canT:0,played:0,fmT:20+Math.random()*15,fmLast:'',vanHi:false});spawnBeer();spawnCan();spawnCan();}
 function spawnBeer(){const free=BEER_SPOTS.filter(([x,y])=>!blocked(x,y,.6)&&Math.hypot(x-S.p.x,y-S.p.y)>25);const q=free.length?pick(free):null;S.beerSpot=q?{x:q[0],y:q[1]}:null;}
 function beerTick(dt){S.drvSaid=Math.max(0,S.drvSaid-dt);canTick(dt);fmTick(dt);if(!S.beerSpot&&S.beerT>0){S.beerT-=dt;if(S.beerT<=0)spawnBeer();}}
 function beerAct(){const p=S.p,near=(q,r)=>Math.hypot(p.x-q.x,p.y-q.y)<r;
@@ -942,7 +957,7 @@ function beerAct(){const p=S.p,near=(q,r)=>Math.hypot(p.x-q.x,p.y-q.y)<r;
 function beerDo(a){const p=S.p;
   if(a.k==='beerBuy'){S.score-=BEER_COST;S.beer=1;float(p.x,p.y,`−${BEER_COST} aliņš`,true);toast('Aliņš nopirkts · nes šoferim');beep(700,.06);beep(1050,.08,'square',.03);}
   else if(a.k==='beerTake'){S.beer=1;S.beerSpot=null;S.beerT=75+Math.random()*35;float(p.x,p.y,'aliņš atrasts!');toast('Atradi aliņu · nes šoferim');beep(880,.08);setTimeout(()=>beep(1320,.1),90);}
-  else if(a.k==='bribe'){S.beer=0;S.bribes++;S.time+=BRIBE_SEC;float(p.x,p.y,`+${BRIBE_SEC} s · šoferis gaida`);toast(`Kravas auto gaida vēl ${BRIBE_SEC} s`);say('drv',pick(DRV_OK));
+  else if(a.k==='bribe'){S.beer=0;S.bribes++;addTime(BRIBE_SEC,'bribe');float(p.x,p.y,`+${BRIBE_SEC} s · šoferis gaida`);toast(`Kravas auto gaida vēl ${BRIBE_SEC} s`);say('drv',pick(DRV_OK));
     beep(520,.1);setTimeout(()=>beep(780,.12),110);setTimeout(()=>beep(1040,.16),230);}}
 function beerSync(now){
   canSync(now);
@@ -957,7 +972,8 @@ const DRUM_SEC=15,PROD_SEC=20,LASTCALL_MIN=6,LASTCALL_SEC=45,BOOST_SEC=25,BOOST_
 const canObjs=[];
 // returns true when the game is over; otherwise the driver gave one more chance
 function timeUp(){const done=S.cables.filter(c=>c.st==='done').length;
-  if(!S.lastCall&&done>=LASTCALL_MIN&&done<S.cables.length){S.lastCall=true;S.time=LASTCALL_SEC;
+  const team=MP.inRound&&MP.team,used=team?MP.lastCall:S.lastCall;
+  if(!used&&done>=LASTCALL_MIN&&done<S.cables.length){S.lastCall=true;if(team){MP.lastCall=true;addTime(LASTCALL_SEC,'last');S.time=LASTCALL_SEC;}else S.time=LASTCALL_SEC;
     toast(`Šoferis: Vēl pēdējo! Gaidu ${LASTCALL_SEC} s`);say('drv','Labi, labi… vēl pēdējo kabeli!');beep(440,.15);setTimeout(()=>beep(660,.2),160);return false;}
   S.time=0;finish(false);return true;}
 function spawnCan(){if(S.cans.length>=2)return;const taken=[S.beerSpot,...S.cans].filter(Boolean);
@@ -1001,10 +1017,11 @@ function bump(n){const p=S.p;
   say(n.key,pick(FR[n.kind==='fork'?'fork':n.kind==='clean'?'fat':n.kind==='tech'?'tech':'rig']));
   let dx=p.x-n.x,dy=p.y-n.y,d=Math.hypot(dx,dy)||1;dx/=d;dy/=d;
   for(let i=0;i<10;i++){const nx=p.x+dx*.25,ny=p.y+dy*.25;if(!blocked(nx,ny,p.r)&&!gateBlock(p.x,nx,p.y)){p.x=nx;p.y=ny;}}
-  p.stun=.7;p.grace=1.5;S.time-=5;S.bumps++;S.score=Math.max(0,S.score-75);float(p.x,p.y,`−5 s · ${n.name}`,true);beep(110,.25,'square',.07);shake=.35;}
+  p.stun=.7;p.grace=1.5;addTime(-5);S.bumps++;S.score=Math.max(0,S.score-75);float(p.x,p.y,`−5 s · ${n.name}`,true);beep(110,.25,'square',.07);shake=.35;}
+function addDrum(c){const d=new THREE.Mesh(new THREE.TorusGeometry(.42,.14,8,22),M(TYPE[c.type].c));d.rotation.x=Math.PI/2;d.position.set(164+drums.length*1.25,.14,52.5);d.castShadow=true;scene.add(d);drums.push(d);}
 function deposit(c){c.st='done';if(c===S.held2)S.held2=null;else{S.held=S.held2||null;S.held2=null;}updateCable(c);const pts=Math.round(c.L*5);S.score+=pts;S.meters+=c.L;
-  const d=new THREE.Mesh(new THREE.TorusGeometry(.42,.14,8,22),M(TYPE[c.type].c));d.rotation.x=Math.PI/2;d.position.set(164+drums.length*1.25,.14,52.5);d.castShadow=true;scene.add(d);drums.push(d);
-  S.time+=DRUM_SEC;float(S.p.x,S.p.y,`+${pts} ${c.id} satīts · +${DRUM_SEC} s`);
+  addDrum(c);
+  addTime(DRUM_SEC);teamCab(c,'done');float(S.p.x,S.p.y,`+${pts} ${c.id} satīts · +${DRUM_SEC} s`);
   setTimeout(()=>{if(S.running&&!S.over)radio('van',pick([`${c.id} saņemts, paldies!`,`${c.id} ir iekšā. Labs darbs!`,`Redzu ${c.id}, ej pēc nākamā!`,`${c.id} satīts. Kravas auto vēl gaida.`]));},900);beep(660,.1);setTimeout(()=>beep(880,.1),90);setTimeout(()=>beep(1320,.18),180);
   toast(`${c.id} satīts · ${Math.round(c.L)} m`);if(S.cables.every(k=>k.st==='done'))finish(true);}
 function gateBlock(ox,nx,y){if(!(ox>=161.1&&nx<161.1))return false;for(const g of GATES)if(y>g.y0-.3&&y<g.y1+.3)return !g.auth;return false;}
@@ -1072,7 +1089,7 @@ function taskTick(dt){const p=S.p;
   if(!S.task){S.taskT-=dt;if(S.taskT<=0){const it=pick(ITEMS.filter(i=>Math.hypot(i.x-p.x,i.y-p.y)>15));S.task={item:it,t:70,carried:false};beep(2600,.05,'sawtooth',.02);setTimeout(()=>beep(2600,.05,'sawtooth',.02),90);toast('Producents rācijā');setTimeout(()=>{if(S.task&&S.task.item===it)radio('prod',it.msg);},500);}return;}
   const t=S.task;t.t-=dt;
   if(!t.carried&&Math.hypot(p.x-t.item.x,p.y-t.item.y)<1.6){t.carried=true;beep(900,.08);float(p.x,p.y,'paņemts: '+t.item.name);}
-  if(t.carried&&Math.hypot(p.x-PATCH.x,p.y-PATCH.y)<4.5){S.score+=300;S.prodDone++;S.time+=PROD_SEC;float(p.x,p.y,`+300 · +${PROD_SEC} s`);toast('Producents apmierināts');radio('prod','Paldies, varonis! Piezvanīšu šoferim, lai pagaida.');beep(880,.1);setTimeout(()=>beep(1320,.15),100);S.task=null;S.taskT=45+Math.random()*25;return;}
+  if(t.carried&&Math.hypot(p.x-PATCH.x,p.y-PATCH.y)<4.5){S.score+=300;S.prodDone++;addTime(PROD_SEC);float(p.x,p.y,`+300 · +${PROD_SEC} s`);toast('Producents apmierināts');radio('prod','Paldies, varonis! Piezvanīšu šoferim, lai pagaida.');beep(880,.1);setTimeout(()=>beep(1320,.15),100);S.task=null;S.taskT=45+Math.random()*25;return;}
   if(t.t<=0){S.score=Math.max(0,S.score-100);toast('Producents: aizmirsti');radio('prod','Aizmirsti, pats atnesīšu.');float(p.x,p.y,'−100 producents',true);S.task=null;S.taskT=50+Math.random()*20;}
 }
 function weatherTick(dt){S.rainT-=dt;
@@ -1087,10 +1104,10 @@ function finish(win){if(S.over)return;S.over=true;S.running=false;try{document.e
   $('eEye').textContent=win?'Derigs pabeigts':'Kravas auto aizbrauca';
   $('eTitle').textContent=win?(S.bumps===0&&S.time>90?'Derig meistars':S.time>30?'Viss satīts':'Pēdējā minūtē'):'Kabeļi palika hallē';
   $('eText').textContent=win?`Visi ${S.cables.length} kabeļi satīti, OB VAN var braukt. Laika bonuss: ${Math.round(S.time)*10} punkti.`:`Satīti ${done} no ${S.cables.length}. Pārējie paliek hallē līdz rītam.`;
-  $('eScore').textContent=S.score;$('eCables').textContent=done+'/'+S.cables.length;$('eTime').textContent=fmt(TIME-S.time);
+  $('eScore').textContent=S.score;$('eCables').textContent=done+'/'+S.cables.length;$('eTime').textContent=fmt(MP.inRound?(srvNow()-MP.startAt)/1000:S.played);
   $('eMeters').textContent=Math.round(S.meters);$('eProd').textContent=S.prodDone;$('eBest').textContent=best;
   $('end').hidden=false;$('prompt').hidden=true;$('hint').hidden=true;
-  if(MP.inRound)mpFinished(done);else $('again').focus();}
+  if(MP.inRound)mpFinished(done);else{$('again').focus();submitSolo(done,win);}}
 
 /* ---------- render sync ---------- */
 const ray=new THREE.Raycaster();let shake=0;const tmpV=new THREE.Vector3();
@@ -1246,8 +1263,9 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden){Object.key
 const qs=new URLSearchParams(location.search);
 const MP_URL=qs.get('ws')||(/^(localhost|127\.0\.0\.1)$/.test(location.hostname)?'ws://localhost:8787/ws':'wss://game.pts24.lv/ws');
 const MP={on:false,inRound:false,ws:null,id:null,name:'',phase:'lobby',players:[],startAt:0,off:0,last:null,lastRound:0,
-  msgs:[],timer:null,cdTimer:null,ping:null,autoAt:0,posT:0,retry:0,wall:0,sendT:0,chatOpen:false,myDone:false};
+  msgs:[],timer:null,cdTimer:null,ping:null,autoAt:0,posT:0,mode:'race',team:false,bonus:0,lastCall:false,cabT:0,retry:0,wall:0,sendT:0,chatOpen:false,myDone:false};
 try{$('mpName').value=localStorage.getItem('atp250-mp-name')||'';}catch(e){}
+const MP_HTTP=MP_URL.replace(/^ws/,'http').replace(/\/ws$/,'');
 const mk=(tag,cls,txt)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e;};
 const mpSend=m=>{if(MP.ws&&MP.ws.readyState===1)MP.ws.send(JSON.stringify(m));};
 const srvNow=()=>Date.now()+MP.off;
@@ -1266,7 +1284,7 @@ function mpConnect(){
   ws.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(err){return;}mpMsg(m);};
   ws.onclose=e=>{if(MP.ws!==ws)return;MP.ws=null;clearInterval(MP.ping);if(e.code===4000||e.code===4003)MP.on=false;if(MP.on){renderLobby();mpRetry();}};}
 function mpRetry(){MP.retry++;setTimeout(mpConnect,Math.min(10000,1000*MP.retry));}
-function mpLeave(){MP.on=false;const ws=MP.ws;MP.ws=null;try{ws&&ws.close();}catch(e){}
+function mpLeave(){loadTops();MP.on=false;const ws=MP.ws;MP.ws=null;try{ws&&ws.close();}catch(e){}
   clearTimeout(MP.timer);MP.timer=null;$('lobby').hidden=true;$('start').hidden=false;}
 
 function mpMsg(m){
@@ -1277,29 +1295,35 @@ function mpMsg(m){
   else if(m.t==='error'){$('lText').textContent=m.text;}
   else if(m.t==='kicked'){mpLeave();$('mpErr').textContent=m.text;$('mpErr').hidden=false;}
   else if(m.t==='pos')ghostPos(m);
+  else if(m.t==='cab')applyCab(m.i,m);
+  else if(m.t==='bonus'){MP.bonus=m.total;S.bribes=m.bribes;MP.lastCall=m.lastCall;}
   else if(m.t==='state')mpState(m);}
 
 function mpState(m){
-  MP.off=m.now-Date.now();MP.phase=m.phase;MP.autoAt=m.autoAt||0;MP.players=m.players;MP.startAt=m.startAt;MP.last=m.last;
+  MP.off=m.now-Date.now();MP.phase=m.phase;MP.mode=m.mode||'race';
+  if(m.team&&MP.inRound&&MP.team){MP.bonus=m.team.bonus;S.bribes=m.team.bribes;MP.lastCall=m.team.lastCall;m.team.cables.forEach((c,i)=>applyCab(i,c));}MP.autoAt=m.autoAt||0;MP.players=m.players;MP.startAt=m.startAt;MP.last=m.last;
   const me=m.players.find(p=>p.id===MP.id);
   if(m.phase==='countdown'&&me&&me.ready&&MP.timer==null&&!MP.inRound)
     MP.timer=setTimeout(mpStart,Math.max(0,m.startAt-srvNow()));
   else if(m.phase==='lobby'&&MP.timer!=null){clearTimeout(MP.timer);MP.timer=null;}
   // the round is over on the server (everyone finished or time ran out)
   for(const id of ghosts.keys()){const p=m.players.find(q=>q.id===id);if(!p||!p.inGame||p.done||p.left)dropGhost(id);}
-  if(MP.inRound&&m.last&&m.last.round>MP.lastRound){if(S.running&&!S.over)finish(false);MP.inRound=false;clearGhosts();
+  if(MP.inRound&&m.last&&m.last.round>MP.lastRound){setTimeout(loadTops,800);if(S.running&&!S.over)finish(!!(m.last.team&&m.last.team.win));MP.inRound=false;clearGhosts();
     $('mpHud').hidden=true;$('cbtn').hidden=true;closeChat();$('eRoomH').textContent='Galīgie rezultāti';}
   renderLobby();renderBoard();renderRank();}
 
-function mpStart(){MP.timer=null;MP.inRound=true;MP.myDone=false;MP.lastRound=MP.last?MP.last.round:0;
+function mpStart(){MP.timer=null;MP.inRound=true;MP.myDone=false;MP.lastRound=MP.last?MP.last.round:0;MP.team=MP.mode==='team';MP.bonus=0;MP.lastCall=false;MP.cabT=0;
   $('lobby').hidden=true;clearGhosts();start();MP.wall=performance.now()/1000;MP.sendT=0;MP.posT=0;
   $('mpHud').hidden=false;$('cbtn').hidden=false;$('restart').hidden=true;$('pEye').textContent='Laiks netiek apturēts · citi turpina spēlēt';
   $('again').hidden=true;$('eLobby').hidden=true;$('eRoom').hidden=true;$('eRoomH').textContent='Istabas rezultāti';renderBoard();}
 // game clock follows the wall clock in a room, so pausing or a background tab does not stop time
 function mpTick(dt){const w=performance.now()/1000,e=w-(MP.wall||w);MP.wall=w;
-  S.time-=Math.max(0,e-(S.paused?0:dt));if(S.time<=0&&timeUp())return;
-  MP.posT-=e;if(MP.posT<=0){MP.posT=.25;mpSend({t:'pos',x:S.p.x,y:S.p.y,h:S.p.head,k:S.held?S.held.type:'',c:S.cart.held});}
-  MP.sendT-=e;if(MP.sendT<=0){MP.sendT=2;mpSend({t:'score',score:S.score,cables:S.cables.filter(c=>c.st==='done').length});renderBoard();}}
+  if(MP.team)S.time=TIME+MP.bonus-(srvNow()-MP.startAt)/1000;  // one shared clock for the whole team
+  else S.time-=Math.max(0,e-(S.paused?0:dt));
+  if(S.time<=0&&timeUp())return;
+  if(MP.team&&(S.held||S.held2)){MP.cabT-=e;if(MP.cabT<=0){MP.cabT=1;[S.held,S.held2].forEach(c=>c&&teamCab(c,'held'));}}
+  MP.posT-=e;if(MP.posT<=0){MP.posT=.5;mpSend({t:'pos',x:S.p.x,y:S.p.y,h:S.p.head,k:S.held?S.held.type:'',c:S.cart.held});}
+  MP.sendT-=e;if(MP.sendT<=0){MP.sendT=3;mpSend({t:'score',score:S.score,cables:S.cables.filter(c=>c.st==='done').length});renderBoard();}}
 function mpFinished(cables){
   if(!MP.myDone){MP.myDone=true;mpSend({t:'done',score:S.score,cables});}
   closeChat();$('again').hidden=true;$('eRoom').hidden=false;$('eLobby').hidden=false;$('eLobby').focus();renderRank();}
@@ -1312,7 +1336,9 @@ function rankRow(p,i,status){const li=mk('li',p.id===MP.id?'me':'');li.append(mk
 function renderRank(){if($('eRoom').hidden)return;const ul=$('eRank');ul.replaceChildren();
   const fin=MP.last&&MP.last.round>MP.lastRound&&!MP.inRound;
   const list=fin?MP.last.results:ranked();
-  list.forEach((p,i)=>ul.append(rankRow(p,i,p.left?'izgāja':fin?`${p.cables}/8 kabeļi`:p.done?'pabeidza':'vēl spēlē…')));}
+  if(fin&&MP.last.team){const t=MP.last.team;$('eRoomH').textContent=`Komanda: ${t.cables}/8 satīti · ${t.total} punkti${t.win?' · derigs pabeigts!':''}`;}
+  else if(MP.team&&!fin)$('eRoomH').textContent=`Komanda: ${S.cables.filter(c=>c.st==='done').length}/8 satīti · gaidām pārējos`;
+  list.forEach((p,i)=>ul.append(rankRow(p,i,p.left?'izgāja':fin?(MP.last.team?`satina ${p.cables}`:`${p.cables}/8 kabeļi`):p.done?'pabeidza':'vēl spēlē…')));}
 function renderBoard(){if($('mpHud').hidden)return;const b=$('mpBoard');b.replaceChildren(mk('h3','','Istaba'));
   ranked().slice(0,6).forEach((p,i)=>{const r=mk('div','r'+(p.id===MP.id?' me':'')+(p.done?' fin':'')+(p.left?' gone':''));r.append(mk('span','',i+1),mk('span','',p.name),mk('span','',p.score));b.append(r);});}
 function renderLog(){
@@ -1327,6 +1353,7 @@ function renderLobby(){
   named.forEach((p,i)=>{const li=mk('li',p.id===MP.id?'me':'');li.append(mk('span','k',i+1+'.'),mk('span','nm',p.name+(p.id===MP.id?' (tu)':'')));
     li.append(ph==='playing'?mk('span','st',p.inGame?(p.done?'pabeidza':'spēlē'):'gaida'):mk('span','st'+(p.ready?' ok':''),p.ready?'gatavs':'vēl nav gatavs'));ul.append(li);});
   const rb=$('lReady');clearInterval(MP.cdTimer);MP.cdTimer=null;
+  [['lRace','race'],['lTeam','team']].forEach(([id,v])=>{const b=$(id);b.setAttribute('aria-checked',MP.mode===v);b.disabled=ph!=='lobby';});
   rb.hidden=ph==='playing';rb.textContent=me&&me.ready?'Tomēr pagaidi':'Esmu gatavs';rb.classList.toggle('ghost',!!(me&&me.ready));
   if(!MP.ws||MP.ws.readyState!==1){$('lTitle').textContent='Savienojas…';$('lText').textContent='Pieslēdzas istabai. Ja tas ievelkas, pārbaudi internetu.';rb.disabled=true;return;}
   rb.disabled=false;
@@ -1337,7 +1364,9 @@ function renderLobby(){
   else{const waiting=named.filter(p=>!p.ready).length;$('lTitle').textContent='Gaidām komandu';
     let t=named.length<2?'Vari gaidīt citus vai sākt viens. ':'';
     t+=waiting?`Spēle sāksies, kad visi būs nospieduši „Esmu gatavs” (vēl gaida: ${waiting}).`:'';
-    if(MP.last&&MP.last.results.length&&MP.last.at>srvNow()-3600e3){const w=MP.last.results[0];t+=` Pēdējā raundā uzvarēja ${w.name} ar ${w.score} punktiem.`;}
+    if(tops.length)t+=` Visu laiku līderis: ${tops[0].name} ar ${tops[0].score} punktiem.`;
+    if(MP.last&&MP.last.team&&MP.last.at>srvNow()-3600e3)t+=` Pēdējā raundā komanda satina ${MP.last.team.cables}/8 kabeļus, ${MP.last.team.total} punkti.`;
+    else if(MP.last&&MP.last.results.length&&MP.last.at>srvNow()-3600e3){const w=MP.last.results[0];t+=` Pēdējā raundā uzvarēja ${w.name} ar ${w.score} punktiem.`;}
     $('lText').textContent=t.trim();
     // 2+ ready: the server starts without the rest when this runs out
     if(MP.autoAt){const tick=()=>{const s=Math.max(0,Math.ceil((MP.autoAt-srvNow())/1000));
@@ -1353,7 +1382,7 @@ function ghostPos(m){if(!MP.inRound&&!S.over)return;let g=ghosts.get(m.id);
     const coil=new THREE.Mesh(new THREE.TorusGeometry(.32,.07,8,20),M(0xffffff));coil.visible=false;scene.add(coil);
     g={o:person(col,{stripe:0xF4F6F8,cap:col}),label:textSprite(p.name,{size:48,scale:.36,color:css,depth:false}),coil,css,name:p.name,x:m.x,y:m.y,h:m.h,spd:0};ghosts.set(m.id,g);}
   Object.assign(g,{tx:m.x,ty:m.y,th:m.h,k:m.k,c:m.c,seen:performance.now()});}
-function ghostSync(dt){const now=performance.now(),f=Math.min(1,dt*8);
+function ghostSync(dt){const now=performance.now(),f=Math.min(1,dt*4);
   for(const g of ghosts.values()){const vis=now-g.seen<4000;g.o.visible=g.label.visible=vis;if(!vis){g.coil.visible=false;continue;}
     const ox=g.x,oy=g.y;g.x+=(g.tx-g.x)*f;g.y+=(g.ty-g.y)*f;const dh=Math.atan2(Math.sin(g.th-g.h),Math.cos(g.th-g.h));g.h+=dh*f;
     if(dt>0)g.spd+=(Math.hypot(g.x-ox,g.y-oy)/dt-g.spd)*Math.min(1,dt*5);
@@ -1386,6 +1415,32 @@ function drawMap(now){const w=pm.clientWidth;if(!w)return;const d=Math.min(2,dev
     while(placed.some(r=>x<r.x+r.w&&r.x<x+tw&&y<r.y+16&&r.y<y+16))y+=17;placed.push({x,y,w:tw});
     pg.fillStyle='rgba(20,27,35,.85)';pg.fillRect(x,y,tw,16);pg.fillStyle=p.c;pg.fillText(p.n,x+4,y+9);}}
 
+/* ---------- team mode: one shared hall; a cable belongs to whoever unplugged it, the owner reports progress ~1/s ---------- */
+function addTime(x,kind){if(MP.inRound&&MP.team){MP.bonus+=x;mpSend({t:'bonus',s:x,kind});}else S.time+=x;}
+function teamClaim(c){if(MP.inRound&&MP.team)mpSend({t:'claim',i:S.cables.indexOf(c)});}
+function teamCab(c,st){if(MP.inRound&&MP.team)mpSend({t:'cab',i:S.cables.indexOf(c),st,s:+c.s.toFixed(2)});}
+function applyCab(i,cb){const c=S.cables[i];if(!c||!S.running&&!S.over)return;
+  const mine=c===S.held||c===S.held2;
+  if(cb.o===MP.id&&!cb.deny)return;  // my own claim confirmed
+  if(mine&&(cb.deny||cb.o)){if(S.held===c){S.held=S.held2||null;S.held2=null;}else S.held2=null;toast(`${c.id} jau paņēma ${cb.n||'kolēģis'}`);}
+  else if(mine)return;
+  const was=c.st;c.st=cb.st==='held'?'taken':cb.st;c.owner=cb.n;if(cb.s>c.s)c.s=cb.s;
+  if(was==='live'&&c.st!=='live'){c.devObj.tally.color.setHex(0x2a0c0a);c.devObj.lab.visible=false;}
+  c.tapes.forEach(t=>{if(!t.done&&t.s<=c.s){t.done=true;scene.remove(t.m);}});
+  c.knots.forEach(k=>{if(!k.done&&k.s<=c.s){k.done=true;k.m.forEach(m=>scene.remove(m));}});
+  updateCable(c);
+  if(c.st==='done'&&was!=='done'){addDrum(c);if(S.running&&!S.over)toast(`${cb.n||'Kolēģis'} satina ${c.id}`);
+    if(S.cables.every(k=>k.st==='done')&&S.running&&!S.over)finish(true);}}
+/* ---------- leaderboard: each player's best result, from rooms and from named single-player games ---------- */
+let tops=[];
+const MODE_LV={race:'sacensība',team:'komanda',solo:'viens'};
+function renderTops(){$('tops').hidden=!tops.length;$('topList').replaceChildren(...tops.slice(0,5).map((p,i)=>{const li=mk('li',p.name===MP.name?'me':'');
+  const nm=mk('span','nm',p.name);nm.append(mk('span','md',`${MODE_LV[p.mode]||''} · ${p.cables}/8`));li.append(mk('span','k',i+1+'.'),nm,mk('b','',p.score));return li;}));}
+function loadTops(){fetch(MP_HTTP+'/top').then(r=>r.json()).then(d=>{tops=d.top||[];renderTops();renderLobby();}).catch(()=>{});}
+function submitSolo(cables,win){const name=$('mpName').value.replace(/\s+/g,' ').trim();if(!name||!S.score)return;
+  try{localStorage.setItem('atp250-mp-name',name);}catch(e){}
+  fetch(MP_HTTP+'/solo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,score:S.score,cables,win})})
+    .then(r=>r.json()).then(d=>{if(d.top){tops=d.top;renderTops();}}).catch(()=>{});}
 function openChat(){if(MP.chatOpen)return;MP.chatOpen=true;Object.keys(keys).forEach(k=>keys[k]=false);touchAct=false;joyV={x:0,y:0};$('knob').style.transform='';
   try{if(document.pointerLockElement)document.exitPointerLock();}catch(e){}
   $('mpSay').hidden=false;$('mpInput').value='';$('mpInput').focus();}
@@ -1399,6 +1454,8 @@ $('mpJoin').onclick=mpJoin;
 $('mpName').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();mpJoin();}});
 $('lReady').onclick=()=>{unlockAudio();const me=MP.players.find(p=>p.id===MP.id);mpSend({t:'ready',v:!(me&&me.ready)});};
 $('lLeave').onclick=mpLeave;
+loadTops();
+$('lRace').onclick=()=>mpSend({t:'mode',v:'race'});$('lTeam').onclick=()=>mpSend({t:'mode',v:'team'});
 $('eLobby').onclick=backToLobby;
 window.__derig={get S(){return S},start,keys,update,sync,MP};
 

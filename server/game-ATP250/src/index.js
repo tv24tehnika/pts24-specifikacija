@@ -3,21 +3,47 @@ import { DurableObject } from 'cloudflare:workers';
 // One shared room: players enter a name, everyone presses "ready", the round starts for all at once,
 // each plays their own copy and reports scores; results are ranked when everyone is done or time runs out.
 const GAME_MS = 900e3;  // 8 min game clock + earned extra time (drums, producer, bribes, last call) + grace
+const TEAM_BASE_S = 480 + 30;  // team mode: shared clock (8 min + grace) plus whatever the team earns
+const CABLES = 8;
 const COUNTDOWN_MS = 5000;
 const AUTO_MS = 60e3;  // with 2+ ready, wait this long for the rest, then start without them
 const MAX_PLAYERS = 16;
 const CHAT_KEEP = 40;
 const KEEP_MS = 3600e3;  // chat and the last round's results are forgotten after an hour
 const STALE_MS = 75e3;  // clients ping every 25 s; silence this long means the connection is dead
+const HISTORY_KEEP = 5000;  // rows of played results kept for the admin page and the leaderboard
 const ORIGINS = [/^https:\/\/(www\.)?pts24\.lv$/, /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/];
+
+const cors = origin => ({ 'Access-Control-Allow-Origin': origin, 'Access-Control-Allow-Headers': 'Authorization, Content-Type', 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS', Vary: 'Origin' });
+// compare via hashes so the check takes the same time whatever the key
+async function sameKey(a, b) {
+  const h = s => crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+  return crypto.subtle.timingSafeEqual(await h(a), await h(b));
+}
 
 export default {
   async fetch(req, env) {
-    const url = new URL(req.url);
-    if (url.pathname !== '/ws') return new Response('ATP250 derigs', { status: 404 });
-    if (req.headers.get('Upgrade') !== 'websocket') return new Response('Expected WebSocket', { status: 426 });
-    if (!ORIGINS.some(r => r.test(req.headers.get('Origin') || ''))) return new Response('Forbidden', { status: 403 });
-    return env.ROOM.get(env.ROOM.idFromName('main')).fetch(req);
+    const url = new URL(req.url), origin = req.headers.get('Origin') || '', allowed = ORIGINS.some(r => r.test(origin));
+    const room = env.ROOM.get(env.ROOM.idFromName('main'));
+    if (url.pathname === '/ws') {
+      if (req.headers.get('Upgrade') !== 'websocket') return new Response('Expected WebSocket', { status: 426 });
+      if (!allowed) return new Response('Forbidden', { status: 403 });
+      return room.fetch(req);
+    }
+    // /top: public leaderboard · /solo: a single-player result from the page · /admin: full history behind ADMIN_KEY
+    if (!['/top', '/solo', '/admin'].includes(url.pathname)) return new Response('ATP250 derigs', { status: 404 });
+    if (req.method === 'OPTIONS') return new Response(null, { status: allowed ? 204 : 403, headers: allowed ? cors(origin) : {} });
+    if (url.pathname === '/solo' && (req.method !== 'POST' || !allowed)) return new Response('Forbidden', { status: 403 });
+    if (url.pathname === '/admin') {
+      const key = (req.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '');
+      if (!env.ADMIN_KEY || !key || !(await sameKey(key, env.ADMIN_KEY)))
+        return Response.json({ error: 'unauthorized' }, { status: 401, headers: allowed ? cors(origin) : {} });
+    }
+    const res = await room.fetch(req);
+    if (!allowed) return res;
+    const out = new Response(res.body, res);
+    for (const [k, v] of Object.entries(cors(origin))) out.headers.set(k, v);
+    return out;
   },
 };
 
@@ -30,13 +56,30 @@ export class Room extends DurableObject {
     // keepalive from clients (idle connections get dropped by proxies) answered without waking the object
     ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair('ping', 'pong'));
     this.seen = new Map();
+    this.soloAt = new Map();
+    this.sql = ctx.storage.sql;
+    this.sql.exec(`CREATE TABLE IF NOT EXISTS plays (id INTEGER PRIMARY KEY AUTOINCREMENT, at INTEGER NOT NULL, round INTEGER NOT NULL DEFAULT 0,
+      mode TEXT NOT NULL, name TEXT NOT NULL, score INTEGER NOT NULL, cables INTEGER NOT NULL, left_early INTEGER NOT NULL DEFAULT 0,
+      team_cables INTEGER, team_win INTEGER)`);
     ctx.blockConcurrencyWhile(async () => {
-      this.room = (await ctx.storage.get('room')) || { phase: 'lobby', startAt: 0, endAt: 0, autoAt: 0, round: 0, left: [], last: null };
+      this.room = (await ctx.storage.get('room')) || { phase: 'lobby', mode: 'race', startAt: 0, endAt: 0, autoAt: 0, round: 0, left: [], last: null };
       this.chat = (await ctx.storage.get('chat')) || [];
     });
   }
 
-  async fetch() {
+  async fetch(req) {
+    const path = new URL(req.url).pathname;
+    if (path === '/top') return Response.json({ top: this.top() });
+    if (path === '/admin') return Response.json(this.admin());
+    if (path === '/solo') {
+      const b = await req.json().catch(() => null), name = clean(b && b.name, 20), now = Date.now();
+      if (!name) return Response.json({ ok: false }, { status: 400 });
+      // one result per name every 30 s is plenty for a real game
+      if (now - (this.soloAt.get(name.toLowerCase()) || 0) < 30e3) return Response.json({ ok: false }, { status: 429 });
+      this.soloAt.set(name.toLowerCase(), now);
+      this.record([{ name, score: Math.min(int(b.score), 100000), cables: Math.min(int(b.cables), CABLES), left: false }], 'solo', 0, null);
+      return Response.json({ ok: true, top: this.top() });
+    }
     const [client, server] = Object.values(new WebSocketPair());
     this.ctx.acceptWebSocket(server);
     server.serializeAttachment({ id: crypto.randomUUID().slice(0, 8), name: '', ready: false, inGame: false, score: 0, cables: 0, done: false, lastChat: 0 });
@@ -49,6 +92,24 @@ export class Room extends DurableObject {
       .map(ws => ({ ws, a: ws.deserializeAttachment() })).filter(p => p.a.name);
   }
   save() { return this.ctx.storage.put('room', this.room); }
+
+  record(rows, mode, round, team) {
+    const at = Date.now();
+    for (const p of rows) this.sql.exec('INSERT INTO plays (at, round, mode, name, score, cables, left_early, team_cables, team_win) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      at, round, mode, p.name, p.score, p.cables, p.left ? 1 : 0, team ? team.cables : null, team ? (team.win ? 1 : 0) : null);
+    this.sql.exec('DELETE FROM plays WHERE id <= (SELECT MAX(id) FROM plays) - ?', HISTORY_KEEP);
+  }
+  // each player's best result
+  top(n = 10) {
+    return this.sql.exec(`SELECT name, score, cables, mode, at FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY lower(name) ORDER BY score DESC, at) AS rn
+      FROM plays WHERE score > 0) WHERE rn = 1 ORDER BY score DESC LIMIT ?`, n).toArray();
+  }
+  admin() {
+    const players = this.sql.exec(`SELECT name, COUNT(*) AS games, MAX(score) AS best, CAST(AVG(score) AS INTEGER) AS avg, SUM(cables) AS cables,
+      MIN(at) AS first, MAX(at) AS last FROM plays GROUP BY lower(name) ORDER BY last DESC`).toArray();
+    const plays = this.sql.exec('SELECT * FROM plays ORDER BY id DESC LIMIT 1000').toArray();
+    return { players, plays, top: this.top(20), now: Date.now() };
+  }
   send(ws, m) { try { ws.send(JSON.stringify(m)); } catch {} }
   broadcast(m, except) { const s = JSON.stringify(m); for (const { ws } of this.named(except)) { try { ws.send(s); } catch {} } }
   state(except) {
@@ -56,7 +117,8 @@ export class Room extends DurableObject {
     const players = this.named(except).map(p => pub(p.a));
     if (this.room.phase === 'playing') players.push(...this.room.left.map(p => ({ ...p, inGame: true, left: true })));
     const r = this.room;
-    this.broadcast({ t: 'state', phase: r.phase, startAt: r.startAt, endAt: r.endAt, autoAt: r.autoAt || 0, now: Date.now(), players, last: r.last }, except);
+    const team = r.phase === 'playing' && r.mode === 'team' ? { cables: r.cables, bonus: r.bonus, bribes: r.bribes, lastCall: r.lastCall } : null;
+    this.broadcast({ t: 'state', phase: r.phase, mode: r.mode || 'race', startAt: r.startAt, endAt: r.endAt, autoAt: r.autoAt || 0, now: Date.now(), players, last: r.last, team }, except);
   }
   async sys(text, except) {
     const msg = { sys: true, text, ts: Date.now() };
@@ -140,6 +202,17 @@ export class Room extends DurableObject {
       await this.checkStart();
       return this.state();
     }
+    if (m.t === 'mode') {
+      if (r.phase !== 'lobby' || !['race', 'team'].includes(m.v) || r.mode === m.v) return;
+      r.mode = m.v;
+      // everyone confirms again for the new mode
+      for (const p of this.named()) p.ws.serializeAttachment({ ...p.a, ready: false });
+      await this.sys(`${me.name} izvēlējās režīmu: ${m.v === 'team' ? 'Komanda' : 'Sacensība'}`);
+      await this.checkStart();
+      return this.state();
+    }
+    // team mode: one shared hall. A cable belongs to whoever unplugged (or picked) it; only the owner reports progress, about once a second
+    if (r.mode === 'team' && r.phase === 'playing' && me.inGame && ['claim', 'cab', 'bonus'].includes(m.t)) return this.team(ws, me, m);
     if (m.t === 'chat') {
       const text = clean(m.text, 200);
       const now = Date.now();
@@ -161,6 +234,34 @@ export class Room extends DurableObject {
     }
   }
 
+  async team(ws, me, m) {
+    const r = this.room;
+    if (m.t === 'claim') {
+      const i = int(m.i), c = r.cables[i];
+      if (!c) return;
+      if (c.st !== 'live' && c.st !== 'left') return this.send(ws, { t: 'cab', i, ...c, deny: true });
+      Object.assign(c, { st: 'held', o: me.id, n: me.name });
+      await this.save();
+      return this.broadcast({ t: 'cab', i, ...c });
+    }
+    if (m.t === 'cab') {
+      const i = int(m.i), c = r.cables[i];
+      if (!c || c.o !== me.id) return;
+      c.s = Math.max(c.s, Math.min(1000, +m.s || 0));
+      if (m.st === 'left' || m.st === 'done') { Object.assign(c, { st: m.st, o: null }); if (m.st === 'done') c.n = me.name; await this.save(); }
+      return this.broadcast({ t: 'cab', i, ...c }, ws);
+    }
+    if (m.t === 'bonus') {
+      if (m.kind === 'bribe') { if (r.bribes >= 2) return; r.bribes++; }
+      if (m.kind === 'last') { if (r.lastCall) return; r.lastCall = true; }
+      r.bonus = Math.max(-300, Math.min(1200, r.bonus + Math.max(-30, Math.min(60, +m.s || 0))));
+      r.endAt = r.startAt + (TEAM_BASE_S + Math.max(0, r.bonus)) * 1000;
+      await this.ctx.storage.setAlarm(r.endAt);
+      await this.save();
+      return this.broadcast({ t: 'bonus', total: r.bonus, bribes: r.bribes, lastCall: r.lastCall });
+    }
+  }
+
   async webSocketClose(ws) { await this.gone(ws); try { ws.close(1000, 'bye'); } catch {} }
   async webSocketError(ws) { await this.gone(ws); }
   async gone(ws, why = 'izgāja') {
@@ -170,6 +271,9 @@ export class Room extends DurableObject {
     ws.serializeAttachment(me);
     if (this.room.phase === 'playing' && me.inGame) {
       this.room.left.push({ id: me.id, name: me.name, score: me.score, cables: me.cables, done: me.done });
+      if (this.room.mode === 'team') this.room.cables.forEach((c, i) => {
+        if (c.o === me.id) { Object.assign(c, { st: 'left', o: null }); this.broadcast({ t: 'cab', i, ...c }, ws); }
+      });
       await this.save();
     }
     await this.sys(`${me.name} ${why}`, ws);
@@ -210,6 +314,14 @@ export class Room extends DurableObject {
       ...r.left.map(p => ({ ...p, left: true }))].sort((a, b) => b.score - a.score);
     r.round++;
     r.last = { round: r.round, results, at: Date.now() };
+    const mode = r.mode || 'race';
+    if (r.mode === 'team' && r.cables) {
+      const done = r.cables.filter(c => c.st === 'done').length;
+      // in a shared hall each player's count is the cables they finished themselves
+      for (const p of results) p.cables = r.cables.filter(c => c.st === 'done' && c.n === p.name).length;
+      r.last.team = { win: done === CABLES, cables: done, total: results.reduce((a, p) => a + p.score, 0) };
+    }
+    this.record(results, mode, r.round, r.last.team || null);
     Object.assign(r, { phase: 'lobby', left: [] });
     for (const { ws, a } of ps) ws.serializeAttachment({ ...a, inGame: false, done: false, ready: false });
     await this.ctx.storage.deleteAlarm();
@@ -235,6 +347,8 @@ export class Room extends DurableObject {
       if (!ps.some(p => p.a.ready)) { r.phase = 'lobby'; await this.save(); return this.state(); }
       for (const { ws, a } of ps) ws.serializeAttachment({ ...a, inGame: a.ready, ready: false, score: 0, cables: 0, done: false });
       Object.assign(r, { phase: 'playing', endAt: r.startAt + GAME_MS, left: [] });
+      if (r.mode === 'team') Object.assign(r, { endAt: r.startAt + TEAM_BASE_S * 1000, bonus: 0, bribes: 0, lastCall: false,
+        cables: Array.from({ length: CABLES }, () => ({ st: 'live', s: 0, o: null, n: '' })) });
       await this.ctx.storage.setAlarm(r.endAt);
       await this.save();
       return this.state();
