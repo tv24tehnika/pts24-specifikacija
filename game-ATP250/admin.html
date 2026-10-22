@@ -62,12 +62,12 @@ tr.round td{background:color-mix(in srgb,var(--hivis) 10%,var(--card));font-weig
 
   <section id="playersSec" hidden>
     <h2>Spēlētāji</h2>
-    <div class="wrap"><table><thead><tr><th>Vārds</th><th class="n">Spēles</th><th class="n">Labākais</th><th class="n">Vidēji</th><th class="n">Kabeļi kopā</th><th>Pirmoreiz</th><th>Pēdējoreiz</th></tr></thead><tbody id="players"></tbody></table></div>
+    <div class="wrap"><table><thead><tr><th>Vārds</th><th class="n">Spēles</th><th class="n">Labākais</th><th class="n">Vidēji</th><th class="n">Kabeļi kopā</th><th class="n">Ātrākais 8/8</th><th>Pirmoreiz</th><th>Pēdējoreiz</th></tr></thead><tbody id="players"></tbody></table></div>
   </section>
 
   <section id="playsSec" hidden>
     <h2>Spēles</h2>
-    <div class="wrap"><table><thead><tr><th>Laiks</th><th>Režīms</th><th>Vārds</th><th class="n">Punkti</th><th class="n">Kabeļi</th><th>Piezīmes</th></tr></thead><tbody id="plays"></tbody></table></div>
+    <div class="wrap"><table><thead><tr><th>Laiks</th><th>Režīms</th><th>Vārds</th><th class="n">Punkti</th><th class="n">Kabeļi</th><th class="n">Laiks</th><th>Piezīmes</th></tr></thead><tbody id="plays"></tbody></table></div>
   </section>
 </main>
 <script>
@@ -75,6 +75,7 @@ tr.round td{background:color-mix(in srgb,var(--hivis) 10%,var(--card));font-weig
 const $=id=>document.getElementById(id);
 const API=new URLSearchParams(location.search).get('api')||(/^(localhost|127\.0\.0\.1)$/.test(location.hostname)?'http://localhost:8787':'https://game.pts24.lv');
 const MODE={race:'Sacensība',team:'Komanda',solo:'Viens'};
+const mmss=s=>s==null?'':String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
 const dt=ms=>new Date(ms).toLocaleString('lv-LV',{timeZone:'Europe/Riga',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
 const el=(tag,txt,cls)=>{const e=document.createElement(tag);if(txt!=null)e.textContent=txt;if(cls)e.className=cls;return e;};
 const tr=(cells,cls)=>{const r=el('tr',null,cls);cells.forEach(([t,c])=>r.append(el('td',t,c)));return r;};
@@ -98,16 +99,16 @@ function show(d){
   const rounds=new Set(d.plays.filter(p=>p.round).map(p=>p.round)).size,leader=d.top[0];
   $('stats').replaceChildren(...[[d.players.length,'Spēlētāji'],[d.plays.length,'Rezultāti'],[rounds,'Raundi istabā'],[leader?leader.score:'–',leader?'Līderis: '+leader.name:'Līderis']]
     .map(([b,s])=>{const x=el('div');x.append(el('b',String(b)),el('span',s));return x;}));
-  $('players').replaceChildren(...d.players.map(p=>tr([[p.name],[p.games,'n'],[p.best,'n'],[p.avg,'n'],[p.cables,'n'],[dt(p.first)],[dt(p.last)]])));
+  $('players').replaceChildren(...d.players.map(p=>tr([[p.name],[p.games,'n'],[p.best,'n'],[p.avg,'n'],[p.cables,'n'],[mmss(p.fastest),'n'],[dt(p.first)],[dt(p.last)]])));
   // newest first; a room round gets a header line with the team result
   const rows=[];let cur=null;
   for(const p of d.plays){
     const grp=p.round?'r'+p.round+'-'+p.at:'s'+p.id;
     if(p.round&&grp!==cur){cur=grp;
       const team=p.team_cables!=null?` · komanda ${p.team_cables}/8${p.team_win?' · pabeigts':''}`:'';
-      rows.push(tr([[dt(p.at)],[MODE[p.mode]||p.mode],[`Raunds #${p.round}${team}`],[''],[''],['']],'round'));}
+      rows.push(tr([[dt(p.at)],[MODE[p.mode]||p.mode],[`Raunds #${p.round}${team}`],[''],[''],[''],['']],'round'));}
     const note=[p.left_early?'izgāja':'',p.mode==='solo'&&p.cables===8?'viss satīts':''].filter(Boolean).join(', ');
-    rows.push(tr([[p.round?'':dt(p.at)],[p.round?'':MODE[p.mode]||p.mode],[p.name],[p.score,'n'],[p.cables,'n'],[note]]));
+    rows.push(tr([[p.round?'':dt(p.at)],[p.round?'':MODE[p.mode]||p.mode],[p.name],[p.score,'n'],[p.cables,'n'],[mmss(p.secs),'n'],[note]]));
   }
   $('plays').replaceChildren(...rows);
 }

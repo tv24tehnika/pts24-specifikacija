@@ -1107,7 +1107,7 @@ function finish(win){if(S.over)return;S.over=true;S.running=false;try{document.e
   $('eEye').textContent=win?'Derigs pabeigts':'Kravas auto aizbrauca';
   $('eTitle').textContent=win?(S.bumps===0&&S.time>90?'Derig meistars':S.time>30?'Viss satīts':'Pēdējā minūtē'):'Kabeļi palika hallē';
   $('eText').textContent=win?`Visi ${S.cables.length} kabeļi satīti, OB VAN var braukt. Laika bonuss: ${Math.round(S.time)*10} punkti.`:`Satīti ${done} no ${S.cables.length}. Pārējie paliek hallē līdz rītam.`;
-  $('eScore').textContent=S.score;$('eCables').textContent=done+'/'+S.cables.length;$('eTime').textContent=fmt(MP.inRound?(srvNow()-MP.startAt)/1000:S.played);
+  $('eScore').textContent=S.score;$('eCables').textContent=done+'/'+S.cables.length;S.used=Math.round(MP.inRound?(srvNow()-MP.startAt)/1000:S.played);$('eTime').textContent=fmt(S.used);
   $('eMeters').textContent=Math.round(S.meters);$('eProd').textContent=S.prodDone;$('eBest').textContent=best;
   $('end').hidden=false;$('prompt').hidden=true;$('hint').hidden=true;
   if(MP.inRound)mpFinished(done);else{$('again').focus();submitSolo(done,win);}}
@@ -1330,7 +1330,7 @@ function mpTick(dt){const w=performance.now()/1000,e=w-(MP.wall||w);MP.wall=w;
   MP.posT-=e;if(MP.posT<=0){MP.posT=.5;mpSend({t:'pos',x:S.p.x,y:S.p.y,h:S.p.head,k:S.held?S.held.type:'',c:S.cart.held});}
   MP.sendT-=e;if(MP.sendT<=0){MP.sendT=3;mpSend({t:'score',score:S.score,cables:S.cables.filter(c=>c.st==='done').length});renderBoard();}}
 function mpFinished(cables){
-  if(!MP.myDone){MP.myDone=true;mpSend({t:'done',score:S.score,cables});}
+  if(!MP.myDone){MP.myDone=true;mpSend({t:'done',score:S.score,cables,time:S.used});}
   closeChat();$('again').hidden=true;$('eRoom').hidden=false;$('eLobby').hidden=false;$('eLobby').focus();renderRank();}
 function backToLobby(){$('end').hidden=true;$('mpHud').hidden=true;$('cbtn').hidden=true;$('restart').hidden=false;$('again').hidden=false;$('eLobby').hidden=true;
   $('pEye').textContent='Spēle apturēta · laiks stāv';$('lobby').hidden=false;renderLobby();renderLog();}
@@ -1343,7 +1343,8 @@ function renderRank(){if($('eRoom').hidden)return;const ul=$('eRank');ul.replace
   const list=fin?MP.last.results:ranked();
   if(fin&&MP.last.team){const t=MP.last.team;$('eRoomH').textContent=`Komanda: ${t.cables}/8 satīti · ${t.total} punkti${t.win?' · derigs pabeigts!':''}`;}
   else if(MP.team&&!fin)$('eRoomH').textContent=`Komanda: ${S.cables.filter(c=>c.st==='done').length}/8 satīti · gaidām pārējos`;
-  list.forEach((p,i)=>ul.append(rankRow(p,i,p.left?'izgāja':fin?(MP.last.team?`satina ${p.cables}`:`${p.cables}/8 kabeļi`):p.done?'pabeidza':'vēl spēlē…')));}
+  const t=p=>p.time!=null?` · ${fmt(p.time)}`:'';
+  list.forEach((p,i)=>ul.append(rankRow(p,i,p.left?'izgāja':fin?(MP.last.team?`satina ${p.cables}`:`${p.cables}/8 kabeļi`)+t(p):p.done?'pabeidza'+t(p):'vēl spēlē…')));}
 function renderBoard(){if($('mpHud').hidden)return;const b=$('mpBoard');b.replaceChildren(mk('h3','','Istaba'));
   ranked().slice(0,6).forEach((p,i)=>{const r=mk('div','r'+(p.id===MP.id?' me':'')+(p.done?' fin':'')+(p.left?' gone':''));r.append(mk('span','',i+1),mk('span','',p.name),mk('span','',p.score));b.append(r);});}
 function renderLog(){
@@ -1441,11 +1442,11 @@ let tops=[],topsOld=false;
 try{tops=JSON.parse(localStorage.getItem('atp250-tops')||'[]');topsOld=tops.length>0;}catch(e){}
 const MODE_LV={race:'sacensība',team:'komanda',solo:'viens'};
 function renderTops(){$('tops').hidden=!tops.length;$('tops').querySelector('.eyebrow').textContent=topsOld?'Rekordi · pēdējie saglabātie':'Rekordi · labākais rezultāts katram';$('topList').replaceChildren(...tops.slice(0,5).map((p,i)=>{const li=mk('li',p.name===MP.name?'me':'');
-  const nm=mk('span','nm',p.name);nm.append(mk('span','md',`${MODE_LV[p.mode]||''} · ${p.cables}/8`));li.append(mk('span','k',i+1+'.'),nm,mk('b','',p.score));return li;}));}
+  const nm=mk('span','nm',p.name);nm.append(mk('span','md',`${MODE_LV[p.mode]||''} · ${p.cables}/8${p.secs!=null?' · '+fmt(p.secs):''}`));li.append(mk('span','k',i+1+'.'),nm,mk('b','',p.score));return li;}));}
 function loadTops(){renderTops();fetch(MP_HTTP+'/top').then(r=>r.json()).then(d=>{tops=d.top||[];topsOld=false;try{localStorage.setItem('atp250-tops',JSON.stringify(tops));}catch(e){}renderTops();renderLobby();}).catch(()=>{});}
 function submitSolo(cables,win){const name=$('mpName').value.replace(/\s+/g,' ').trim();if(!name||!S.score)return;
   try{localStorage.setItem('atp250-mp-name',name);}catch(e){}
-  sendSolo({name,score:S.score,cables,win});}
+  sendSolo({name,score:S.score,cables,win,time:S.used});}
 const soloQueue=()=>{try{return JSON.parse(localStorage.getItem('atp250-solo-queue')||'[]');}catch(e){return [];}};
 const saveQueue=q=>{try{localStorage.setItem('atp250-solo-queue',JSON.stringify(q));}catch(e){}};
 function sendSolo(r){

@@ -61,6 +61,8 @@ export class Room extends DurableObject {
     this.sql.exec(`CREATE TABLE IF NOT EXISTS plays (id INTEGER PRIMARY KEY AUTOINCREMENT, at INTEGER NOT NULL, round INTEGER NOT NULL DEFAULT 0,
       mode TEXT NOT NULL, name TEXT NOT NULL, score INTEGER NOT NULL, cables INTEGER NOT NULL, left_early INTEGER NOT NULL DEFAULT 0,
       team_cables INTEGER, team_win INTEGER)`);
+    // finish time in seconds, added after the table first went live
+    if (!this.sql.exec('PRAGMA table_info(plays)').toArray().some(c => c.name === 'secs')) this.sql.exec('ALTER TABLE plays ADD COLUMN secs INTEGER');
     ctx.blockConcurrencyWhile(async () => {
       this.room = (await ctx.storage.get('room')) || { phase: 'lobby', mode: 'race', startAt: 0, endAt: 0, autoAt: 0, round: 0, left: [], last: null };
       this.chat = (await ctx.storage.get('chat')) || [];
@@ -77,7 +79,7 @@ export class Room extends DurableObject {
       // one result per name every 30 s is plenty for a real game
       if (now - (this.soloAt.get(name.toLowerCase()) || 0) < 30e3) return Response.json({ ok: false }, { status: 429 });
       this.soloAt.set(name.toLowerCase(), now);
-      this.record([{ name, score: Math.min(int(b.score), 100000), cables: Math.min(int(b.cables), CABLES), left: false }], 'solo', 0, null);
+      this.record([{ name, score: Math.min(int(b.score), 100000), cables: Math.min(int(b.cables), CABLES), left: false, time: b.time == null ? null : Math.min(int(b.time), 3600) }], 'solo', 0, null);
       return Response.json({ ok: true, top: this.top() });
     }
     const [client, server] = Object.values(new WebSocketPair());
@@ -95,17 +97,18 @@ export class Room extends DurableObject {
 
   record(rows, mode, round, team) {
     const at = Date.now();
-    for (const p of rows) this.sql.exec('INSERT INTO plays (at, round, mode, name, score, cables, left_early, team_cables, team_win) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      at, round, mode, p.name, p.score, p.cables, p.left ? 1 : 0, team ? team.cables : null, team ? (team.win ? 1 : 0) : null);
+    for (const p of rows) this.sql.exec('INSERT INTO plays (at, round, mode, name, score, cables, left_early, team_cables, team_win, secs) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      at, round, mode, p.name, p.score, p.cables, p.left ? 1 : 0, team ? team.cables : null, team ? (team.win ? 1 : 0) : null, p.time ?? null);
     this.sql.exec('DELETE FROM plays WHERE id <= (SELECT MAX(id) FROM plays) - ?', HISTORY_KEEP);
   }
   // each player's best result
   top(n = 10) {
-    return this.sql.exec(`SELECT name, score, cables, mode, at FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY lower(name) ORDER BY score DESC, at) AS rn
-      FROM plays WHERE score > 0) WHERE rn = 1 ORDER BY score DESC LIMIT ?`, n).toArray();
+    return this.sql.exec(`SELECT name, score, cables, mode, at, secs FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY lower(name)
+      ORDER BY score DESC, secs IS NULL, secs, at) AS rn FROM plays WHERE score > 0) WHERE rn = 1 ORDER BY score DESC, secs IS NULL, secs LIMIT ?`, n).toArray();
   }
   admin() {
     const players = this.sql.exec(`SELECT name, COUNT(*) AS games, MAX(score) AS best, CAST(AVG(score) AS INTEGER) AS avg, SUM(cables) AS cables,
+      MIN(CASE WHEN cables = ${CABLES} THEN secs END) AS fastest,
       MIN(at) AS first, MAX(at) AS last FROM plays GROUP BY lower(name) ORDER BY last DESC`).toArray();
     const plays = this.sql.exec('SELECT * FROM plays ORDER BY id DESC LIMIT 1000').toArray();
     return { players, plays, top: this.top(20), now: Date.now() };
@@ -178,7 +181,7 @@ export class Room extends DurableObject {
         for (const p of others.filter(p => p.a.id === m.id)) { try { p.ws.close(4002, 'replaced'); } catch {} await this.gone(p.ws); }
         me.id = m.id;
         const i = m.resume && r.phase === 'playing' ? r.left.findIndex(p => p.id === m.id) : -1;
-        if (i >= 0) { const p = r.left.splice(i, 1)[0]; Object.assign(me, { inGame: true, score: p.score, cables: p.cables, done: p.done }); await this.save(); }
+        if (i >= 0) { const p = r.left.splice(i, 1)[0]; Object.assign(me, { inGame: true, score: p.score, cables: p.cables, done: p.done, time: p.time }); await this.save(); }
       }
       const taken = new Set(this.named(ws).map(p => p.a.name.toLowerCase()));
       let name = name0;
@@ -227,6 +230,7 @@ export class Room extends DurableObject {
     if ((m.t === 'score' || m.t === 'done') && me.inGame && !me.done && r.phase === 'playing') {
       me.score = int(m.score);
       me.cables = int(m.cables);
+      if (m.t === 'done') me.time = m.time == null ? null : Math.min(int(m.time), 3600);
       if (m.t === 'done') me.done = true;
       ws.serializeAttachment(me);
       if (me.done && await this.checkEnd()) return;
@@ -270,7 +274,7 @@ export class Room extends DurableObject {
     me.gone = true;
     ws.serializeAttachment(me);
     if (this.room.phase === 'playing' && me.inGame) {
-      this.room.left.push({ id: me.id, name: me.name, score: me.score, cables: me.cables, done: me.done });
+      this.room.left.push({ id: me.id, name: me.name, score: me.score, cables: me.cables, done: me.done, time: me.done ? me.time ?? null : null });
       if (this.room.mode === 'team') this.room.cables.forEach((c, i) => {
         if (c.o === me.id) { Object.assign(c, { st: 'left', o: null }); this.broadcast({ t: 'cab', i, ...c }, ws); }
       });
@@ -310,7 +314,7 @@ export class Room extends DurableObject {
 
   async endRound(except) {
     const r = this.room, ps = this.named(except);
-    const results = [...ps.filter(p => p.a.inGame).map(({ a }) => ({ id: a.id, name: a.name, score: a.score, cables: a.cables, done: a.done })),
+    const results = [...ps.filter(p => p.a.inGame).map(({ a }) => ({ id: a.id, name: a.name, score: a.score, cables: a.cables, done: a.done, time: a.done ? a.time ?? null : null })),
       ...r.left.map(p => ({ ...p, left: true }))].sort((a, b) => b.score - a.score);
     r.round++;
     r.last = { round: r.round, results, at: Date.now() };
@@ -345,7 +349,7 @@ export class Room extends DurableObject {
     if (r.phase === 'countdown') {
       const ps = this.named();
       if (!ps.some(p => p.a.ready)) { r.phase = 'lobby'; await this.save(); return this.state(); }
-      for (const { ws, a } of ps) ws.serializeAttachment({ ...a, inGame: a.ready, ready: false, score: 0, cables: 0, done: false });
+      for (const { ws, a } of ps) ws.serializeAttachment({ ...a, inGame: a.ready, ready: false, score: 0, cables: 0, done: false, time: null });
       Object.assign(r, { phase: 'playing', endAt: r.startAt + GAME_MS, left: [] });
       if (r.mode === 'team') Object.assign(r, { endAt: r.startAt + TEAM_BASE_S * 1000, bonus: 0, bribes: 0, lastCall: false,
         cables: Array.from({ length: CABLES }, () => ({ st: 'live', s: 0, o: null, n: '' })) });
