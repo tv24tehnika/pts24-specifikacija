@@ -102,6 +102,7 @@ input.txt{font:16px var(--mono);padding:9px 10px;border:2px solid var(--ink);bor
 input.txt:focus{outline:2px solid var(--hivis);outline-offset:1px}
 .field{display:flex;flex-direction:column;gap:5px;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#5D6976}
 .btns{display:flex;gap:8px;flex-wrap:wrap}
+.note{font-size:12px;color:#5D6976;margin:0}
 .err{color:#C0362C;font-size:12.5px;margin:0}
 .plist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;font-size:13px}
 .plist li{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:center;background:#fff;border:1px solid #D3D9DF;border-radius:3px;padding:6px 9px;font-variant-numeric:tabular-nums}
@@ -218,7 +219,9 @@ input.txt:focus{outline:2px solid var(--hivis);outline-offset:1px}
     <div class="btns">
       <button class="btn" id="mpJoin" disabled>Ielādē…</button>
       <button class="btn ghost" id="go" disabled>Spēlēt vienam</button>
+      <button class="btn ghost" id="install" hidden>Instalēt kā lietotni</button>
     </div>
+    <p class="note" id="iosHint" hidden>Lai spēle būtu kā lietotne un strādātu arī bez interneta: Safari <b>Kopīgot</b> → <b>Pievienot sākuma ekrānam</b>.</p>
   </div>
 </div>
 <div class="ov" id="lobby" hidden>
@@ -1273,7 +1276,9 @@ const srvNow=()=>Date.now()+MP.off;
 function mpJoin(){
   const name=$('mpName').value.replace(/\s+/g,' ').trim();
   if(!name){$('mpErr').textContent='Ieraksti savu vārdu, lai citi zina, kas tu esi.';$('mpErr').hidden=false;$('mpName').focus();return;}
-  $('mpErr').hidden=true;try{localStorage.setItem('atp250-mp-name',name);}catch(e){}
+  try{localStorage.setItem('atp250-mp-name',name);}catch(e){}
+  if(!navigator.onLine){$('mpErr').textContent='Bez interneta istaba nav pieejama. Vari spēlēt vienam, rezultāts tiks aizsūtīts vēlāk.';$('mpErr').hidden=false;return;}
+  $('mpErr').hidden=true;
   unlockAudio();MP.on=true;MP.name=name;MP.msgs=[];MP.players=[];MP.phase='lobby';
   $('start').hidden=true;$('lobby').hidden=false;renderLobby();renderLog();mpConnect();}
 function mpConnect(){
@@ -1432,15 +1437,32 @@ function applyCab(i,cb){const c=S.cables[i];if(!c||!S.running&&!S.over)return;
   if(c.st==='done'&&was!=='done'){addDrum(c);if(S.running&&!S.over)toast(`${cb.n||'Kolēģis'} satina ${c.id}`);
     if(S.cables.every(k=>k.st==='done')&&S.running&&!S.over)finish(true);}}
 /* ---------- leaderboard: each player's best result, from rooms and from named single-player games ---------- */
-let tops=[];
+let tops=[],topsOld=false;
+try{tops=JSON.parse(localStorage.getItem('atp250-tops')||'[]');topsOld=tops.length>0;}catch(e){}
 const MODE_LV={race:'sacensība',team:'komanda',solo:'viens'};
-function renderTops(){$('tops').hidden=!tops.length;$('topList').replaceChildren(...tops.slice(0,5).map((p,i)=>{const li=mk('li',p.name===MP.name?'me':'');
+function renderTops(){$('tops').hidden=!tops.length;$('tops').querySelector('.eyebrow').textContent=topsOld?'Rekordi · pēdējie saglabātie':'Rekordi · labākais rezultāts katram';$('topList').replaceChildren(...tops.slice(0,5).map((p,i)=>{const li=mk('li',p.name===MP.name?'me':'');
   const nm=mk('span','nm',p.name);nm.append(mk('span','md',`${MODE_LV[p.mode]||''} · ${p.cables}/8`));li.append(mk('span','k',i+1+'.'),nm,mk('b','',p.score));return li;}));}
-function loadTops(){fetch(MP_HTTP+'/top').then(r=>r.json()).then(d=>{tops=d.top||[];renderTops();renderLobby();}).catch(()=>{});}
+function loadTops(){renderTops();fetch(MP_HTTP+'/top').then(r=>r.json()).then(d=>{tops=d.top||[];topsOld=false;try{localStorage.setItem('atp250-tops',JSON.stringify(tops));}catch(e){}renderTops();renderLobby();}).catch(()=>{});}
 function submitSolo(cables,win){const name=$('mpName').value.replace(/\s+/g,' ').trim();if(!name||!S.score)return;
   try{localStorage.setItem('atp250-mp-name',name);}catch(e){}
-  fetch(MP_HTTP+'/solo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,score:S.score,cables,win})})
-    .then(r=>r.json()).then(d=>{if(d.top){tops=d.top;renderTops();}}).catch(()=>{});}
+  sendSolo({name,score:S.score,cables,win});}
+const soloQueue=()=>{try{return JSON.parse(localStorage.getItem('atp250-solo-queue')||'[]');}catch(e){return [];}};
+const saveQueue=q=>{try{localStorage.setItem('atp250-solo-queue',JSON.stringify(q));}catch(e){}};
+function sendSolo(r){
+  fetch(MP_HTTP+'/solo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(r)})
+    .then(res=>{if(!res.ok&&res.status!==429)throw 0;return res.json();}).then(d=>{if(d.top){tops=d.top;topsOld=false;renderTops();}})
+    .catch(()=>{const q=soloQueue().filter(x=>x.name!==r.name||x.score>r.score);if(!q.some(x=>x.name===r.name))q.push(r);saveQueue(q.slice(-20));});}
+function flushSolo(){const q=soloQueue();if(!q.length||!navigator.onLine)return;saveQueue([]);q.forEach(sendSolo);}
+addEventListener('online',()=>{flushSolo();loadTops();});
+/* ---------- installable, offline-capable game (service worker only in this folder) ---------- */
+if('serviceWorker' in navigator&&window.isSecureContext)navigator.serviceWorker.register('sw.js',{scope:'./'}).catch(()=>{});
+let installEvt=null;
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEvt=e;$('install').hidden=false;});
+$('install').onclick=async()=>{if(!installEvt)return;installEvt.prompt();await installEvt.userChoice.catch(()=>{});installEvt=null;$('install').hidden=true;};
+addEventListener('appinstalled',()=>{$('install').hidden=true;});
+{const ios=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  const standalone=matchMedia('(display-mode: standalone),(display-mode: fullscreen)').matches||navigator.standalone;
+  $('iosHint').hidden=!(ios&&!standalone);}
 function openChat(){if(MP.chatOpen)return;MP.chatOpen=true;Object.keys(keys).forEach(k=>keys[k]=false);touchAct=false;joyV={x:0,y:0};$('knob').style.transform='';
   try{if(document.pointerLockElement)document.exitPointerLock();}catch(e){}
   $('mpSay').hidden=false;$('mpInput').value='';$('mpInput').focus();}
@@ -1454,7 +1476,7 @@ $('mpJoin').onclick=mpJoin;
 $('mpName').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();mpJoin();}});
 $('lReady').onclick=()=>{unlockAudio();const me=MP.players.find(p=>p.id===MP.id);mpSend({t:'ready',v:!(me&&me.ready)});};
 $('lLeave').onclick=mpLeave;
-loadTops();
+loadTops();flushSolo();
 $('lRace').onclick=()=>mpSend({t:'mode',v:'race'});$('lTeam').onclick=()=>mpSend({t:'mode',v:'team'});
 $('eLobby').onclick=backToLobby;
 window.__derig={get S(){return S},start,keys,update,sync,MP};
