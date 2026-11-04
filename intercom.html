@@ -147,8 +147,8 @@ dialog .opts{display:grid;gap:8px;margin:12px 0}
       <button id="btnOpen" title="Augšupielādēt iepriekš saglabātu .xlsx un turpināt">⬆︎ Atvērt .xlsx</button>
       <button id="btnSave" class="primary" title="Lejupielādēt aizpildīto tabulu">⬇︎ Lejupielādēt .xlsx</button>
       <button id="btnPrint">Drukāt</button>
-      <button id="btnNew">Jauns</button>
-      <button id="btnExample">Piemērs</button>
+      <button id="btnExample" title="Aizpildīt ar universālu sporta pārraides paraugu">Ielādēt paraugu</button>
+      <button id="btnNew" title="Nodzēst visu un sākt no jauna">Notīrīt visu</button>
       <input type="file" id="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
     </div>
   </header>
@@ -157,9 +157,9 @@ dialog .opts{display:grid;gap:8px;margin:12px 0}
     <h2><span class="n">1</span>Pasākums</h2>
     <p class="hint">Pamatinformācija. Tiek saglabāta failā lapā "Pasākums".</p>
     <div class="grid ev">
-      <label class="f">Pasākums<input type="text" data-ev="name" placeholder="piem., ATP 250 Rīga"></label>
+      <label class="f">Pasākums<input type="text" data-ev="name" placeholder="piem., Basketbola spēle"></label>
       <label class="f">Datums<input type="text" data-ev="date" placeholder="piem., 12.–18.05.2027"></label>
-      <label class="f">Vieta<input type="text" data-ev="place" placeholder="piem., Arēna Rīga"></label>
+      <label class="f">Vieta<input type="text" data-ev="place" placeholder="piem., sporta halle"></label>
       <label class="f">Atbildīgais<input type="text" data-ev="contact" placeholder="Vārds, tālrunis"></label>
       <label class="f wide">Piezīmes<textarea data-ev="notes" rows="2" placeholder="Īpašas prasības, pieslēgumi, IP adreses u.c."></textarea></label>
     </div>
@@ -275,8 +275,7 @@ function blankState(){
 }
 function exampleState(){
   const s = blankState();
-  s.event.name = 'Tenisa čempionāts';
-  const gn = ['PRODUCTION','ENGINEER','SKAŅA','REPLAY','ATP MEDIA'];
+  const gn = ['PRODUCTION','ENGINEER','SKAŅA','REPLAY','GRAFIKA'];
   s.groups = gn.map((n,i) => ({id:uid(), name:n, color:PALETTE[i], notes:''}));
   const G = Object.fromEntries(s.groups.map(g => [g.name, g.id]));
   s.ifx = {p1:G.PRODUCTION, p2:G.ENGINEER};
@@ -285,30 +284,35 @@ function exampleState(){
     marks.split(',').filter(Boolean).forEach(m => { const [n,v] = m.split(':'); ch[G[n]] = v || 'X'; });
     s.users.push({id:uid(), role, name:'', device, notes, ch});
   };
-  u('Producer','Vadu beltpack','Vada visu raidījumu','PRODUCTION,SKAŅA,REPLAY,ATP MEDIA');
-  u('Tehniskais direktors (EIC)','Vadu beltpack','PRODUCTION + ENGINEER','PRODUCTION,ENGINEER,SKAŅA');
+  u('Režisors','Vadu beltpack','Vada visu raidījumu','PRODUCTION,SKAŅA,REPLAY,GRAFIKA');
   u('Producents','Vadu beltpack','','PRODUCTION');
-  for (let i=1;i<=6;i++) u('Kamera '+i, CAM, 'Caur Interface X + splitteris');
+  u('Tehniskais direktors (EIC)','Vadu beltpack','','PRODUCTION,ENGINEER,SKAŅA');
+  for (let i=1;i<=4;i++) u('Kamera '+i, CAM, 'Caur Interface X + splitteris');
+  u('Kameru inženieris (shading)','Vadu beltpack','Sazinās ar operatoriem par shading','ENGINEER');
   u('Skaņas operators','Vadu beltpack','','ENGINEER,SKAŅA');
   u('Replay / EVS operators','Vadu beltpack','','PRODUCTION,REPLAY');
+  u('Grafikas operators','Vadu beltpack','','PRODUCTION:L,GRAFIKA');
   u('Laukuma koordinators','Bezvadu beltpack','','PRODUCTION');
-  u('Kameru inženieris (shading)','Vadu beltpack','Sazinās ar operatoriem par shading','ENGINEER');
-  u('ATP Media pārstāvis','Vadu beltpack','','ATP MEDIA,PRODUCTION:L');
   return s;
 }
 
 let state;
 try { state = JSON.parse(localStorage.getItem(STORE_KEY)); } catch(e) { state = null; }
-if (!state || !Array.isArray(state.users)) state = exampleState();
+if (!state || !Array.isArray(state.users)) state = blankState();
 state.equip = Object.assign(blankState().equip, state.equip || {});
 
-let saveTimer;
+let saveTimer = null;
+function flush(){
+  if (saveTimer === null) return;
+  clearTimeout(saveTimer); saveTimer = null;
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); $('#saved').textContent = '· saglabāts pārlūkā'; } catch(e) {}
+}
 function save(){
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => {
-    try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); $('#saved').textContent = '· saglabāts pārlūkā'; } catch(e) {}
-  }, 300);
+  saveTimer = setTimeout(flush, 300);
 }
+window.addEventListener('pagehide', flush);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flush(); });
 
 /* ---------- derived ---------- */
 const isCam = u => u.device === CAM;
@@ -363,7 +367,7 @@ function renderGroups(){
         <button class="ghost" data-gact="down" title="Uz leju" ${i===state.groups.length-1?'disabled':''}>↓</button>
         <button class="ghost" data-gact="del" title="Dzēst grupu">✕</button>
       </td>
-    </tr>`).join('') || `<tr><td colspan="6" class="sub" style="padding:12px">Nav nevienas grupas. Pievienojiet pirmo.</td></tr>`;
+    </tr>`).join('') || `<tr><td colspan="6" class="sub" style="padding:12px">Nav nevienas grupas. Pievienojiet pirmo vai <button data-template>ielādējiet paraugu</button></td></tr>`;
   const opts = sel => `<option value="">— nav —</option>` + state.groups.map(g => `<option value="${g.id}" ${g.id===sel?'selected':''}>${esc(g.name||'(bez nosaukuma)')}</option>`).join('');
   $('#ifx1').innerHTML = opts(state.ifx.p1);
   $('#ifx2').innerHTML = opts(state.ifx.p2);
@@ -396,7 +400,7 @@ function renderUsers(){
         <button class="ghost" data-uact="dup" title="Dublēt">⧉</button>
         <button class="ghost" data-uact="del" title="Dzēst">✕</button>
       </td></tr>`;
-  }).join('') || `<tr><td colspan="${state.groups.length+7}" class="sub" style="padding:12px">Nav neviena lietotāja. Pievienojiet ar pogām zemāk.</td></tr>`;
+  }).join('') || `<tr><td colspan="${state.groups.length+7}" class="sub" style="padding:12px">Nav neviena lietotāja. Pievienojiet ar pogām zemāk vai <button data-template>ielādējiet paraugu</button></td></tr>`;
 }
 function renderEquip(){
   $('#eBody').innerHTML = equipCalc().map(e => `
@@ -441,6 +445,7 @@ function warnings(){
   return out;
 }
 function renderWarns(){
+  if (isEmpty()) { $('#warns').innerHTML = `<li class="warn">Forma ir tukša. Pievienojiet grupas un lietotājus vai ielādējiet paraugu.</li>`; return; }
   const w = warnings();
   $('#warns').innerHTML = w.length ? w.map(([c,t]) => `<li class="${c}">${esc(t)}</li>`).join('') : `<li class="ok">Viss kārtībā: nav atrasts neviens trūkums.</li>`;
 }
@@ -561,17 +566,21 @@ $('#addGroup').onclick = () => {
   renderGroups(); renderUsers(); renderDerived(); save();
   $('#gBody tr:last-child input[data-gf="name"]').focus();
 };
+function isEmpty(){
+  return !state.users.length && !state.groups.length && !Object.values(state.event).some(v => (v || '').trim());
+}
 $('#btnNew').onclick = () => {
-  if (!confirm('Sākt jaunu, tukšu konfigurāciju? Pašreizējie dati pārlūkā tiks aizstāti (lejupielādējiet tos, ja vajag).')) return;
-  state = blankState();
-  ['PRODUCTION','ENGINEER'].forEach((n,i) => state.groups.push({id:uid(), name:n, color:PALETTE[i], notes:''}));
-  state.ifx = {p1:state.groups[0].id, p2:state.groups[1].id};
-  renderAll(); save();
+  if (!isEmpty() && !confirm('Nodzēst visu un sākt no jauna? Visi ievadītie dati tiks izdzēsti (ja vajag, vispirms lejupielādējiet .xlsx).')) return;
+  state = blankState(); renderAll(); save();
+  toast('Forma notīrīta.');
 };
-$('#btnExample').onclick = () => {
-  if (!confirm('Ielādēt piemēru? Pašreizējie dati pārlūkā tiks aizstāti.')) return;
+function loadTemplate(){
+  if (!isEmpty() && !confirm('Ielādēt paraugu? Pašreizējie dati formā tiks aizstāti.')) return;
   state = exampleState(); renderAll(); save();
-};
+  toast('Paraugs ielādēts. Pielāgojiet lomas, grupas un ierīces savam pasākumam.');
+}
+$('#btnExample').onclick = loadTemplate;
+document.addEventListener('click', e => { if (e.target.closest('button[data-template]')) loadTemplate(); });
 $('#btnPrint').onclick = () => window.print();
 
 function toast(msg){

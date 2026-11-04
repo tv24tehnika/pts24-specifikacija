@@ -22,3 +22,6 @@ sadarbibas/
 
 # Wrangler lokālā kešatmiņa (servera testēšana)
 .wrangler/
+
+# Intercom plānošanas tabulas oriģināls — tikai lokāli, ne uz git (forma: intercom.html)
+intercom-planosanas-tabula.xlsx
