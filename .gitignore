@@ -25,3 +25,6 @@ sadarbibas/
 
 # Intercom plānošanas tabulas oriģināls — tikai lokāli, ne uz git (forma: intercom.html)
 intercom-planosanas-tabula.xlsx
+
+# GreenGo Control projekti (satur ierīču MAC/IP/sērijas nr.) — tikai lokāli, ne uz git
+*.gg5

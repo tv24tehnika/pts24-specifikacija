@@ -67,6 +67,8 @@ thead .sticky{background:var(--soft);z-index:3}
 .users td.role{min-width:180px}
 .users td.name{min-width:130px}
 .users td.dev{min-width:190px}
+.users td.gg{min-width:130px}
+.users td.gg input{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px}
 .users td.notes{min-width:180px}
 .users tr.cam td{background:color-mix(in srgb,var(--fixed) 45%,var(--card))}
 .users tr.cam td.sticky{background:color-mix(in srgb,var(--fixed) 45%,var(--card))}
@@ -146,6 +148,7 @@ dialog .opts{display:grid;gap:8px;margin:12px 0}
     <div class="toolbar">
       <button id="btnOpen" title="Augšupielādēt iepriekš saglabātu .xlsx un turpināt">⬆︎ Atvērt .xlsx</button>
       <button id="btnSave" class="primary" title="Lejupielādēt aizpildīto tabulu">⬇︎ Lejupielādēt .xlsx</button>
+      <button id="btnGG5" class="primary" title="Lejupielādēt GreenGo Control projektu ar lietotājiem un grupām (bez ierīcēm)">⬇︎ GreenGo .gg5</button>
       <button id="btnPrint">Drukāt</button>
       <button id="btnExample" title="Aizpildīt ar universālu sporta pārraides paraugu">Ielādēt paraugu</button>
       <button id="btnNew" title="Nodzēst visu un sākt no jauna">Notīrīt visu</button>
@@ -224,7 +227,7 @@ dialog .opts{display:grid;gap:8px;margin:12px 0}
 
   <section class="card">
     <h2><span class="n">6</span>GreenGo iestatījumi</h2>
-    <p class="hint">Kas jāieliek GreenGo Config katrā ierīcē. Kanālu secība ir tāda pati kā grupu secība.</p>
+    <p class="hint">Kas jāieliek GreenGo Config katrā ierīcē. Kanālu secība ir tāda pati kā grupu secība. Poga <b>"GreenGo .gg5"</b> izveido gatavu Green-GO Control 5 projektu ar šiem lietotājiem, grupām un kanāliem. Ierīces tam piesaista pašā Green-GO Control. Nosaukumos garumzīmes tiek noņemtas (SKAŅA → SKANA), un katrs nosaukums ir līdz 15 zīmēm.</p>
     <h3>Ierīces un kanāli</h3>
     <div class="ucards" id="ucards"></div>
     <h3>Grupas</h3>
@@ -279,20 +282,20 @@ function exampleState(){
   s.groups = gn.map((n,i) => ({id:uid(), name:n, color:PALETTE[i], notes:''}));
   const G = Object.fromEntries(s.groups.map(g => [g.name, g.id]));
   s.ifx = {p1:G.PRODUCTION, p2:G.ENGINEER};
-  const u = (role, device, notes, marks='') => {
+  const u = (role, device, notes, marks='', gg='') => {
     const ch = {};
     marks.split(',').filter(Boolean).forEach(m => { const [n,v] = m.split(':'); ch[G[n]] = v || 'X'; });
-    s.users.push({id:uid(), role, name:'', device, notes, ch});
+    s.users.push({id:uid(), role, name:'', gg, device, notes, ch});
   };
   u('Režisors','Vadu beltpack','Vada visu raidījumu','PRODUCTION,SKAŅA,REPLAY,GRAFIKA');
   u('Producents','Vadu beltpack','','PRODUCTION');
   u('Tehniskais direktors (EIC)','Vadu beltpack','','PRODUCTION,ENGINEER,SKAŅA');
   for (let i=1;i<=4;i++) u('Kamera '+i, CAM, 'Caur Interface X + splitteris');
-  u('Kameru inženieris (shading)','Vadu beltpack','Sazinās ar operatoriem par shading','ENGINEER');
-  u('Skaņas operators','Vadu beltpack','','ENGINEER,SKAŅA');
-  u('Replay / EVS operators','Vadu beltpack','','PRODUCTION,REPLAY');
-  u('Grafikas operators','Vadu beltpack','','PRODUCTION:L,GRAFIKA');
-  u('Laukuma koordinators','Bezvadu beltpack','','PRODUCTION');
+  u('Kameru inženieris (shading)','Vadu beltpack','Sazinās ar operatoriem par shading','ENGINEER','Shading');
+  u('Skaņas operators','Vadu beltpack','','ENGINEER,SKAŅA','Audio');
+  u('Replay / EVS operators','Vadu beltpack','','PRODUCTION,REPLAY','Replay');
+  u('Grafikas operators','Vadu beltpack','','PRODUCTION:L,GRAFIKA','Grafika');
+  u('Laukuma koordinators','Bezvadu beltpack','','PRODUCTION','Laukums');
   return s;
 }
 
@@ -329,6 +332,16 @@ function marksOf(u){
 }
 function channelsOf(u){ const m = marksOf(u); return state.groups.filter(g => m[g.id]).map(g => ({g, mode:m[g.id]})); }
 const label = u => u.role || u.name || '(bez lomas)';
+/* GreenGo nosaukumi: tikai ASCII, līdz 15 zīmēm (tāds ir Green-GO Control ierobežojums) */
+const GG_MAX = 15;
+const translit = t => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\x20-\x7E]/g, '').replace(/\s+/g, ' ').trim();
+function ggAuto(u){
+  const m = (u.role || '').match(/\(([^)]+)\)/);
+  const base = m && translit(m[1]).length <= GG_MAX ? m[1] : (u.role || u.name || '');
+  return translit(base).slice(0, GG_MAX).trim();
+}
+const ggUserName = u => translit(u.gg).slice(0, GG_MAX).trim() || ggAuto(u);
+const ggGroupName = g => translit(g.name).slice(0, GG_MAX).trim();
 const groupById = id => state.groups.find(g => g.id === id);
 function textOn(hex){
   const h = (hex || '#888888').replace('#','');
@@ -359,7 +372,7 @@ function renderGroups(){
     <tr data-gid="${g.id}">
       <td class="num">${i+1}</td>
       <td><input type="color" data-gf="color" value="${esc(g.color)}" aria-label="Krāsa"></td>
-      <td style="min-width:160px"><input type="text" data-gf="name" value="${esc(g.name)}" placeholder="Grupas nosaukums"></td>
+      <td style="min-width:160px"><input type="text" data-gf="name" maxlength="15" value="${esc(g.name)}" placeholder="Grupas nosaukums"></td>
       <td style="min-width:200px"><input type="text" data-gf="notes" value="${esc(g.notes)}" placeholder="—"></td>
       <td class="cnt">${counts[g.id]}</td>
       <td class="rowact">
@@ -374,7 +387,7 @@ function renderGroups(){
 }
 function renderUsers(){
   $('#uHead').innerHTML = `<tr>
-    <th class="num">#</th><th class="sticky">Loma / amats</th><th>Vārds</th><th>Ierīce</th>
+    <th class="num">#</th><th class="sticky">Loma / amats</th><th>Vārds</th><th title="Lietotāja nosaukums GreenGo projektā un uz ierīces ekrāna (līdz 15 zīmēm, bez garumzīmēm). Ja tukšs, tiek ņemts no lomas.">GreenGo nos.</th><th>Ierīce</th>
     ${state.groups.map(g => `<th class="g" title="${esc(g.notes||g.name)}"><span class="bar" style="background:${esc(g.color)}"></span>${esc(g.name||'?')}</th>`).join('')}
     <th class="cnt" title="Kanālu skaits">Kan.</th><th>Piezīmes</th><th></th></tr>`;
   $('#uBody').innerHTML = state.users.map((u,i) => {
@@ -390,6 +403,7 @@ function renderUsers(){
       <td class="num">${i+1}</td>
       <td class="role sticky"><input type="text" data-uf="role" value="${esc(u.role)}" placeholder="Loma"></td>
       <td class="name"><input type="text" data-uf="name" value="${esc(u.name)}" placeholder="—"></td>
+      <td class="gg">${cam ? '<span class="sub" title="Kamerām GreenGo lietotāji ir Interface X porti">Interface X</span>' : `<input type="text" data-uf="gg" maxlength="15" value="${esc(u.gg || '')}" placeholder="${esc(ggAuto(u))}">`}</td>
       <td class="dev"><select data-uf="device"><option value="">— izvēlēties —</option>${DEVICES.map(d => `<option ${d===u.device?'selected':''}>${d}</option>`).join('')}</select></td>
       ${cells}
       <td class="cnt ${over?'over':''}" title="${over?'Vairāk par 4 kanāliem: kanāli no 5. sāk darboties tikai caur extended channels':''}">${n}${over?' ⚠︎':''}</td>
@@ -400,7 +414,7 @@ function renderUsers(){
         <button class="ghost" data-uact="dup" title="Dublēt">⧉</button>
         <button class="ghost" data-uact="del" title="Dzēst">✕</button>
       </td></tr>`;
-  }).join('') || `<tr><td colspan="${state.groups.length+7}" class="sub" style="padding:12px">Nav neviena lietotāja. Pievienojiet ar pogām zemāk vai <button data-template>ielādējiet paraugu</button></td></tr>`;
+  }).join('') || `<tr><td colspan="${state.groups.length+8}" class="sub" style="padding:12px">Nav neviena lietotāja. Pievienojiet ar pogām zemāk vai <button data-template>ielādējiet paraugu</button></td></tr>`;
 }
 function renderEquip(){
   $('#eBody').innerHTML = equipCalc().map(e => `
@@ -441,6 +455,9 @@ function warnings(){
     if (!members[g.id]) out.push(['warn', `Grupā "${g.name||'?'}" nav neviena lietotāja.`]);
     else if (!talkers[g.id]) out.push(['warn', `Grupā "${g.name||'?'}" neviens nerunā (visi tikai klausās).`]);
   });
+  const ggSeen = {};
+  ggUsers().forEach(x => { const k = x.name.toUpperCase(); if (ggSeen[k]) out.push(['warn', `GreenGo nosaukums "${x.name}" atkārtojas (${ggSeen[k]} un ${x.src}). Ierakstiet atšķirīgu kolonnā "GreenGo nos."`]); else ggSeen[k] = x.src; });
+  state.groups.forEach(g => { if (translit(g.name).length > GG_MAX) out.push(['warn', `Grupas nosaukums "${g.name}" ir garāks par ${GG_MAX} zīmēm. GreenGo failā būs "${ggGroupName(g)}".`]); });
   equipCalc().forEach(e => { if (e.cls !== 'ok') out.push([e.cls, `${e.label}: ${e.st} (vajag ${e.need}, pieejami ${e.std} + ${e.extra}).`]); });
   return out;
 }
@@ -459,7 +476,7 @@ function renderSummary(){
     const ch = channelsOf(u);
     const bp = BELTPACKS.includes(u.device);
     cards.push(`<div class="uc"><div class="h">${esc(label(u))}</div>
-      <div class="d">${esc([u.name && u.role ? u.name : '', u.device || 'ierīce nav izvēlēta'].filter(Boolean).join(' · '))}</div>
+      <div class="d">${esc([u.name && u.role ? u.name : '', u.device || 'ierīce nav izvēlēta', 'GreenGo: ' + (ggUserName(u) || '?')].filter(Boolean).join(' · '))}</div>
       ${ch.length ? `<ol>${ch.map((c,i) => `<li class="${bp && i>=QUICK_KEYS?'ext':''}">${chipHTML(c.g,c.mode)}${bp && i>=QUICK_KEYS?'<span class="tag">extended</span>':''}</li>`).join('')}</ol>` : '<div class="sub">Nav kanālu</div>'}
     </div>`);
   });
@@ -492,7 +509,8 @@ document.addEventListener('input', e => {
     save(); return;
   }
   if (t.dataset.uf && t.dataset.uf !== 'device') {
-    const u = state.users.find(x => x.id === t.closest('tr').dataset.uid); u[t.dataset.uf] = t.value;
+    const tr = t.closest('tr'), u = state.users.find(x => x.id === tr.dataset.uid); u[t.dataset.uf] = t.value;
+    const ggIn = tr.querySelector('input[data-uf="gg"]'); if (ggIn) ggIn.placeholder = ggAuto(u);
     renderWarns(); renderSummary(); save(); return;
   }
   if (t.dataset.ef) {
@@ -676,7 +694,7 @@ function parseWorkbook(wb, prefix){
 
   // lietotāji (rindas sakrīt ar matricas rindām)
   const hm = headerMap(users);
-  const cRole = findCol(hm,'loma') || 2, cName = findCol(hm,'vārds','vards') || 3, cDev = findCol(hm,'ierīce','ierīces','ierice') || 4, cNotes = findCol(hm,'piezīmes','piezimes') || 5;
+  const cRole = findCol(hm,'loma') || 2, cName = findCol(hm,'vārds','vards') || 3, cDev = findCol(hm,'ierīce','ierīces','ierice') || 4, cNotes = findCol(hm,'piezīmes','piezimes') || 5, cGG = findCol(hm,'greengo');
   const last = Math.max(users.rowCount, matrix ? matrix.rowCount : 0);
   for (let r = 2; r <= last; r++) {
     const ur = users.getRow(r);
@@ -695,7 +713,7 @@ function parseWorkbook(wb, prefix){
     if (!hasUserData && !Object.keys(ch).length) continue; // tukšas rindas un piezīmes zem tabulas
     let device = normDev(devRaw);
     if (device === null) { notes = [notes, 'Ierīce: ' + devRaw].filter(Boolean).join(' · '); device = ''; }
-    s.users.push({id:uid(), role, name, device, notes, ch});
+    s.users.push({id:uid(), role, name, gg: cGG ? cv(ur.getCell(cGG)) : '', device, notes, ch});
   }
 
   // pasākuma info + Interface X
@@ -832,13 +850,13 @@ async function exportXlsx(){
 
   // Lietotāji
   const wu = wb.addWorksheet('Lietotāji', {views:[{state:'frozen', ySplit:1}]});
-  wu.columns = [{width:6},{width:32},{width:22},{width:22},{width:55}];
-  headRow(wu, ['Nr.','Loma / amats','Vārds (nav obligāts)','Ierīces veids','Piezīmes']);
+  wu.columns = [{width:6},{width:32},{width:22},{width:22},{width:55},{width:22}];
+  headRow(wu, ['Nr.','Loma / amats','Vārds (nav obligāts)','Ierīces veids','Piezīmes','GreenGo nosaukums (≤15)']);
   const devList = '"' + DEVICES.join(',') + '"';
   for (let i = 0; i < N; i++) {
     const u = state.users[i];
-    const r = wu.addRow([i+1, u ? u.role : '', u ? u.name : '', u ? u.device : '', u ? u.notes : '']);
-    [2,3,4,5].forEach(c => r.getCell(c).font = {color:XL.input});
+    const r = wu.addRow([i+1, u ? u.role : '', u ? u.name : '', u ? u.device : '', u ? u.notes : '', u && !isCam(u) ? (u.gg || '') : '']);
+    [2,3,4,5,6].forEach(c => r.getCell(c).font = {color:XL.input});
     r.getCell(4).dataValidation = {type:'list', allowBlank:true, formulae:[devList]};
   }
 
@@ -939,6 +957,119 @@ async function exportXlsx(){
   toast('Lejupielādēts: ' + a.download);
 }
 $('#btnSave').onclick = () => exportXlsx().catch(err => { console.error(err); toast('Neizdevās izveidot failu: ' + err.message); });
+
+/* ---------- GreenGo .gg5 ----------
+   Green-GO Control 5.x projekts (JSON). Tiek izveidoti tikai lietotāji un grupas;
+   ierīces piesaista pēc tam pašā Green-GO Control. TalkMode: 0 = disabled (tikai klausās), 3 = latch/momentary. */
+const GG_VERSION = {Version:'5.2.2', Branch:'HEAD', Commit:'525b2ce', BuildNr:'25347'};
+/* Tukšas konfigurācijas "sēkla", ko izveidojis pats Green-GO Core 5.2.2 (bez parolēm).
+   configId, paroļu lauki un Binary ir savstarpēji saistīti, tāpēc tos nedrīkst mainīt atsevišķi. */
+const GG_SEED = {
+  configId:'e4bfdc48-d73040e2', ConfigPassword:'4afaa1a9-2c5b-5cde-3740-d86766b0c4e0', AdminPassword:'40815af8-e962-e83e-2125-d8b2d9cb88b9',
+  MulticastAddress:'239.1.103.198',
+  Binary:'R0dPNQAAAJAAAACQAAAAAOFjt5lo5uCkTPKvrV2idETBZ8EOUFRTMjQgSW50ZXJjb22B4kAw10jcv+RBHsj6TyF9AEHvAWfGEwDBIAQABAAEAAQABAAHAIcUAwADAAcMCAADAAIAAgAiDAkAsTUuMi4yLTI1MzQ3sTUuMi4yLTI1MzQ3QR7I+k8BAQEAAAAA',
+};
+const GG_LED = {"0":[4,0,0],"1":[4,0,0],"2":[4,0,0],"3":[4,0,0],"4":[4,0,0],"5":[6,0,0],"6":[7,4,5],"7":[3,0,0],"8":[3,0,0],"9":[7,0,3],"10":[8,0,0],"11":[3,0,0],"12":[2,0,0],"13":[2,0,0],"14":[2,1,3],"15":[9,0,0]};
+const GG_DASHBOARDS = {"keys":["1"],"1":{"myId":"1","Name":"Home","Layout":{"1":{"1":{"Type":2,"Width":1,"Height":3,"Columns":{"Status":{"Enabled":1},"Id":{"Enabled":1},"Name":{"Enabled":1},"InputLevel":{"Enabled":1},"ActiveChannels":{"Enabled":0,"Threshold":7}},"Name":"Users","Filters":"[*]","Settings":{"Scale":0}},"2":{"Type":4,"Width":1,"Height":1,"Name":"Groups","Columns":{"Status":{"Enabled":1},"Id":{"Enabled":0},"Name":{"Enabled":1},"InputLevel":{"Enabled":1},"ActiveMembers":{"Enabled":0}},"Filters":"[*]"},"3":{"Type":8,"Width":1,"Height":3,"Name":"Device Graphics","Settings":{"IconSize":1,"Scale":0},"Columns":{"Status":{"Enabled":1},"Id":{"Enabled":0},"Name":{"Enabled":1},"InputLevel":{"Enabled":1},"ActiveMembers":{"Enabled":1}},"Filters":"sort_by(sort_by(@, &deviceType), &Name)[*]"}},"2":{"1":{"Type":1},"2":{"Type":11,"Width":1,"Height":1,"Name":"Clock","Settings":{"Scale":0},"Columns":{"Time":{"Enabled":1},"Date":{"Enabled":1}}},"3":{"Type":1}},"3":{"1":{"Type":1},"2":{"Type":12,"Width":1,"Height":1,"Name":"Wireless devices","Settings":{"Scale":0,"SelectedMonitor":"0","MonitorSettings":{"historyDuration":{"min":0,"max":120,"Value":20},"showDeviceOverlay":1,"showDummyOverlay":0,"showRssiValue":0,"rssiColor":1}},"Columns":"--","Filters":"sort_by(sort_by(@, &deviceType), &Name)[? Battery != `null`]"},"3":{"Type":1}}}}};
+const ggLevel = () => ({Value:0, min:-40, max:12});
+function ggStamp(d){
+  const p = n => String(n).padStart(2, '0');
+  return `${p(d.getDate())}-${p(d.getMonth()+1)}-${d.getFullYear()} ${d.getHours()}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+}
+// Saraksts ar GreenGo lietotājiem: katra loma + pa vienam lietotājam katram Interface X portam (GV kameras)
+function ggUsers(){
+  const list = state.users.filter(u => !isCam(u)).map((u, i) => ({
+    name: ggUserName(u) || `User ${i+1}`, src: label(u),
+    desc: [u.role, u.name, u.device, u.notes].filter(Boolean).join(' · '),
+    slots: channelsOf(u).map(c => ({g:c.g, talk:c.mode === 'X'})),
+  }));
+  const cams = state.users.filter(isCam);
+  if (cams.length) {
+    [state.ifx.p1, state.ifx.p2].forEach((gid, pi) => {
+      const g = groupById(gid);
+      if (!g || (pi === 1 && gid === state.ifx.p1)) return;
+      list.push({
+        name: ('GV ' + ggGroupName(g)).slice(0, GG_MAX).trim(), src: `Interface X ports ${pi+1}`,
+        desc: `Interface X ports ${pi+1} (4-wire, splitteris) · ${cams.map(label).join(', ')}`,
+        slots: [{g, talk:true}],
+      });
+    });
+  }
+  return list;
+}
+function ggChannel(n, slot, gidOf){
+  return {myId:String(n), status: slot ? 1 : 0,
+    Assign: slot ? {Type:2, Id:gidOf(slot.g)} : {Type:0, Id:0}, Override:{Type:0, Id:0},
+    Talk:0, TalkMode: slot && !slot.talk ? 0 : 3, ChannelMode:0, ListenMode:0, CallMode:3, CueMode:0, Priority:0, Pan:0,
+    Level:ggLevel(), Listen:1, memberState:0, talkState:0, listenState:0, callState:0, cueState:0};
+}
+function buildGG5(){
+  const now = new Date(), stamp = ggStamp(now), ev = state.event;
+  const gidOf = g => state.groups.indexOf(g) + 1;
+  const Users = {keys:[], badge:0}, Groups = {keys:[], badge:0};
+  state.groups.forEach((g, i) => {
+    const id = String(i + 1);
+    Groups.keys.push(id);
+    Groups[id] = {myId:id, Name: ggGroupName(g) || `Group ${id}`, badge:0, status:1, DisplayName:'', Description: g.notes || '', Color:0, members:{}, audioLevel:[-80,-80,0]};
+  });
+  ggUsers().forEach((x, i) => {
+    const id = String(i + 1), Channels = {};
+    for (let n = 1; n <= 32; n++) Channels[n] = ggChannel(n, x.slots[n-1], gidOf);
+    x.slots.slice(0, 32).forEach((sl, n) => {
+      const gid = String(gidOf(sl.g)), key = `0_${id}_${n+1}`;
+      Groups[gid].members[key] = {type:0, id, myId:key, channel:n+1, status:1, parent:'', children:[]};
+    });
+    Users.keys.push(id);
+    Users[id] = {myId:id, Name:x.name, DisplayName:'', Mode:0, badge:0, status: x.slots.length ? 1 : 0, Description:x.desc, Color:0,
+      devices:[], audioLevel:[-80,-80,0], Channels,
+      SpecialChannels:{
+        Program:{status:1, Assign:{Type:0, Id:0}, Level:ggLevel(), Pan:0, memberState:0, Dim:0},
+        Announce:{status:1, Assign:{Type:0, Id:0}, Level:ggLevel(), Pan:0, memberState:0},
+        Emergency:{status:1, Assign:{Type:0, Id:0}, Level:ggLevel(), Pan:0, memberState:0},
+        Direct:{Level:ggLevel(), Priority:0, CueMode:0, Pan:0}},
+      DeviceProfiles:{},
+      Settings:{ActiveTime:1, ToneLevel:-12, AlertTone:0, ReplyMode:2, PriorityDim:-6, PopupMode:3, CueTimeout:3, Isolate:0, RoomId:{Type:0, Id:0}, RoomDim:-12, RoomPan:0},
+      Security:{Pincode:'', ChannelLevel:1, MenuAccess:1, ConfigClone:1, UserSelect:1, Channel:1, Special:1, UserSettings:1, Audio:1, Device:1},
+      FlexList:[]};
+  });
+  const name = translit(ev.name).slice(0, 31).trim() || 'Intercom';
+  const Colors = Object.fromEntries(Object.entries(GG_LED).map(([k, [C1, C2, Rate]]) => [k, {Led:{C1, C2, Rate}}]));
+  return {
+    Settings:{Name:name, Description: translit([ev.date, ev.place, ev.contact].filter(Boolean).join(' / ')).slice(0, 100),
+      configId:GG_SEED.configId, ConfigPassword:GG_SEED.ConfigPassword, ConfigPasswordSet:0, AdminPassword:GG_SEED.AdminPassword, AdminPasswordSet:0,
+      SampleRate:32000, MulticastAddress:GG_SEED.MulticastAddress, Colors, TechPincode:'0',
+      createdAtTimestamp:stamp, savedAtTimestamp:stamp, binaryTimestamp:stamp,
+      fileCreatedVersion:`${GG_VERSION.Version}-${GG_VERSION.BuildNr}`, fileCurrentVersion:`${GG_VERSION.Version}-${GG_VERSION.BuildNr}`},
+    Monitor:{DeviceId:'', state:0},
+    Users, Groups,
+    Rooms:{keys:[], badge:0}, Templates:{keys:[], badge:0}, Devices:{keys:[], badge:0}, OtherConfigs:{keys:[]},
+    Clients:{keys:[]}, Network:{keys:[], badge:0}, Binary:GG_SEED.Binary,
+    RemoteConnection:{hostname:'', Enable:0, status:0, connectionId:'', connectionPassword:'', RemoteClients:{}},
+    State:{newBinary:1, configChanged:1, following:1},
+    VersionInfo:{...GG_VERSION},
+    Dashboards: JSON.parse(JSON.stringify(GG_DASHBOARDS)),
+    Scripts:{keys:[], badge:0}, UsbDevices:{keys:[]},
+    WirelessPools:{keys:[]}, WirelessAccessPoints:{keys:[]}, WirelessClients:{keys:[]},
+    Footer:{Config:{badge:0, text:'Config: ' + name}, Network:{badge:0, total:0, lost:0, notAdopted:0}, Wireless:{badge:0, total:0, lost:0}, Usb:{badge:0, total:0, lost:0}},
+  };
+}
+function fileSlug(){
+  return (state.event.name || 'intercom').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/gi,'-').replace(/^-|-$/g,'').toLowerCase() || 'intercom';
+}
+function downloadBlob(blob, filename){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+}
+$('#btnGG5').onclick = () => {
+  const real = state.users.filter(u => !isCam(u));
+  if (!state.groups.length || !real.length) { toast('Vispirms pievienojiet vismaz vienu grupu un vienu lietotāju.'); return; }
+  const gg = buildGG5();
+  const text = JSON.stringify(gg, null, 1).replace(/\n/g, '\r\n');
+  downloadBlob(new Blob([text], {type:'application/json'}), `greengo-${fileSlug()}.gg5`);
+  toast(`Lejupielādēts GreenGo projekts: ${gg.Users.keys.length} lietotāji, ${gg.Groups.keys.length} grupas.`);
+};
 
 renderAll();
 </script>
