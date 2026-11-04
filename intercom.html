@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="lv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>GreenGo Intercom Plānotājs</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<style>
+:root{
+  --bg:#f3f5f8; --card:#ffffff; --ink:#18202b; --muted:#5d6878; --line:#dde2ea; --soft:#eef1f6;
+  --accent:#1f6f43; --accent-ink:#ffffff; --input:#1f4fbf; --ref:#1e7b34;
+  --ok-bg:#e3f4e8; --ok:#17663a; --warn-bg:#fdf1d8; --warn:#8a5a00; --bad-bg:#fbe3e3; --bad:#a32020;
+  --fixed:#e9ecf1; --shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#11151b; --card:#1a2029; --ink:#e6eaf0; --muted:#98a3b3; --line:#2c3440; --soft:#222a35;
+    --accent:#3fae6f; --accent-ink:#0d1a12; --input:#8fb0ff; --ref:#6fd08f;
+    --ok-bg:#16301f; --ok:#7fdca0; --warn-bg:#352a12; --warn:#f2c46b; --bad-bg:#3a1a1a; --bad:#ff9a9a;
+    --fixed:#262e3a; --shadow:none;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#11151b; --card:#1a2029; --ink:#e6eaf0; --muted:#98a3b3; --line:#2c3440; --soft:#222a35;
+  --accent:#3fae6f; --accent-ink:#0d1a12; --input:#8fb0ff; --ref:#6fd08f;
+  --ok-bg:#16301f; --ok:#7fdca0; --warn-bg:#352a12; --warn:#f2c46b; --bad-bg:#3a1a1a; --bad:#ff9a9a;
+  --fixed:#262e3a; --shadow:none;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1280px;margin:0 auto;padding:20px 16px 80px}
+header.top{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:flex-end;justify-content:space-between;margin-bottom:16px}
+h1{font-size:24px;margin:0 0 2px;letter-spacing:-.01em}
+.sub{color:var(--muted);margin:0;font-size:14px}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px}
+button,.btn{font:inherit;font-size:14px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:8px 12px;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+button:hover,.btn:hover{border-color:var(--muted)}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+button.ghost{background:transparent;border-color:transparent;color:var(--muted);padding:4px 6px}
+button.ghost:hover{color:var(--ink);background:var(--soft)}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:18px;margin-bottom:16px}
+.card h2{font-size:17px;margin:0 0 4px;display:flex;align-items:center;gap:8px}
+.card h2 .n{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--soft);font-size:13px;color:var(--muted)}
+.card .hint{color:var(--muted);font-size:13px;margin:0 0 14px}
+.grid{display:grid;gap:12px}
+.ev{grid-template-columns:repeat(4,minmax(0,1fr))}
+.ev .wide{grid-column:1/-1}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.03em}
+input[type=text],input[type=date],input[type=number],select,textarea{font:inherit;font-size:14px;color:var(--input);background:var(--card);border:1px solid var(--line);border-radius:7px;padding:7px 9px;width:100%;min-width:0}
+textarea{resize:vertical;min-height:38px}
+select{color:var(--ink)}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:separate;border-spacing:0;width:100%}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle;font-size:14px}
+thead th{background:var(--soft);font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;position:sticky;top:0;z-index:1}
+tbody tr:last-child td{border-bottom:none}
+td input[type=text],td select{border-color:transparent;background:transparent;padding:6px 6px}
+td input[type=text]:hover,td select:hover{border-color:var(--line)}
+td input[type=text]:focus,td select:focus{border-color:var(--accent);background:var(--card)}
+.num{width:36px;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
+.sticky{position:sticky;left:0;background:var(--card);z-index:2}
+thead .sticky{background:var(--soft);z-index:3}
+.users td.role{min-width:180px}
+.users td.name{min-width:130px}
+.users td.dev{min-width:190px}
+.users td.notes{min-width:180px}
+.users tr.cam td{background:color-mix(in srgb,var(--fixed) 45%,var(--card))}
+.users tr.cam td.sticky{background:color-mix(in srgb,var(--fixed) 45%,var(--card))}
+th.g{text-align:center;min-width:76px;padding:6px 4px;text-transform:none;letter-spacing:0;color:var(--ink);font-size:12px;line-height:1.2}
+th.g .bar{display:block;height:4px;border-radius:2px;margin:0 auto 4px;width:42px}
+td.m{text-align:center;padding:3px}
+.mk{width:40px;height:30px;border-radius:7px;border:1.5px dashed var(--line);background:transparent;padding:0;justify-content:center;font-weight:800;font-size:13px;color:var(--muted)}
+.mk:hover{border-color:var(--muted)}
+.mk.x{border-style:solid;color:#fff}
+.mk.l{border-style:solid;background:var(--card)}
+.mk[disabled]{cursor:not-allowed;opacity:.85}
+.cnt{font-variant-numeric:tabular-nums;text-align:center;font-weight:600;min-width:52px}
+.cnt.over{color:var(--warn)}
+.rowact{white-space:nowrap;text-align:right}
+.adds{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--muted);margin:0 0 12px;align-items:center}
+.legend .mk{display:inline-flex;align-items:center;justify-content:center;width:28px;height:22px;font-size:11px;cursor:default;pointer-events:none}
+.groups td{padding:5px 6px}
+.groups input[type=color]{width:38px;height:32px;padding:0;border:1px solid var(--line);border-radius:7px;background:none;cursor:pointer}
+.pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12.5px;font-weight:600;white-space:nowrap}
+.pill.ok{background:var(--ok-bg);color:var(--ok)}
+.pill.warn{background:var(--warn-bg);color:var(--warn)}
+.pill.bad{background:var(--bad-bg);color:var(--bad)}
+.equip input[type=number]{width:72px;text-align:right}
+.equip td.c{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.ifx{grid-template-columns:repeat(2,minmax(0,1fr));max-width:560px;margin-top:14px}
+.warns{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.warns li{padding:8px 12px;border-radius:8px;font-size:14px}
+.warns li.warn{background:var(--warn-bg);color:var(--warn)}
+.warns li.bad{background:var(--bad-bg);color:var(--bad)}
+.warns li.ok{background:var(--ok-bg);color:var(--ok)}
+.ucards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.uc{border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.uc .h{font-weight:700}
+.uc .d{color:var(--muted);font-size:13px;margin-bottom:6px}
+.uc ol{margin:0;padding-left:22px;font-size:14px}
+.uc li{margin:2px 0}
+.uc li.ext{color:var(--muted)}
+.chip{display:inline-flex;align-items:center;gap:6px}
+.chip i{width:10px;height:10px;border-radius:3px;display:inline-block;flex:none}
+.tag{font-size:11px;font-weight:700;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:0 4px;margin-left:4px}
+h3{font-size:14px;margin:18px 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.gt td{vertical-align:top}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:calc(100% - 32px);z-index:50}
+.toast.show{opacity:1}
+.drop{position:fixed;inset:0;background:color-mix(in srgb,var(--accent) 18%,transparent);border:3px dashed var(--accent);display:none;place-items:center;font-size:20px;font-weight:700;color:var(--ink);z-index:40}
+.drop.show{display:grid}
+dialog{border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);padding:20px;max-width:420px;width:calc(100% - 32px)}
+dialog::backdrop{background:rgba(0,0,0,.4)}
+dialog .opts{display:grid;gap:8px;margin:12px 0}
+.saved{font-size:12px;color:var(--muted)}
+@media (max-width:760px){
+  .ev{grid-template-columns:1fr 1fr}
+  h1{font-size:20px}
+}
+@media (max-width:460px){
+  .ev,.ifx{grid-template-columns:1fr}
+}
+@media print{
+  body{background:#fff;color:#000;font-size:11px}
+  .noprint,.toolbar,.adds,.rowact,button.ghost{display:none!important}
+  .card{box-shadow:none;border:none;padding:0;margin-bottom:14px;break-inside:auto}
+  .scroll{overflow:visible;border:none}
+  input,select,textarea{border:none!important;padding:0!important;color:#000!important;background:none!important;-webkit-appearance:none;appearance:none}
+  .mk{width:24px;height:18px}
+  .wrap{padding:0}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>GreenGo intercom plānotājs</h1>
+      <p class="sub">PTS 24 · lietotāji, grupas, kanāli un aprīkojums vienā vietā <span class="saved" id="saved"></span></p>
+    </div>
+    <div class="toolbar">
+      <button id="btnOpen" title="Augšupielādēt iepriekš saglabātu .xlsx un turpināt">⬆︎ Atvērt .xlsx</button>
+      <button id="btnSave" class="primary" title="Lejupielādēt aizpildīto tabulu">⬇︎ Lejupielādēt .xlsx</button>
+      <button id="btnPrint">Drukāt</button>
+      <button id="btnNew">Jauns</button>
+      <button id="btnExample">Piemērs</button>
+      <input type="file" id="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
+    </div>
+  </header>
+
+  <section class="card">
+    <h2><span class="n">1</span>Pasākums</h2>
+    <p class="hint">Pamatinformācija. Tiek saglabāta failā lapā "Pasākums".</p>
+    <div class="grid ev">
+      <label class="f">Pasākums<input type="text" data-ev="name" placeholder="piem., ATP 250 Rīga"></label>
+      <label class="f">Datums<input type="text" data-ev="date" placeholder="piem., 12.–18.05.2027"></label>
+      <label class="f">Vieta<input type="text" data-ev="place" placeholder="piem., Arēna Rīga"></label>
+      <label class="f">Atbildīgais<input type="text" data-ev="contact" placeholder="Vārds, tālrunis"></label>
+      <label class="f wide">Piezīmes<textarea data-ev="notes" rows="2" placeholder="Īpašas prasības, pieslēgumi, IP adreses u.c."></textarea></label>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2><span class="n">2</span>Grupas / kanāli</h2>
+    <p class="hint">GreenGo grupas, kas parādās kā kolonnas matricā. Secība nosaka kanālu secību beltpackā: pirmās 4 grupas, ko lietotājs dzird, ir uz ātrajām pogām.</p>
+    <div class="scroll">
+      <table class="groups">
+        <thead><tr><th class="num">#</th><th>Krāsa</th><th>Nosaukums</th><th>Piezīmes</th><th class="cnt">Lietotāji</th><th></th></tr></thead>
+        <tbody id="gBody"></tbody>
+      </table>
+    </div>
+    <div class="adds"><button id="addGroup">+ Pievienot grupu</button></div>
+    <div class="grid ifx">
+      <label class="f">Interface X · ports 1 (GV kameras)<select id="ifx1"></select></label>
+      <label class="f">Interface X · ports 2 (GV kameras)<select id="ifx2"></select></label>
+    </div>
+    <p class="hint" style="margin:8px 0 0">Katrs ports ar splitteri sadalīts uz līdz 8 kamerām. GV kameru operatoriem šīs divas grupas ir fiksētas.</p>
+  </section>
+
+  <section class="card">
+    <h2><span class="n">3</span>Lietotāji un grupu matrica</h2>
+    <p class="hint">Katrs cilvēks ar beltpacku vai staciju, kā arī GV kameras. Lai mainītu stāvokli, klikšķiniet uz šūnas matricā.</p>
+    <div class="legend">
+      <span class="chip"><span class="mk x" style="background:#1f6f43;border-color:#1f6f43">X</span> runā un klausās</span>
+      <span class="chip"><span class="mk l" style="border-color:#1f6f43;color:#1f6f43">L</span> tikai klausās</span>
+      <span class="chip"><span class="mk"></span> nav grupā</span>
+      <span>Pelēkās rindas: GV kameras (fiksēti Interface X porti)</span>
+    </div>
+    <div class="scroll">
+      <table class="users">
+        <thead id="uHead"></thead>
+        <tbody id="uBody"></tbody>
+      </table>
+    </div>
+    <div class="adds">
+      <button data-add="Vadu beltpack">+ Vadu beltpack</button>
+      <button data-add="Bezvadu beltpack">+ Bezvadu beltpack</button>
+      <button data-add="Rack stacija">+ Rack stacija</button>
+      <button data-add="Galda stacija">+ Galda stacija</button>
+      <button data-add="GV kamera (4-wire)">+ GV kamera</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2><span class="n">4</span>Aprīkojums</h2>
+    <p class="hint">Lauks "Nepieciešams" tiek saskaitīts automātiski no lietotāju saraksta. Pieejamo daudzumu var mainīt.</p>
+    <div class="scroll">
+      <table class="equip">
+        <thead><tr><th>Ierīces veids</th><th>Standarts</th><th>Papildu</th><th style="text-align:right">Kopā</th><th style="text-align:right">Vajag</th><th style="text-align:right">Atlikums</th><th>Statuss</th></tr></thead>
+        <tbody id="eBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2><span class="n">5</span>Pārbaude</h2>
+    <ul class="warns" id="warns"></ul>
+  </section>
+
+  <section class="card">
+    <h2><span class="n">6</span>GreenGo iestatījumi</h2>
+    <p class="hint">Kas jāieliek GreenGo Config katrā ierīcē. Kanālu secība ir tāda pati kā grupu secība.</p>
+    <h3>Ierīces un kanāli</h3>
+    <div class="ucards" id="ucards"></div>
+    <h3>Grupas</h3>
+    <div class="scroll">
+      <table class="gt">
+        <thead><tr><th>Grupa</th><th>Runā un klausās</th><th>Tikai klausās</th></tr></thead>
+        <tbody id="gtBody"></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<div class="drop" id="drop">Atlaidiet .xlsx failu, lai to atvērtu</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<dialog id="pick">
+  <h2 style="margin:0;font-size:17px">Kuru pasākumu atvērt?</h2>
+  <p class="sub">Failā ir vairākas konfigurācijas.</p>
+  <div class="opts" id="pickOpts"></div>
+  <button id="pickCancel">Atcelt</button>
+</dialog>
+
+<script>
+"use strict";
+const CAM = 'GV kamera (4-wire)';
+const DEVICES = ['Vadu beltpack','Bezvadu beltpack','Rack stacija','Galda stacija',CAM];
+const BELTPACKS = ['Vadu beltpack','Bezvadu beltpack'];
+const QUICK_KEYS = 4; // BPX / WBPX: 4 ātrās pogas, līdz 32 kanāliem ar "extended channels"
+const PALETTE = ['#2563eb','#dc2626','#16a34a','#d97706','#7c3aed','#0891b2','#db2777','#65a30d','#ea580c','#475569','#0f766e','#9333ea'];
+const EQUIP = [
+  {key:'Vadu beltpack', label:'Vadu beltpack', std:8, extra:0},
+  {key:'Bezvadu beltpack', label:'Bezvadu beltpack', std:4, extra:4},
+  {key:'Rack stacija', label:'Rack stacija', std:2, extra:0},
+  {key:'Galda stacija', label:'Galda stacija', std:0, extra:1},
+  {key:CAM, label:'GV kameras (Interface X + splitteris)', std:8, extra:0},
+];
+const STORE_KEY = 'pts-greengo-intercom-v1';
+
+const uid = () => Math.random().toString(36).slice(2, 10);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const $ = s => document.querySelector(s);
+
+function blankState(){
+  return {
+    event:{name:'',date:'',place:'',contact:'',notes:''},
+    groups:[], ifx:{p1:'',p2:''}, users:[],
+    equip:Object.fromEntries(EQUIP.map(e => [e.key,{std:e.std,extra:e.extra}])),
+  };
+}
+function exampleState(){
+  const s = blankState();
+  s.event.name = 'Tenisa čempionāts';
+  const gn = ['PRODUCTION','ENGINEER','SKAŅA','REPLAY','ATP MEDIA'];
+  s.groups = gn.map((n,i) => ({id:uid(), name:n, color:PALETTE[i], notes:''}));
+  const G = Object.fromEntries(s.groups.map(g => [g.name, g.id]));
+  s.ifx = {p1:G.PRODUCTION, p2:G.ENGINEER};
+  const u = (role, device, notes, marks='') => {
+    const ch = {};
+    marks.split(',').filter(Boolean).forEach(m => { const [n,v] = m.split(':'); ch[G[n]] = v || 'X'; });
+    s.users.push({id:uid(), role, name:'', device, notes, ch});
+  };
+  u('Producer','Vadu beltpack','Vada visu raidījumu','PRODUCTION,SKAŅA,REPLAY,ATP MEDIA');
+  u('Tehniskais direktors (EIC)','Vadu beltpack','PRODUCTION + ENGINEER','PRODUCTION,ENGINEER,SKAŅA');
+  u('Producents','Vadu beltpack','','PRODUCTION');
+  for (let i=1;i<=6;i++) u('Kamera '+i, CAM, 'Caur Interface X + splitteris');
+  u('Skaņas operators','Vadu beltpack','','ENGINEER,SKAŅA');
+  u('Replay / EVS operators','Vadu beltpack','','PRODUCTION,REPLAY');
+  u('Laukuma koordinators','Bezvadu beltpack','','PRODUCTION');
+  u('Kameru inženieris (shading)','Vadu beltpack','Sazinās ar operatoriem par shading','ENGINEER');
+  u('ATP Media pārstāvis','Vadu beltpack','','ATP MEDIA,PRODUCTION:L');
+  return s;
+}
+
+let state;
+try { state = JSON.parse(localStorage.getItem(STORE_KEY)); } catch(e) { state = null; }
+if (!state || !Array.isArray(state.users)) state = exampleState();
+state.equip = Object.assign(blankState().equip, state.equip || {});
+
+let saveTimer;
+function save(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); $('#saved').textContent = '· saglabāts pārlūkā'; } catch(e) {}
+  }, 300);
+}
+
+/* ---------- derived ---------- */
+const isCam = u => u.device === CAM;
+function marksOf(u){
+  if (isCam(u)) {
+    const m = {};
+    if (state.ifx.p1) m[state.ifx.p1] = 'X';
+    if (state.ifx.p2) m[state.ifx.p2] = 'X';
+    return m;
+  }
+  const m = {};
+  for (const g of state.groups) if (u.ch[g.id]) m[g.id] = u.ch[g.id];
+  return m;
+}
+function channelsOf(u){ const m = marksOf(u); return state.groups.filter(g => m[g.id]).map(g => ({g, mode:m[g.id]})); }
+const label = u => u.role || u.name || '(bez lomas)';
+const groupById = id => state.groups.find(g => g.id === id);
+function textOn(hex){
+  const h = (hex || '#888888').replace('#','');
+  const r = parseInt(h.slice(0,2),16), g = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16);
+  return (0.299*r + 0.587*g + 0.114*b) > 160 ? '#111111' : '#ffffff';
+}
+function equipCalc(){
+  return EQUIP.map(e => {
+    const av = state.equip[e.key] || {std:0,extra:0};
+    const std = +av.std || 0, extra = +av.extra || 0, total = std + extra;
+    const need = state.users.filter(u => u.device === e.key).length;
+    let st, cls;
+    if (need <= std) { st = e.key === CAM ? 'OK, pietiek ar splittera kapacitāti' : 'OK, pietiek ar standarta aprīkojumu'; cls = 'ok'; }
+    else if (need <= total) { st = e.key === CAM ? 'Vajadzēs papildu splitteri / portu' : 'Vajadzēs papildu aprīkojumu'; cls = 'warn'; }
+    else { st = (e.key === CAM ? 'Pārsniedz splittera kapacitāti, trūkst ' : 'Nepietiek, trūkst ') + (need - total) + ' gab.'; cls = 'bad'; }
+    return {...e, std, extra, total, need, rest: total - need, st, cls};
+  });
+}
+
+/* ---------- render ---------- */
+function renderEvent(){
+  document.querySelectorAll('[data-ev]').forEach(el => { el.value = state.event[el.dataset.ev] || ''; });
+}
+function renderGroups(){
+  const counts = Object.fromEntries(state.groups.map(g => [g.id, 0]));
+  state.users.forEach(u => Object.keys(marksOf(u)).forEach(id => { if (id in counts) counts[id]++; }));
+  $('#gBody').innerHTML = state.groups.map((g,i) => `
+    <tr data-gid="${g.id}">
+      <td class="num">${i+1}</td>
+      <td><input type="color" data-gf="color" value="${esc(g.color)}" aria-label="Krāsa"></td>
+      <td style="min-width:160px"><input type="text" data-gf="name" value="${esc(g.name)}" placeholder="Grupas nosaukums"></td>
+      <td style="min-width:200px"><input type="text" data-gf="notes" value="${esc(g.notes)}" placeholder="—"></td>
+      <td class="cnt">${counts[g.id]}</td>
+      <td class="rowact">
+        <button class="ghost" data-gact="up" title="Uz augšu" ${i===0?'disabled':''}>↑</button>
+        <button class="ghost" data-gact="down" title="Uz leju" ${i===state.groups.length-1?'disabled':''}>↓</button>
+        <button class="ghost" data-gact="del" title="Dzēst grupu">✕</button>
+      </td>
+    </tr>`).join('') || `<tr><td colspan="6" class="sub" style="padding:12px">Nav nevienas grupas. Pievienojiet pirmo.</td></tr>`;
+  const opts = sel => `<option value="">— nav —</option>` + state.groups.map(g => `<option value="${g.id}" ${g.id===sel?'selected':''}>${esc(g.name||'(bez nosaukuma)')}</option>`).join('');
+  $('#ifx1').innerHTML = opts(state.ifx.p1);
+  $('#ifx2').innerHTML = opts(state.ifx.p2);
+}
+function renderUsers(){
+  $('#uHead').innerHTML = `<tr>
+    <th class="num">#</th><th class="sticky">Loma / amats</th><th>Vārds</th><th>Ierīce</th>
+    ${state.groups.map(g => `<th class="g" title="${esc(g.notes||g.name)}"><span class="bar" style="background:${esc(g.color)}"></span>${esc(g.name||'?')}</th>`).join('')}
+    <th class="cnt" title="Kanālu skaits">Kan.</th><th>Piezīmes</th><th></th></tr>`;
+  $('#uBody').innerHTML = state.users.map((u,i) => {
+    const m = marksOf(u), cam = isCam(u), n = Object.keys(m).length;
+    const over = BELTPACKS.includes(u.device) && n > QUICK_KEYS;
+    const cells = state.groups.map(g => {
+      const v = m[g.id] || '';
+      const style = v === 'X' ? `background:${g.color};border-color:${g.color};color:${textOn(g.color)}` : v === 'L' ? `border-color:${g.color};color:${g.color}` : '';
+      const t = `${g.name}: ${v==='X'?'runā un klausās':v==='L'?'tikai klausās':'nav grupā'}${cam?' (fiksēts Interface X)':''}`;
+      return `<td class="m"><button class="mk ${v.toLowerCase()}" data-mk="${g.id}" style="${style}" title="${esc(t)}" aria-label="${esc(label(u)+', '+t)}" ${cam?'disabled':''}>${v}</button></td>`;
+    }).join('');
+    return `<tr data-uid="${u.id}" class="${cam?'cam':''}">
+      <td class="num">${i+1}</td>
+      <td class="role sticky"><input type="text" data-uf="role" value="${esc(u.role)}" placeholder="Loma"></td>
+      <td class="name"><input type="text" data-uf="name" value="${esc(u.name)}" placeholder="—"></td>
+      <td class="dev"><select data-uf="device"><option value="">— izvēlēties —</option>${DEVICES.map(d => `<option ${d===u.device?'selected':''}>${d}</option>`).join('')}</select></td>
+      ${cells}
+      <td class="cnt ${over?'over':''}" title="${over?'Vairāk par 4 kanāliem: kanāli no 5. sāk darboties tikai caur extended channels':''}">${n}${over?' ⚠︎':''}</td>
+      <td class="notes"><input type="text" data-uf="notes" value="${esc(u.notes)}" placeholder="—"></td>
+      <td class="rowact">
+        <button class="ghost" data-uact="up" title="Uz augšu" ${i===0?'disabled':''}>↑</button>
+        <button class="ghost" data-uact="down" title="Uz leju" ${i===state.users.length-1?'disabled':''}>↓</button>
+        <button class="ghost" data-uact="dup" title="Dublēt">⧉</button>
+        <button class="ghost" data-uact="del" title="Dzēst">✕</button>
+      </td></tr>`;
+  }).join('') || `<tr><td colspan="${state.groups.length+7}" class="sub" style="padding:12px">Nav neviena lietotāja. Pievienojiet ar pogām zemāk.</td></tr>`;
+}
+function renderEquip(){
+  $('#eBody').innerHTML = equipCalc().map(e => `
+    <tr data-ek="${esc(e.key)}">
+      <td>${esc(e.label)}</td>
+      <td><input type="number" min="0" step="1" data-ef="std" value="${e.std}" aria-label="${esc(e.label)} standarts"></td>
+      <td><input type="number" min="0" step="1" data-ef="extra" value="${e.extra}" aria-label="${esc(e.label)} papildu"></td>
+      <td class="c">${e.total}</td><td class="c">${e.need}</td><td class="c">${e.rest}</td>
+      <td><span class="pill ${e.cls}">${esc(e.st)}</span></td>
+    </tr>`).join('') + (() => {
+      const w = state.users.filter(u => u.device === 'Bezvadu beltpack').length;
+      return `<tr><td>Antenas (bezvadu)</td><td class="sub">—</td><td class="sub">—</td><td class="c">—</td><td class="c">${Math.ceil(w/4)}</td><td class="c">—</td><td><span class="pill ok">1 antena uz katriem 4 bezvadu beltpackiem</span></td></tr>`;
+    })();
+}
+function warnings(){
+  const out = [];
+  const names = {};
+  state.groups.forEach(g => {
+    const k = g.name.trim().toUpperCase();
+    if (!k) out.push(['bad', 'Grupai nav nosaukuma.']);
+    else if (names[k]) out.push(['bad', `Grupas nosaukums "${g.name}" atkārtojas.`]);
+    names[k] = 1;
+  });
+  const cams = state.users.filter(isCam);
+  if (cams.length && (!state.ifx.p1 || !state.ifx.p2)) out.push(['warn', 'Ir GV kameras, bet nav norādītas abas Interface X portu grupas.']);
+  const members = {}, talkers = {};
+  state.users.forEach((u,i) => {
+    const n = `#${i+1} ${label(u)}`;
+    const ch = channelsOf(u);
+    ch.forEach(c => { members[c.g.id] = 1; if (c.mode === 'X') talkers[c.g.id] = 1; });
+    if (!u.role && !u.name) out.push(['warn', `Rinda #${i+1}: nav norādīta loma vai vārds.`]);
+    if (!u.device) out.push(['warn', `${n}: nav izvēlēts ierīces veids.`]);
+    if (!isCam(u) && !ch.length) out.push(['warn', `${n}: nav pievienots nevienai grupai.`]);
+    if (BELTPACKS.includes(u.device) && ch.length > QUICK_KEYS)
+      out.push(['warn', `${n}: ${ch.length} kanāli. Uz beltpacka ātrajām pogām ir tikai 4, pārējie būs pieejami caur extended channels.`]);
+  });
+  state.groups.forEach(g => {
+    if (!members[g.id]) out.push(['warn', `Grupā "${g.name||'?'}" nav neviena lietotāja.`]);
+    else if (!talkers[g.id]) out.push(['warn', `Grupā "${g.name||'?'}" neviens nerunā (visi tikai klausās).`]);
+  });
+  equipCalc().forEach(e => { if (e.cls !== 'ok') out.push([e.cls, `${e.label}: ${e.st} (vajag ${e.need}, pieejami ${e.std} + ${e.extra}).`]); });
+  return out;
+}
+function renderWarns(){
+  const w = warnings();
+  $('#warns').innerHTML = w.length ? w.map(([c,t]) => `<li class="${c}">${esc(t)}</li>`).join('') : `<li class="ok">Viss kārtībā: nav atrasts neviens trūkums.</li>`;
+}
+function chipHTML(g, mode){
+  return `<span class="chip"><i style="background:${esc(g.color)}"></i>${esc(g.name||'?')}${mode==='L'?'<span class="tag">tikai klausās</span>':''}</span>`;
+}
+function renderSummary(){
+  const cards = [];
+  const cams = state.users.filter(isCam);
+  state.users.filter(u => !isCam(u)).forEach(u => {
+    const ch = channelsOf(u);
+    const bp = BELTPACKS.includes(u.device);
+    cards.push(`<div class="uc"><div class="h">${esc(label(u))}</div>
+      <div class="d">${esc([u.name && u.role ? u.name : '', u.device || 'ierīce nav izvēlēta'].filter(Boolean).join(' · '))}</div>
+      ${ch.length ? `<ol>${ch.map((c,i) => `<li class="${bp && i>=QUICK_KEYS?'ext':''}">${chipHTML(c.g,c.mode)}${bp && i>=QUICK_KEYS?'<span class="tag">extended</span>':''}</li>`).join('')}</ol>` : '<div class="sub">Nav kanālu</div>'}
+    </div>`);
+  });
+  if (cams.length) {
+    const p1 = groupById(state.ifx.p1), p2 = groupById(state.ifx.p2);
+    cards.push(`<div class="uc"><div class="h">GV kameras (${cams.length})</div>
+      <div class="d">Interface X, 4-wire caur splitteri</div>
+      <ol><li>Ports 1 → ${p1 ? chipHTML(p1) : '<span class="pill bad">nav norādīts</span>'}</li><li>Ports 2 → ${p2 ? chipHTML(p2) : '<span class="pill bad">nav norādīts</span>'}</li></ol>
+      <div class="d" style="margin:6px 0 0">${esc(cams.map(label).join(', '))}</div></div>`);
+  }
+  $('#ucards').innerHTML = cards.join('') || '<p class="sub">Nav lietotāju.</p>';
+  $('#gtBody').innerHTML = state.groups.map(g => {
+    const t = [], l = [];
+    state.users.forEach(u => { const m = marksOf(u)[g.id]; if (m === 'X') t.push(label(u)); else if (m === 'L') l.push(label(u)); });
+    return `<tr><td style="white-space:nowrap">${chipHTML(g)}</td><td>${esc(t.join(', ')) || '<span class="sub">—</span>'}</td><td>${esc(l.join(', ')) || '<span class="sub">—</span>'}</td></tr>`;
+  }).join('');
+}
+function renderDerived(){ renderEquip(); renderWarns(); renderSummary(); }
+function renderAll(){ renderEvent(); renderGroups(); renderUsers(); renderDerived(); }
+
+/* ---------- events ---------- */
+document.addEventListener('input', e => {
+  const t = e.target;
+  if (t.dataset.ev) { state.event[t.dataset.ev] = t.value; save(); return; }
+  if (t.dataset.gf) {
+    const g = groupById(t.closest('tr').dataset.gid); g[t.dataset.gf] = t.value;
+    renderUsers(); renderDerived();
+    const s1 = $('#ifx1'), s2 = $('#ifx2');
+    [s1,s2].forEach(s => [...s.options].forEach(o => { if (o.value === g.id) o.textContent = g.name || '(bez nosaukuma)'; }));
+    save(); return;
+  }
+  if (t.dataset.uf && t.dataset.uf !== 'device') {
+    const u = state.users.find(x => x.id === t.closest('tr').dataset.uid); u[t.dataset.uf] = t.value;
+    renderWarns(); renderSummary(); save(); return;
+  }
+  if (t.dataset.ef) {
+    const k = t.closest('tr').dataset.ek; state.equip[k][t.dataset.ef] = Math.max(0, parseInt(t.value) || 0);
+    renderWarns(); save();
+    // atjauno tikai aprēķinātās šūnas, lai nepazaudētu fokusu
+    const e = equipCalc().find(x => x.key === k), tds = t.closest('tr').children;
+    tds[3].textContent = e.total; tds[5].textContent = e.rest; tds[6].innerHTML = `<span class="pill ${e.cls}">${esc(e.st)}</span>`;
+  }
+});
+document.addEventListener('change', e => {
+  const t = e.target;
+  if (t.dataset.uf === 'device') {
+    const u = state.users.find(x => x.id === t.closest('tr').dataset.uid); u.device = t.value;
+    renderGroups(); renderUsers(); renderDerived(); save();
+  }
+  if (t.id === 'ifx1' || t.id === 'ifx2') {
+    state.ifx[t.id === 'ifx1' ? 'p1' : 'p2'] = t.value;
+    renderGroups(); renderUsers(); renderDerived(); save();
+  }
+  if (t.dataset.ef) renderEquip();
+});
+function move(arr, i, d){ const j = i + d; if (j < 0 || j >= arr.length) return; [arr[i], arr[j]] = [arr[j], arr[i]]; }
+document.addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.mk) {
+    const u = state.users.find(x => x.id === b.closest('tr').dataset.uid);
+    const cur = u.ch[b.dataset.mk] || '';
+    const next = cur === '' ? 'X' : cur === 'X' ? 'L' : '';
+    if (next) u.ch[b.dataset.mk] = next; else delete u.ch[b.dataset.mk];
+    const id = b.dataset.mk, uidv = u.id;
+    renderGroups(); renderUsers(); renderDerived(); save();
+    const nb = document.querySelector(`tr[data-uid="${uidv}"] button[data-mk="${id}"]`); if (nb) nb.focus();
+    return;
+  }
+  if (b.dataset.uact) {
+    const i = state.users.findIndex(x => x.id === b.closest('tr').dataset.uid);
+    const a = b.dataset.uact;
+    if (a === 'up') move(state.users, i, -1);
+    if (a === 'down') move(state.users, i, 1);
+    if (a === 'dup') state.users.splice(i+1, 0, {...JSON.parse(JSON.stringify(state.users[i])), id:uid()});
+    if (a === 'del') { const u = state.users[i]; if ((u.role || u.name) && !confirm(`Dzēst "${label(u)}"?`)) return; state.users.splice(i, 1); }
+    renderGroups(); renderUsers(); renderDerived(); save(); return;
+  }
+  if (b.dataset.gact) {
+    const i = state.groups.findIndex(x => x.id === b.closest('tr').dataset.gid);
+    const a = b.dataset.gact;
+    if (a === 'up') move(state.groups, i, -1);
+    if (a === 'down') move(state.groups, i, 1);
+    if (a === 'del') {
+      const g = state.groups[i];
+      if (!confirm(`Dzēst grupu "${g.name}"? Atzīmes matricā šai grupai tiks noņemtas.`)) return;
+      state.groups.splice(i, 1);
+      state.users.forEach(u => delete u.ch[g.id]);
+      if (state.ifx.p1 === g.id) state.ifx.p1 = '';
+      if (state.ifx.p2 === g.id) state.ifx.p2 = '';
+    }
+    renderGroups(); renderUsers(); renderDerived(); save(); return;
+  }
+  if (b.dataset.add) {
+    const dev = b.dataset.add;
+    const role = dev === CAM ? 'Kamera ' + (state.users.filter(isCam).length + 1) : '';
+    state.users.push({id:uid(), role, name:'', device:dev, notes:'', ch:{}});
+    renderGroups(); renderUsers(); renderDerived(); save();
+    const inp = document.querySelector(`#uBody tr:last-child input[data-uf="role"]`); if (inp && !role) inp.focus();
+    return;
+  }
+});
+$('#addGroup').onclick = () => {
+  state.groups.push({id:uid(), name:'', color:PALETTE[state.groups.length % PALETTE.length], notes:''});
+  renderGroups(); renderUsers(); renderDerived(); save();
+  $('#gBody tr:last-child input[data-gf="name"]').focus();
+};
+$('#btnNew').onclick = () => {
+  if (!confirm('Sākt jaunu, tukšu konfigurāciju? Pašreizējie dati pārlūkā tiks aizstāti (lejupielādējiet tos, ja vajag).')) return;
+  state = blankState();
+  ['PRODUCTION','ENGINEER'].forEach((n,i) => state.groups.push({id:uid(), name:n, color:PALETTE[i], notes:''}));
+  state.ifx = {p1:state.groups[0].id, p2:state.groups[1].id};
+  renderAll(); save();
+};
+$('#btnExample').onclick = () => {
+  if (!confirm('Ielādēt piemēru? Pašreizējie dati pārlūkā tiks aizstāti.')) return;
+  state = exampleState(); renderAll(); save();
+};
+$('#btnPrint').onclick = () => window.print();
+
+function toast(msg){
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+/* ---------- import ---------- */
+function cv(cell){
+  let v = cell && cell.value;
+  if (v == null) return '';
+  if (typeof v === 'object') {
+    if (v instanceof Date) return v.toLocaleDateString('lv-LV');
+    if (v.richText) return v.richText.map(r => r.text).join('').trim();
+    if ('result' in v) v = v.result;
+    else if (v.formula || v.sharedFormula) return '';
+    else if ('text' in v) v = v.text;
+    if (v == null || typeof v === 'object') return '';
+  }
+  return String(v).trim();
+}
+function normDev(s){
+  const x = (s || '').toLowerCase();
+  if (!x) return '';
+  if (x.includes('kamer') || x.includes('4-wire') || x.includes('4 wire')) return CAM;
+  if (x.includes('bezvadu') || x.includes('wireless') || x.includes('wbp')) return 'Bezvadu beltpack';
+  if (x.includes('rack') || x.includes('mcx')) return 'Rack stacija';
+  if (x.includes('galda') || x.includes('desk')) return 'Galda stacija';
+  if (x.includes('vadu') || x.includes('beltpack') || x.includes('bpx')) return 'Vadu beltpack';
+  return null;
+}
+function headerMap(ws){
+  const map = {};
+  ws.getRow(1).eachCell({includeEmpty:false}, (c, col) => { map[col] = cv(c).toLowerCase(); });
+  return map;
+}
+function findCol(map, ...keys){
+  for (const [col, h] of Object.entries(map)) if (keys.some(k => h.startsWith(k))) return +col;
+  return 0;
+}
+function sheetSets(wb){
+  const sets = [];
+  wb.eachSheet(ws => {
+    const m = ws.name.match(/^(.*?)\s*[-–—:]?\s*Lietotāji\s*$/i);
+    if (m) sets.push(m[1].trim());
+  });
+  return sets;
+}
+function findSheet(wb, prefix, name){
+  let hit = null;
+  wb.eachSheet(ws => {
+    const n = ws.name.trim();
+    if (!n.toLowerCase().endsWith(name.toLowerCase())) return;
+    const pre = n.slice(0, n.length - name.length).replace(/[\s\-–—:]+$/,'').trim();
+    if (pre.toLowerCase() === prefix.toLowerCase()) hit = ws;
+  });
+  return hit;
+}
+function parseWorkbook(wb, prefix){
+  const s = blankState();
+  const users = findSheet(wb, prefix, 'Lietotāji');
+  const matrix = findSheet(wb, prefix, 'Grupu matrica');
+  const info = findSheet(wb, prefix, 'Pasākums');
+  const gsheet = findSheet(wb, prefix, 'Grupas');
+  const eq = findSheet(wb, prefix, 'Aprīkojums');
+  if (!users) throw new Error('Failā nav lapas "Lietotāji".');
+
+  // grupas no matricas galvenes
+  const gcols = [];
+  if (matrix) {
+    const hr = matrix.getRow(1);
+    for (let c = 2; c <= Math.max(2, matrix.columnCount); c++) {
+      const n = cv(hr.getCell(c));
+      if (!n) break;
+      gcols.push({col:c, g:{id:uid(), name:n, color:PALETTE[gcols.length % PALETTE.length], notes:''}});
+    }
+  }
+  // krāsas un piezīmes no lapas "Grupas" (ja eksportēts no šīs formas)
+  if (gsheet) {
+    const hm = headerMap(gsheet);
+    const cN = findCol(hm,'grupa','nosaukums'), cK = findCol(hm,'krāsa'), cP = findCol(hm,'piezīmes');
+    gsheet.eachRow((row, r) => {
+      if (r === 1 || !cN) return;
+      const n = cv(row.getCell(cN)); if (!n) return;
+      let gc = gcols.find(x => x.g.name.toUpperCase() === n.toUpperCase());
+      if (!gc) { gc = {col:0, g:{id:uid(), name:n, color:PALETTE[gcols.length % PALETTE.length], notes:''}}; gcols.push(gc); }
+      const k = cK ? cv(row.getCell(cK)) : '';
+      if (/^#?[0-9a-f]{6}$/i.test(k)) gc.g.color = '#' + k.replace('#','').toLowerCase();
+      if (cP) gc.g.notes = cv(row.getCell(cP));
+    });
+  }
+  s.groups = gcols.map(x => x.g);
+
+  // lietotāji (rindas sakrīt ar matricas rindām)
+  const hm = headerMap(users);
+  const cRole = findCol(hm,'loma') || 2, cName = findCol(hm,'vārds','vards') || 3, cDev = findCol(hm,'ierīce','ierīces','ierice') || 4, cNotes = findCol(hm,'piezīmes','piezimes') || 5;
+  const last = Math.max(users.rowCount, matrix ? matrix.rowCount : 0);
+  for (let r = 2; r <= last; r++) {
+    const ur = users.getRow(r);
+    let role = cv(ur.getCell(cRole)), name = cv(ur.getCell(cName)), devRaw = cv(ur.getCell(cDev)), notes = cv(ur.getCell(cNotes));
+    const ch = {};
+    if (matrix) {
+      const mr = matrix.getRow(r);
+      gcols.forEach(({col, g}) => {
+        if (!col) return;
+        const v = cv(mr.getCell(col)).toUpperCase();
+        if (v) ch[g.id] = v === 'L' ? 'L' : 'X';
+      });
+      if (!role) role = cv(mr.getCell(1));
+    }
+    const hasUserData = cv(ur.getCell(cRole)) || name || devRaw || notes;
+    if (!hasUserData && !Object.keys(ch).length) continue; // tukšas rindas un piezīmes zem tabulas
+    let device = normDev(devRaw);
+    if (device === null) { notes = [notes, 'Ierīce: ' + devRaw].filter(Boolean).join(' · '); device = ''; }
+    s.users.push({id:uid(), role, name, device, notes, ch});
+  }
+
+  // pasākuma info + Interface X
+  const byName = n => s.groups.find(g => g.name.toUpperCase() === (n || '').toUpperCase());
+  if (info) {
+    const keys = {pasākums:'name', datums:'date', vieta:'place', atbildīgais:'contact', piezīmes:'notes'};
+    info.eachRow(row => {
+      const k = cv(row.getCell(1)).toLowerCase(), v = cv(row.getCell(2));
+      if (keys[k]) s.event[keys[k]] = v;
+      if (k.startsWith('interface x ports 1')) s.ifx.p1 = (byName(v) || {}).id || '';
+      if (k.startsWith('interface x ports 2')) s.ifx.p2 = (byName(v) || {}).id || '';
+    });
+  }
+  if (!s.event.name && prefix) s.event.name = prefix;
+  if (!info) {
+    s.ifx.p1 = (byName('PRODUCTION') || s.groups[0] || {}).id || '';
+    s.ifx.p2 = (byName('ENGINEER') || s.groups[1] || {}).id || '';
+  }
+
+  // aprīkojuma pieejamība
+  if (eq) {
+    eq.eachRow((row, r) => {
+      if (r === 1) return;
+      const n = cv(row.getCell(1)).toLowerCase(); if (!n) return;
+      const e = EQUIP.find(x => n === x.label.toLowerCase() || n === x.key.toLowerCase() || (x.key === CAM && n.startsWith('gv kamer')));
+      if (!e) return;
+      const std = parseInt(cv(row.getCell(2))), extra = parseInt(cv(row.getCell(3)));
+      if (!isNaN(std)) s.equip[e.key].std = std;
+      if (!isNaN(extra)) s.equip[e.key].extra = extra;
+    });
+  }
+  return s;
+}
+async function openFile(file){
+  if (!file) return;
+  if (!/\.xlsx$/i.test(file.name)) { toast('Var atvērt tikai .xlsx failus.'); return; }
+  try {
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(await file.arrayBuffer());
+    const sets = sheetSets(wb);
+    if (!sets.length) throw new Error('Failā nav lapas "Lietotāji".');
+    const prefix = sets.length === 1 ? sets[0] : await pickSet(sets);
+    if (prefix == null) return;
+    const hasData = state.users.length && (state.users.some(u => u.role || u.name));
+    if (hasData && !confirm(`Atvērt "${file.name}"? Pašreizējie dati formā tiks aizstāti.`)) return;
+    state = parseWorkbook(wb, prefix);
+    renderAll(); save();
+    toast(`Atvērts: ${state.users.length} lietotāji, ${state.groups.length} grupas.`);
+  } catch (err) {
+    console.error(err);
+    toast('Neizdevās atvērt failu: ' + err.message);
+  }
+}
+function pickSet(sets){
+  return new Promise(res => {
+    const d = $('#pick');
+    $('#pickOpts').innerHTML = sets.map((p,i) => `<button data-i="${i}">${esc(p || 'Pamata (bez nosaukuma)')}</button>`).join('');
+    $('#pickOpts').onclick = e => { const b = e.target.closest('button'); if (b) { d.close(); res(sets[+b.dataset.i]); } };
+    $('#pickCancel').onclick = () => { d.close(); res(null); };
+    d.oncancel = () => res(null);
+    d.showModal();
+  });
+}
+$('#btnOpen').onclick = () => $('#file').click();
+$('#file').onchange = e => { openFile(e.target.files[0]); e.target.value = ''; };
+let dragDepth = 0;
+window.addEventListener('dragenter', e => { if ([...e.dataTransfer.types].includes('Files')) { dragDepth++; $('#drop').classList.add('show'); } });
+window.addEventListener('dragleave', () => { if (--dragDepth <= 0) { dragDepth = 0; $('#drop').classList.remove('show'); } });
+window.addEventListener('dragover', e => e.preventDefault());
+window.addEventListener('drop', e => { e.preventDefault(); dragDepth = 0; $('#drop').classList.remove('show'); openFile(e.dataTransfer.files[0]); });
+
+/* ---------- export ---------- */
+const XL = {
+  input:{argb:'FF1F4FBF'}, ref:{argb:'FF1E7B34'}, black:{argb:'FF000000'},
+  head:{type:'pattern', pattern:'solid', fgColor:{argb:'FFE8ECF2'}},
+  fixed:{type:'pattern', pattern:'solid', fgColor:{argb:'FFE9ECF1'}},
+  border:{bottom:{style:'thin', color:{argb:'FFC9D0DA'}}},
+};
+const argb = hex => 'FF' + (hex || '#888888').replace('#','').toUpperCase();
+function headRow(ws, values){
+  const r = ws.addRow(values);
+  r.eachCell(c => { c.font = {bold:true}; c.fill = XL.head; c.border = XL.border; c.alignment = {vertical:'middle', wrapText:true}; });
+  r.height = 22;
+  return r;
+}
+async function exportXlsx(){
+  const wb = new ExcelJS.Workbook();
+  wb.creator = 'PTS 24'; wb.created = new Date();
+  const N = Math.max(state.users.length, 20);       // rindas Lietotāji lapā (kā veidnē, vismaz 20)
+  const lastRow = N + 1;
+  const ev = state.event;
+
+  // Instrukcijas
+  const wi = wb.addWorksheet('Instrukcijas');
+  wi.getColumn(1).width = 120;
+  const lines = [
+    ['GreenGo intercom plānošanas tabula', {bold:true, size:16}],
+    ['Veidne intercom lietotāju, grupu un aprīkojuma plānošanai raidījumiem / pārraidēm', {italic:true}],
+    [''],
+    ['KĀ IZMANTOT', {bold:true}],
+    ['1. Lapā "Lietotāji" ierakstiet katru cilvēku, kam būs intercom beltpack vai stacija: lomu, vārdu (nav obligāts) un ierīces veidu.'],
+    ['2. Lapā "Grupu matrica" atzīmējiet, kuras grupas / kanālus katrs cilvēks dzird: "X" nozīmē runā un klausās, "L" nozīmē tikai klausās.'],
+    ['3. Lapa "Aprīkojums" automātiski saskaita, cik ierīču katra veida nepieciešams, un salīdzina ar PTS 24 pieejamo aprīkojumu.'],
+    ['4. Lapa "GreenGo iestatījumi" parāda, kuri kanāli jāieliek katrā ierīcē (secība = grupu secība; beltpackam pirmie 4 ir uz ātrajām pogām).'],
+    ['5. Šo failu var atkal atvērt formā (pts24.lv/intercom.html → "Atvērt .xlsx") un turpināt konfigurāciju.'],
+    [''],
+    ['PIEZĪMJU KRĀSU LEĢENDA', {bold:true}],
+    ['• Zils teksts: jāaizpilda / jārediģē.', {color:XL.input}],
+    ['• Zaļš teksts: automātiska atsauce uz citu lapu (nerediģēt tieši, mainiet avotā "Lietotāji").', {color:XL.ref}],
+    ['• Melns teksts: galvenes un formulas.'],
+    [''],
+    ['PTS 24 GREENGO APRĪKOJUMS (BĀZE)', {bold:true}],
+    ['• 8 vadu beltpacki'], ['• 4 bezvadu beltpacki (retos gadījumos pieejami vēl 4, kopā līdz 8)'], ['• 2 rack stacijas'],
+    ['• 1 galda stacija (retos gadījumos)'], ['• 1 antena uz katriem 4 bezvadu beltpackiem'],
+    [''],
+    ['KAMERU OPERATORI (GV KAMERAS)', {bold:true}],
+    ['Kameru operatori nelieto atsevišķu GreenGo beltpacku. Viņu intercom ir iebūvēts GV kamerā un pienāk caur Interface X 4-wire pieslēgumu. Interface X izmanto 2 fiksētus portus kopumā (lapā "Pasākums" norādītas to grupas), un katrs ports ar pašizgatavotu splitteri tiek sadalīts uz līdz 8 kamerām. "Grupu matricā" kameru rindām X ir tikai šajās divās kolonnās.'],
+  ];
+  lines.forEach(([t, f]) => { const r = wi.addRow([t]); r.getCell(1).alignment = {wrapText:true, vertical:'top'}; if (f) r.getCell(1).font = f; });
+
+  // Pasākums
+  const wp = wb.addWorksheet('Pasākums');
+  wp.columns = [{width:28},{width:70}];
+  headRow(wp, ['Lauks','Vērtība']);
+  const g1 = groupById(state.ifx.p1), g2 = groupById(state.ifx.p2);
+  [['Pasākums',ev.name],['Datums',ev.date],['Vieta',ev.place],['Atbildīgais',ev.contact],['Piezīmes',ev.notes],
+   ['Interface X ports 1 (grupa)', g1 ? g1.name : ''],['Interface X ports 2 (grupa)', g2 ? g2.name : ''],
+   ['Saglabāts', new Date().toLocaleString('lv-LV')]].forEach(([k,v], i) => {
+    const r = wp.addRow([k, v || '']);
+    r.getCell(1).font = {bold:true};
+    r.getCell(2).font = {color: i < 7 ? XL.input : XL.black};
+    r.getCell(2).alignment = {wrapText:true, vertical:'top'};
+  });
+
+  // Lietotāji
+  const wu = wb.addWorksheet('Lietotāji', {views:[{state:'frozen', ySplit:1}]});
+  wu.columns = [{width:6},{width:32},{width:22},{width:22},{width:55}];
+  headRow(wu, ['Nr.','Loma / amats','Vārds (nav obligāts)','Ierīces veids','Piezīmes']);
+  const devList = '"' + DEVICES.join(',') + '"';
+  for (let i = 0; i < N; i++) {
+    const u = state.users[i];
+    const r = wu.addRow([i+1, u ? u.role : '', u ? u.name : '', u ? u.device : '', u ? u.notes : '']);
+    [2,3,4,5].forEach(c => r.getCell(c).font = {color:XL.input});
+    r.getCell(4).dataValidation = {type:'list', allowBlank:true, formulae:[devList]};
+  }
+
+  // Grupu matrica
+  const wm = wb.addWorksheet('Grupu matrica', {views:[{state:'frozen', xSplit:1, ySplit:1}]});
+  wm.columns = [{width:32}, ...state.groups.map(() => ({width:14}))];
+  const mh = headRow(wm, ['Loma / amats', ...state.groups.map(g => g.name)]);
+  state.groups.forEach((g, i) => {
+    const c = mh.getCell(i+2);
+    c.fill = {type:'pattern', pattern:'solid', fgColor:{argb:argb(g.color)}};
+    c.font = {bold:true, color:{argb:argb(textOn(g.color))}};
+    c.alignment = {horizontal:'center', vertical:'middle', wrapText:true};
+  });
+  for (let i = 0; i < N; i++) {
+    const u = state.users[i], rn = i + 2;
+    const m = u ? marksOf(u) : {};
+    const r = wm.addRow([{formula:`IF(Lietotāji!B${rn}="","",Lietotāji!B${rn})`, result: u ? u.role : ''}, ...state.groups.map(g => m[g.id] || '')]);
+    r.getCell(1).font = {color:XL.ref};
+    state.groups.forEach((g, gi) => {
+      const c = r.getCell(gi+2);
+      c.alignment = {horizontal:'center'};
+      c.font = {bold:true, color:{argb:argb(g.color)}};
+      c.dataValidation = {type:'list', allowBlank:true, formulae:['"X,L"']};
+      if (u && isCam(u)) c.fill = XL.fixed;
+    });
+  }
+  wm.addRow([]);
+  wm.addRow(['X = runā un klausās · L = tikai klausās · pelēkas šūnas = GV kameru fiksētie Interface X kanāli']).getCell(1).font = {italic:true, color:{argb:'FF666666'}};
+
+  // Aprīkojums
+  const wa = wb.addWorksheet('Aprīkojums', {views:[{state:'frozen', ySplit:1}]});
+  wa.columns = [{width:36},{width:14},{width:16},{width:14},{width:16},{width:12},{width:58}];
+  headRow(wa, ['Ierīces veids','Pieejams (standarts)','Papildu (retos gadījumos)','Pieejams kopā','Nepieciešams (no saraksta)','Atlikums','Statuss']);
+  const rng = `Lietotāji!$D$2:$D$${lastRow}`;
+  equipCalc().forEach((e, i) => {
+    const rn = i + 2;
+    const crit = e.key === CAM ? `"${CAM}"` : `A${rn}`;
+    const msgs = e.key === CAM
+      ? ['"OK — pietiek ar splittera kapacitāti"','"Vajadzēs papildu splitteri / portu"','"Pārsniedz splittera kapacitāti — trūkst "']
+      : ['"OK — pietiek ar standarta aprīkojumu"','"Vajadzēs retos gadījumos pieejamo papildu aprīkojumu"','"Nepietiek aprīkojuma — trūkst "'];
+    const stTxt = e.cls === 'ok' ? msgs[0] : e.cls === 'warn' ? msgs[1] : msgs[2].slice(0,-1) + (e.need - e.total) + ' gab."';
+    const r = wa.addRow([
+      e.key === CAM ? e.label : e.key, e.std, e.extra,
+      {formula:`B${rn}+C${rn}`, result:e.total},
+      {formula:`COUNTIF(${rng},${crit})`, result:e.need},
+      {formula:`D${rn}-E${rn}`, result:e.rest},
+      {formula:`IF(E${rn}<=B${rn},${msgs[0]},IF(E${rn}<=D${rn},${msgs[1]},${msgs[2]} & (E${rn}-D${rn}) & " gab."))`, result:stTxt.replace(/^"|"$/g,'')},
+    ]);
+    [2,3].forEach(c => r.getCell(c).font = {color:XL.input});
+  });
+  const wl = state.users.filter(u => u.device === 'Bezvadu beltpack').length;
+  wa.addRow(['Antenas (bezvadu)','—','—','—',{formula:'ROUNDUP(E3/4,0)', result:Math.ceil(wl/4)},'—','1 antena uz katriem 4 bezvadu beltpackiem']);
+  wa.addRow([]);
+  const nr = wa.addRow(['"Nepieciešams" tiek saskaitīts automātiski no lapas "Lietotāji" (kolonna "Ierīces veids"). GV kameru operatori (4-wire caur Interface X) NEpatērē beltpackus vai antenas: viņi izmanto 2 fiksētus Interface X portus kopumā, no kuriem katrs ar pašizgatavotu splitteri sadalīts uz līdz 8 kamerām.']);
+  wa.mergeCells(`A${nr.number}:G${nr.number}`);
+  nr.getCell(1).alignment = {wrapText:true, vertical:'top'}; nr.height = 48;
+
+  // Grupas
+  const wg = wb.addWorksheet('Grupas', {views:[{state:'frozen', ySplit:1}]});
+  wg.columns = [{width:6},{width:22},{width:12},{width:50},{width:40},{width:40}];
+  headRow(wg, ['Nr.','Grupa','Krāsa','Runā un klausās','Tikai klausās','Piezīmes']);
+  state.groups.forEach((g, i) => {
+    const t = [], l = [];
+    state.users.forEach(u => { const m = marksOf(u)[g.id]; if (m === 'X') t.push(label(u)); else if (m === 'L') l.push(label(u)); });
+    const r = wg.addRow([i+1, g.name, g.color.toUpperCase(), t.join(', '), l.join(', '), g.notes || '']);
+    r.getCell(3).fill = {type:'pattern', pattern:'solid', fgColor:{argb:argb(g.color)}};
+    r.getCell(3).font = {color:{argb:argb(textOn(g.color))}};
+    r.getCell(2).font = {bold:true, color:XL.input};
+    r.getCell(6).font = {color:XL.input};
+    [4,5].forEach(c => r.getCell(c).alignment = {wrapText:true, vertical:'top'});
+  });
+
+  // GreenGo iestatījumi
+  const ws = wb.addWorksheet('GreenGo iestatījumi', {views:[{state:'frozen', xSplit:2, ySplit:1}]});
+  const K = Math.max(QUICK_KEYS, ...state.users.map(u => channelsOf(u).length));
+  ws.columns = [{width:6},{width:32},{width:20},{width:22}, ...Array.from({length:K}, () => ({width:16}))];
+  const hr = headRow(ws, ['Nr.','Loma / amats','Vārds','Ierīce', ...Array.from({length:K}, (_, i) => `Kanāls ${i+1}` + (i < QUICK_KEYS ? '' : ' (ext.)'))]);
+  state.users.forEach((u, i) => {
+    const ch = channelsOf(u);
+    const r = ws.addRow([i+1, u.role, u.name, u.device + (isCam(u) ? ' · Interface X' : ''), ...ch.map(c => c.g.name + (c.mode === 'L' ? ' (tikai klausās)' : ''))]);
+    ch.forEach((c, ci) => {
+      const cell = r.getCell(ci + 5);
+      if (c.mode === 'X') { cell.fill = {type:'pattern', pattern:'solid', fgColor:{argb:argb(c.g.color)}}; cell.font = {bold:true, color:{argb:argb(textOn(c.g.color))}}; }
+      else cell.font = {italic:true, color:{argb:argb(c.g.color)}};
+    });
+  });
+  ws.addRow([]);
+  ws.addRow(['', 'Vadu / bezvadu beltpackam kanāli 1–4 ir uz ātrajām pogām; no 5. kanāla pieejami caur "extended channels" (līdz 32).']).getCell(2).font = {italic:true, color:{argb:'FF666666'}};
+
+  const buf = await wb.xlsx.writeBuffer();
+  const slug = (ev.name || 'intercom').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/gi,'-').replace(/^-|-$/g,'').toLowerCase() || 'intercom';
+  const d = new Date(), stamp = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([buf], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
+  a.download = `greengo-${slug}-${stamp}.xlsx`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  toast('Lejupielādēts: ' + a.download);
+}
+$('#btnSave').onclick = () => exportXlsx().catch(err => { console.error(err); toast('Neizdevās izveidot failu: ' + err.message); });
+
+renderAll();
+</script>
+</body>
+</html>

@@ -3,6 +3,7 @@ Allow: /
 Disallow: /calc.html
 Disallow: /piedavajums.html
 Disallow: /cg.html
+Disallow: /intercom.html
 Disallow: /sync/
 Disallow: /game-ATP250/admin.html
 Disallow: /server/
