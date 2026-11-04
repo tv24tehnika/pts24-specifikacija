@@ -120,6 +120,15 @@ dialog{border:1px solid var(--line);border-radius:12px;background:var(--card);co
 dialog::backdrop{background:rgba(0,0,0,.4)}
 dialog .opts{display:grid;gap:8px;margin:12px 0}
 .saved{font-size:12px;color:var(--muted)}
+.guide summary{cursor:pointer;font-size:17px;font-weight:700;list-style:none;display:flex;align-items:center;gap:8px}
+.guide summary::-webkit-details-marker{display:none}
+.guide summary::after{content:"▾";color:var(--muted);font-size:14px;transition:transform .15s}
+.guide:not([open]) summary::after{transform:rotate(-90deg)}
+.guide ol{margin:12px 0 0;padding-left:22px;display:grid;gap:8px}
+.guide li{padding-left:2px}
+.guide li b{color:var(--ink)}
+.guide .send{margin-top:14px;padding:12px 14px;border-radius:10px;background:var(--ok-bg);color:var(--ok);font-weight:600}
+.guide .send a{color:inherit}
 @media (max-width:760px){
   .ev{grid-template-columns:1fr 1fr}
   h1{font-size:20px}
@@ -155,6 +164,21 @@ dialog .opts{display:grid;gap:8px;margin:12px 0}
       <input type="file" id="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
     </div>
   </header>
+
+  <section class="card">
+    <details class="guide" open>
+      <summary>Kā aizpildīt</summary>
+      <ol>
+        <li><b>Pasākums:</b> ierakstiet nosaukumu, datumu, vietu un kontaktpersonu.</li>
+        <li><b>Grupas:</b> izveidojiet vajadzīgās grupas (sarunu kanālus), piemēram, PRODUCTION, ENGINEER, SKAŅA. Visi grupas dalībnieki dzird cits citu. Ja nezināt, ar ko sākt, nospiediet "Ielādēt paraugu" un pielāgojiet.</li>
+        <li><b>Lietotāji:</b> katram cilvēkam vai amatam, kam vajag intercom, pievienojiet rindu un izvēlieties ierīci (vadu vai bezvadu beltpack, stacija, GV kamera). Matricā atzīmējiet, kurās grupās viņš ir: <b>X</b> nozīmē runā un klausās, <b>L</b> nozīmē tikai klausās.</li>
+        <li><b>Pārbaude:</b> sadaļā 5 izlabojiet brīdinājumus, ja tādi ir, un pārliecinieties, ka aprīkojuma pietiek.</li>
+        <li><b>Lejupielādējiet .gg5 failu</b> ar pogu "GreenGo .gg5" augšā.</li>
+      </ol>
+      <div class="send">Nosūtiet .gg5 failu PTS24 atbildīgajai personai. Ja nezināt, kam, sūtiet uz <a href="mailto:pts24lv@gmail.com">pts24lv@gmail.com</a>.</div>
+      <p class="hint" style="margin:12px 0 0">Lai vēlāk varētu turpināt labot, lejupielādējiet arī ".xlsx" un vēlāk atveriet to šeit ar "Atvērt .xlsx". Ievadītais saglabājas arī šajā pārlūkā.</p>
+    </details>
+  </section>
 
   <section class="card">
     <h2><span class="n">1</span>Pasākums</h2>
@@ -1068,7 +1092,7 @@ $('#btnGG5').onclick = () => {
   const gg = buildGG5();
   const text = JSON.stringify(gg, null, 1).replace(/\n/g, '\r\n');
   downloadBlob(new Blob([text], {type:'application/json'}), `greengo-${fileSlug()}.gg5`);
-  toast(`Lejupielādēts GreenGo projekts: ${gg.Users.keys.length} lietotāji, ${gg.Groups.keys.length} grupas.`);
+  toast(`Lejupielādēts GreenGo projekts (${gg.Users.keys.length} lietotāji, ${gg.Groups.keys.length} grupas). Nosūtiet failu PTS24 atbildīgajai personai.`);
 };
 
 renderAll();
