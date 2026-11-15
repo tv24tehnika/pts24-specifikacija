@@ -52,6 +52,9 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 label.f{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.03em}
 input[type=text],input[type=date],input[type=number],select,textarea{font:inherit;font-size:14px;color:var(--input);background:var(--card);border:1px solid var(--line);border-radius:7px;padding:7px 9px;width:100%;min-width:0}
 textarea{resize:vertical;min-height:38px}
+textarea.meet{min-height:150px;line-height:1.5}
+.meethead{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.meethead button.ghost{font-size:12px;text-transform:none;letter-spacing:0;font-weight:600}
 select{color:var(--ink)}
 .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:10px}
 table{border-collapse:separate;border-spacing:0;width:100%}
@@ -169,7 +172,7 @@ dialog .opts{display:grid;gap:8px;margin:12px 0}
     <details class="guide" open>
       <summary>Kā aizpildīt</summary>
       <ol>
-        <li><b>Pasākums:</b> ierakstiet nosaukumu, datumu, vietu un kontaktpersonu.</li>
+        <li><b>Pasākums:</b> ierakstiet nosaukumu, datumu, vietu un kontaktpersonu. Laukā "Sapulču piezīmes" pierakstiet, par ko vienojāties sapulcēs pirms pasākuma.</li>
         <li><b>Grupas:</b> izveidojiet vajadzīgās grupas (sarunu kanālus), piemēram, PRODUCTION, ENGINEER, SKAŅA. Visi grupas dalībnieki dzird cits citu. Ja nezināt, ar ko sākt, nospiediet "Ielādēt paraugu" un pielāgojiet.</li>
         <li><b>Lietotāji:</b> katram cilvēkam vai amatam, kam vajag intercom, pievienojiet rindu un izvēlieties ierīci (vadu vai bezvadu beltpack, stacija, GV kamera). Matricā atzīmējiet, kurās grupās viņš ir: <b>X</b> nozīmē runā un klausās, <b>L</b> nozīmē tikai klausās.</li>
         <li><b>Pārbaude:</b> sadaļā 5 izlabojiet brīdinājumus, ja tādi ir, un pārliecinieties, ka aprīkojuma pietiek.</li>
@@ -189,6 +192,10 @@ dialog .opts{display:grid;gap:8px;margin:12px 0}
       <label class="f">Vieta<input type="text" data-ev="place" placeholder="piem., sporta halle"></label>
       <label class="f">Atbildīgais<input type="text" data-ev="contact" placeholder="Vārds, tālrunis"></label>
       <label class="f wide">Piezīmes<textarea data-ev="notes" rows="2" placeholder="Īpašas prasības, pieslēgumi, IP adreses u.c."></textarea></label>
+      <div class="f wide" style="display:flex;flex-direction:column;gap:4px">
+        <div class="meethead"><label class="f" for="meetNotes">Sapulču piezīmes</label><button type="button" class="ghost" id="btnMeetDate" title="Pievienot šodienas datumu jaunas sapulces sākumam">+ Šodienas sapulce</button></div>
+        <textarea id="meetNotes" class="meet" data-ev="meetings" rows="7" placeholder="Pieraksti no sapulcēm pirms pasākuma: kas piedalījās, par ko vienojāmies, kas vēl jāizdara un līdz kuram datumam."></textarea>
+      </div>
     </div>
   </section>
 
@@ -295,7 +302,7 @@ const $ = s => document.querySelector(s);
 
 function blankState(){
   return {
-    event:{name:'',date:'',place:'',contact:'',notes:''},
+    event:{name:'',date:'',place:'',contact:'',notes:'',meetings:''},
     groups:[], ifx:{p1:'',p2:''}, users:[],
     equip:Object.fromEntries(EQUIP.map(e => [e.key,{std:e.std,extra:e.extra}])),
   };
@@ -339,6 +346,7 @@ function save(){
   saveTimer = setTimeout(flush, 300);
 }
 window.addEventListener('pagehide', flush);
+['resize','beforeprint'].forEach(t => window.addEventListener(t, () => document.querySelectorAll('textarea[data-ev]').forEach(growArea)));
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flush(); });
 
 /* ---------- derived ---------- */
@@ -387,7 +395,12 @@ function equipCalc(){
 
 /* ---------- render ---------- */
 function renderEvent(){
-  document.querySelectorAll('[data-ev]').forEach(el => { el.value = state.event[el.dataset.ev] || ''; });
+  document.querySelectorAll('[data-ev]').forEach(el => { el.value = state.event[el.dataset.ev] || ''; growArea(el); });
+}
+function growArea(el){
+  if (el.tagName !== 'TEXTAREA') return;
+  el.style.height = 'auto';
+  el.style.height = (el.scrollHeight + 2) + 'px';
 }
 function renderGroups(){
   const counts = Object.fromEntries(state.groups.map(g => [g.id, 0]));
@@ -524,7 +537,7 @@ function renderAll(){ renderEvent(); renderGroups(); renderUsers(); renderDerive
 /* ---------- events ---------- */
 document.addEventListener('input', e => {
   const t = e.target;
-  if (t.dataset.ev) { state.event[t.dataset.ev] = t.value; save(); return; }
+  if (t.dataset.ev) { state.event[t.dataset.ev] = t.value; growArea(t); save(); return; }
   if (t.dataset.gf) {
     const g = groupById(t.closest('tr').dataset.gid); g[t.dataset.gf] = t.value;
     renderUsers(); renderDerived();
@@ -624,6 +637,14 @@ function loadTemplate(){
 $('#btnExample').onclick = loadTemplate;
 document.addEventListener('click', e => { if (e.target.closest('button[data-template]')) loadTemplate(); });
 $('#btnPrint').onclick = () => window.print();
+$('#btnMeetDate').onclick = () => {
+  const ta = $('#meetNotes');
+  const head = new Date().toLocaleDateString('lv-LV', {day:'2-digit', month:'2-digit', year:'numeric'}) + ' sapulce:\n';
+  const cur = ta.value.replace(/\s+$/, '');
+  ta.value = cur ? cur + '\n\n' + head : head;
+  state.event.meetings = ta.value; growArea(ta); save();
+  ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length);
+};
 
 function toast(msg){
   const t = $('#toast'); t.textContent = msg; t.classList.add('show');
@@ -743,7 +764,7 @@ function parseWorkbook(wb, prefix){
   // pasākuma info + Interface X
   const byName = n => s.groups.find(g => g.name.toUpperCase() === (n || '').toUpperCase());
   if (info) {
-    const keys = {pasākums:'name', datums:'date', vieta:'place', atbildīgais:'contact', piezīmes:'notes'};
+    const keys = {pasākums:'name', datums:'date', vieta:'place', atbildīgais:'contact', piezīmes:'notes', 'sapulču piezīmes':'meetings'};
     info.eachRow(row => {
       const k = cv(row.getCell(1)).toLowerCase(), v = cv(row.getCell(2));
       if (keys[k]) s.event[keys[k]] = v;
@@ -863,12 +884,12 @@ async function exportXlsx(){
   wp.columns = [{width:28},{width:70}];
   headRow(wp, ['Lauks','Vērtība']);
   const g1 = groupById(state.ifx.p1), g2 = groupById(state.ifx.p2);
-  [['Pasākums',ev.name],['Datums',ev.date],['Vieta',ev.place],['Atbildīgais',ev.contact],['Piezīmes',ev.notes],
+  [['Pasākums',ev.name],['Datums',ev.date],['Vieta',ev.place],['Atbildīgais',ev.contact],['Piezīmes',ev.notes],['Sapulču piezīmes',ev.meetings],
    ['Interface X ports 1 (grupa)', g1 ? g1.name : ''],['Interface X ports 2 (grupa)', g2 ? g2.name : ''],
    ['Saglabāts', new Date().toLocaleString('lv-LV')]].forEach(([k,v], i) => {
     const r = wp.addRow([k, v || '']);
     r.getCell(1).font = {bold:true};
-    r.getCell(2).font = {color: i < 7 ? XL.input : XL.black};
+    r.getCell(2).font = {color: i < 8 ? XL.input : XL.black};
     r.getCell(2).alignment = {wrapText:true, vertical:'top'};
   });
 
