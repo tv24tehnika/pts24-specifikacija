@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="lv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>PDF → PPTX</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+<style>
+  :root{
+    --bg:#0e1116; --panel:#161b22; --line:#2a313c; --text:#e6edf3; --muted:#8b949e;
+    --accent:#e5484d; --accent2:#ff6b6b; --ok:#3fb950;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;min-height:100vh;display:flex;justify-content:center;padding:40px 16px}
+  .wrap{width:100%;max-width:760px}
+  h1{font-size:26px;margin:0 0 4px;font-weight:700;letter-spacing:-.01em}
+  h1 span{color:var(--accent)}
+  .sub{color:var(--muted);margin:0 0 28px;font-size:14px;line-height:1.5}
+  .drop{border:2px dashed var(--line);border-radius:14px;padding:44px 20px;text-align:center;cursor:pointer;transition:.15s;background:var(--panel)}
+  .drop:hover,.drop.over{border-color:var(--accent);background:#1c1416}
+  .drop b{display:block;font-size:17px;margin-bottom:6px}
+  .drop small{color:var(--muted)}
+  input[type=file]{display:none}
+  .opts{display:flex;flex-wrap:wrap;gap:18px;margin:20px 0;padding:16px 18px;background:var(--panel);border:1px solid var(--line);border-radius:12px;font-size:14px}
+  .opts label{display:flex;align-items:center;gap:8px;color:var(--muted)}
+  .opts .fixed{color:var(--text);font-weight:500}
+  select{background:#0d1117;color:var(--text);border:1px solid var(--line);border-radius:6px;padding:6px 8px;font:inherit}
+  input[type=checkbox]{accent-color:var(--accent);width:16px;height:16px}
+  .list{display:flex;flex-direction:column;gap:10px}
+  .item{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .row{display:flex;align-items:center;gap:12px}
+  .name{flex:1;min-width:0;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .status{font-size:13px;color:var(--muted);white-space:nowrap}
+  .status.ok{color:var(--ok)} .status.err{color:var(--accent2)}
+  .bar{height:6px;background:#0d1117;border-radius:3px;margin-top:10px;overflow:hidden}
+  .bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
+  .item.done .bar i{background:var(--ok)}
+  button{background:var(--accent);color:#fff;border:0;border-radius:8px;padding:8px 14px;font:600 13px Inter,sans-serif;cursor:pointer}
+  button:hover{background:var(--accent2)}
+  button[disabled]{opacity:.4;cursor:default}
+  .thumbs{display:flex;gap:6px;margin-top:12px;overflow-x:auto;padding-bottom:4px}
+  .thumbs img{height:54px;border-radius:4px;border:1px solid var(--line);flex:none}
+  .foot{color:var(--muted);font-size:12px;margin-top:28px;line-height:1.6}
+  .msg{margin-top:8px;font-size:13px;color:var(--accent2)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>PDF <span>→</span> PPTX</h1>
+  <p class="sub">Katra PDF lapa kļūst par atsevišķu 1920×1080 slaidu ar melnu fonu. Fails tiek apstrādāts tikai šajā pārlūkā, nekur netiek augšupielādēts.</p>
+
+  <div class="drop" id="drop">
+    <b>Ievelc PDF failu(s) šeit</b>
+    <small>vai noklikšķini, lai izvēlētos</small>
+    <input type="file" id="file" accept="application/pdf,.pdf" multiple>
+  </div>
+
+  <div class="opts">
+    <label>Slaids <span class="fixed">1920 × 1080 · 16:9 · melns fons</span></label>
+    <label>Formāts
+      <select id="fmt">
+        <option value="jpeg" selected>JPEG (mazāks fails)</option>
+        <option value="png">PNG (bez zudumiem)</option>
+      </select>
+    </label>
+    <label><input type="checkbox" id="notes" checked> Lapas tekstu ielikt runātāja piezīmēs</label>
+  </div>
+
+  <div class="list" id="list"></div>
+
+  <p class="foot">Visi slaidi ir 16:9 (1920×1080). Ja PDF lapa ir 16:9, tā aizpilda visu slaidu; ja citās proporcijās (piem., A4), tā tiek centrēta uz melna fona, nekad netiek apgriezta. Slaidos ir lapu attēli, tāpēc izskats paliek identisks oriģinālam, bet teksts slaidā nav rediģējams.</p>
+</div>
+
+<script>
+(function(){
+  const OUT_W = 1920, OUT_H = 1080;          // gala attēla izmērs pikseļos
+  const SLIDE_W = 13.333, SLIDE_H = 7.5;     // 16:9 slaids collās (PowerPoint "Widescreen")
+  const SS = 2;                              // renderē 2× lielāku un samazina — asāks teksts
+
+  const pdfjs = window.pdfjsLib;
+  if (pdfjs) pdfjs.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
+  const drop = document.getElementById('drop');
+  const input = document.getElementById('file');
+  const list = document.getElementById('list');
+
+  let downloads = null;
+  try {
+    if (window.claude && window.claude.use) {
+      window.claude.use('downloads').then(d => { downloads = d; }).catch(()=>{});
+    }
+  } catch(e) {}
+
+  drop.addEventListener('click', () => input.click());
+  input.addEventListener('change', () => { handle([...input.files]); input.value=''; });
+  ['dragenter','dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+  ['dragleave','drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
+  drop.addEventListener('drop', e => handle([...e.dataTransfer.files]));
+
+  let queue = Promise.resolve();
+  function handle(files){
+    files.filter(f => /\.pdf$/i.test(f.name) || f.type === 'application/pdf')
+         .forEach(f => { const ui = makeItem(f.name); queue = queue.then(() => convert(f, ui)); });
+  }
+
+  function makeItem(name){
+    const el = document.createElement('div');
+    el.className = 'item';
+    el.innerHTML = `<div class="row"><div class="name"></div><div class="status">Gaida…</div></div>
+      <div class="bar"><i></i></div><div class="thumbs"></div>`;
+    el.querySelector('.name').textContent = name;
+    list.prepend(el);
+    return {
+      el,
+      status(t, cls){ const s = el.querySelector('.status'); s.textContent = t; s.className = 'status ' + (cls||''); },
+      progress(p){ el.querySelector('.bar i').style.width = (p*100).toFixed(1) + '%'; },
+      thumb(src){ const i = new Image(); i.src = src; el.querySelector('.thumbs').appendChild(i); },
+      row(){ return el.querySelector('.row'); },
+      msg(t){ let m = el.querySelector('.msg'); if(!m){ m = document.createElement('div'); m.className='msg'; el.appendChild(m);} m.textContent = t; }
+    };
+  }
+
+  // Lapas novietojums 1920×1080 kadrā. Ja proporcijas gandrīz 16:9 (±2 %),
+  // lapu izstiepj pa visu kadru, lai nepaliek 1px malas; citādi — centrē (contain).
+  function placement(pw, ph){
+    const pr = pw / ph, fr = OUT_W / OUT_H;
+    if (Math.abs(pr / fr - 1) < 0.02) return { x: 0, y: 0, w: OUT_W, h: OUT_H };
+    let w, h;
+    if (pr > fr) { w = OUT_W; h = Math.round(OUT_W / pr); }
+    else         { h = OUT_H; w = Math.round(OUT_H * pr); }
+    return { x: Math.round((OUT_W - w) / 2), y: Math.round((OUT_H - h) / 2), w, h };
+  }
+
+  async function convert(file, ui){
+    if (!pdfjs || !window.PptxGenJS) { ui.status('Bibliotēkas neielādējās', 'err'); return; }
+    const fmt = document.getElementById('fmt').value;
+    const withNotes = document.getElementById('notes').checked;
+    try {
+      ui.status('Atver PDF…');
+      const buf = await file.arrayBuffer();
+      const pdf = await pdfjs.getDocument({ data: buf }).promise;
+      const n = pdf.numPages;
+
+      const pptx = new PptxGenJS();
+      pptx.defineLayout({ name: 'FHD', width: SLIDE_W, height: SLIDE_H });
+      pptx.layout = 'FHD';
+      pptx.title = file.name.replace(/\.pdf$/i, '');
+
+      // gala kadrs 1920×1080
+      const out = document.createElement('canvas');
+      out.width = OUT_W; out.height = OUT_H;
+      const octx = out.getContext('2d');
+      // starpkadrs lapas renderēšanai
+      const tmp = document.createElement('canvas');
+      const tctx = tmp.getContext('2d');
+
+      for (let i = 1; i <= n; i++) {
+        ui.status(`Lapa ${i} / ${n}`);
+        const page = await pdf.getPage(i);
+        const v1 = page.getViewport({ scale: 1 });
+        const p = placement(v1.width, v1.height);
+
+        // renderē lapu ~2× lielāku nekā vieta kadrā
+        const scale = Math.max(p.w / v1.width, p.h / v1.height) * SS;
+        const vp = page.getViewport({ scale });
+        tmp.width = Math.ceil(vp.width); tmp.height = Math.ceil(vp.height);
+        tctx.fillStyle = '#fff'; tctx.fillRect(0, 0, tmp.width, tmp.height);   // PDF "papīrs"
+        await page.render({ canvasContext: tctx, viewport: vp }).promise;
+
+        // melns fons + lapa
+        octx.fillStyle = '#000'; octx.fillRect(0, 0, OUT_W, OUT_H);
+        octx.imageSmoothingEnabled = true; octx.imageSmoothingQuality = 'high';
+        octx.drawImage(tmp, 0, 0, vp.width, vp.height, p.x, p.y, p.w, p.h);
+
+        const data = fmt === 'png' ? out.toDataURL('image/png') : out.toDataURL('image/jpeg', 0.92);
+
+        const slide = pptx.addSlide();
+        slide.background = { color: '000000' };
+        slide.addImage({ data, x: 0, y: 0, w: SLIDE_W, h: SLIDE_H });
+
+        if (withNotes) {
+          try {
+            const tc = await page.getTextContent();
+            let txt = '', lastY = null;
+            for (const it of tc.items) {
+              const yy = it.transform ? it.transform[5] : null;
+              if (lastY !== null && yy !== null && Math.abs(yy - lastY) > 2) txt += '\n';
+              else if (txt && !txt.endsWith(' ') && !txt.endsWith('\n')) txt += ' ';
+              txt += it.str; lastY = yy;
+              if (it.hasEOL) { txt += '\n'; lastY = null; }
+            }
+            txt = txt.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+            if (txt) slide.addNotes(txt);
+          } catch(e) {}
+        }
+
+        // sīktēls
+        const t = document.createElement('canvas');
+        t.height = 54; t.width = 96;
+        t.getContext('2d').drawImage(out, 0, 0, t.width, t.height);
+        ui.thumb(t.toDataURL('image/jpeg', 0.7));
+
+        ui.progress(i / (n + 1));
+        page.cleanup();
+      }
+      tmp.width = tmp.height = 0;
+
+      ui.status('Veido PPTX…');
+      const blob = await pptx.write({ outputType: 'blob' });
+      ui.progress(1);
+      ui.el.classList.add('done');
+      const outName = file.name.replace(/\.pdf$/i, '') + '.pptx';
+      ui.status(`Gatavs · ${n} slaidi · ${(blob.size/1048576).toFixed(1)} MB`, 'ok');
+
+      const btn = document.createElement('button');
+      btn.textContent = 'Lejupielādēt';
+      btn.addEventListener('click', () => save(outName, blob, ui, btn));
+      ui.row().appendChild(btn);
+      pdf.destroy();
+    } catch (e) {
+      console.error(e);
+      ui.status('Kļūda', 'err');
+      ui.msg(String(e && e.message || e));
+    }
+  }
+
+  async function save(name, blob, ui, btn){
+    if (downloads) {
+      btn.disabled = true;
+      try { await downloads.save({ filename: name, data: blob }); }
+      catch (e) {
+        const c = e && e.code;
+        if (c === 'declined') {}
+        else if (c === 'rate_limited') ui.msg('Lejupielādes logs jau ir atvērts. Pamēģini vēlreiz pēc brīža.');
+        else if (c === 'too_large') ui.msg('Fails ir par lielu. Izvēlies JPEG.');
+        else ui.msg('Lejupielāde šeit nav pieejama.');
+      }
+      btn.disabled = false;
+      return;
+    }
+    // parasta lejupielāde (pts24.lv vai lokāli atvērts fails)
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  }
+})();
+</script>
+</body>
+</html>
